@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import "./AdvisorPage.css";
-import advisor from "../locales/advisor.json";
+
 /* ==========================================================
    =============== 1) Seasons (i18n version) ================
    ========================================================== */
