@@ -1,0 +1,38 @@
+/* src/pages/History.css */
+
+/* พื้นหลังหลัก */
+.siteBG {
+  background: linear-gradient(
+    to bottom right,
+    #fadcdc 0%,
+    #e6dceb 45%,
+    #ffffff 100%
+  );
+  min-height: 100vh;
+}
+
+/* เอฟเฟกต์ hover */
+button:hover {
+  transition: all 0.2s ease;
+  transform: translateY(-1px);
+}
+
+/* การ์ด */
+.history-card {
+  transition: all 0.25s ease;
+}
+.history-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(117, 70, 74, 0.15);
+}
+
+/* ฟิลเตอร์ + input */
+input,
+select {
+  outline: none;
+}
+input:focus,
+select:focus {
+  border-color: #d85e79 !important;
+  box-shadow: 0 0 0 3px rgba(216, 94, 121, 0.25);
+}

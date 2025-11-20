@@ -1,0 +1,33 @@
+/* src/components/MakeoverStudio.css */
+
+/* เส้นตกแต่งหัวข้อ */
+.headerLine {
+  background: linear-gradient(90deg, rgba(230,220,235,.9), rgba(230,220,235,0));
+}
+
+/* reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.4s ease;
+}
+.reveal.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ปุ่ม ripple effect */
+.btn-ripple {
+  position: absolute;
+  border-radius: 999px;
+  transform: scale(0);
+  animation: ripple .6s ease-out;
+  background: #ffffff55;
+  pointer-events: none;
+}
+@keyframes ripple {
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
