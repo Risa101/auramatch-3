@@ -1,0 +1,494 @@
+{
+  "en": {
+    "advisor": {
+      "hero": {
+        "badge": "Personal Color Advisor",
+        "title": "Find your Season & Face Shape",
+        "subtitle": "AI analyzes your features and undertone to recommend styles that truly match you.",
+        "btnQuiz": "Start Face Shape Quiz",
+        "btnSeason": "View Seasons"
+      },
+
+      "quiz": {
+        "title": "Face Shape Quiz",
+        "subtitle": "Answer 6 questions to discover your natural face shape",
+        "next": "Next",
+        "finish": "Finish",
+        "restart": "Restart",
+
+        "ratio": {
+          "q": "What is your face ratio?",
+          "opt1": "Wider than tall",
+          "opt2": "Balanced",
+          "opt3": "Taller than wide"
+        },
+        "jaw": {
+          "q": "What is your jawline like?",
+          "opt1": "Soft curve",
+          "opt2": "Straight / Angular",
+          "opt3": "Pointed or V-shape"
+        },
+        "forehead": {
+          "q": "Your forehead looks…",
+          "opt1": "Wide",
+          "opt2": "Average",
+          "opt3": "Narrow"
+        },
+        "cheekbone": {
+          "q": "Where are your cheekbones positioned?",
+          "opt1": "High & prominent",
+          "opt2": "Balanced",
+          "opt3": "Low or soft"
+        },
+        "chin": {
+          "q": "What does your chin look like?",
+          "opt1": "Rounded",
+          "opt2": "Pointy",
+          "opt3": "Wide"
+        },
+        "overall": {
+          "q": "Overall facial outline?",
+          "opt1": "Soft & curved",
+          "opt2": "Straight & structured",
+          "opt3": "Sharp bottom / V-shape"
+        }
+      },
+
+      "mini": {
+        "title": "Quick Face Shape Check",
+        "subtitle": "If you're unsure, use this quick method.",
+        "forehead": "Forehead width",
+        "cheek": "Cheekbone prominence",
+        "jaw": "Jawline",
+        "chin": "Chin",
+        "optionWide": "Wide",
+        "optionNarrow": "Narrow",
+        "optionAvg": "Average",
+        "optionHigh": "High",
+        "optionSoft": "Soft",
+        "optionSquare": "Square",
+        "optionPointy": "Pointy",
+        "predicted": "You likely have:"
+      },
+
+      "faceResult": {
+        "badge": "Your Face Shape",
+        "retry": "Try Again",
+        "toAnalysis": "Go to AI Analysis"
+      },
+
+      "shape": {
+        "Round": {
+          "name": "Round",
+          "traits": "Soft jawline • Full cheeks • Face width ≈ height",
+          "do": [
+            "Side part hairstyles",
+            "Layered cuts to add dimension",
+            "Soft waves to elongate the face"
+          ],
+          "avoid": [
+            "Straight full bangs",
+            "Chin-length bobs without layers"
+          ]
+        },
+
+        "Oval": {
+          "name": "Oval",
+          "traits": "Balanced proportions • Slightly narrow chin",
+          "do": [
+            "Most hairstyles suit well",
+            "Curtain bangs",
+            "Long layers"
+          ],
+          "avoid": [
+            "Very flat hairstyles",
+            "Micro bangs"
+          ]
+        },
+
+        "Square": {
+          "name": "Square",
+          "traits": "Defined jawline • Angular corners",
+          "do": [
+            "Soft curls and waves",
+            "Long layers",
+            "Side-swept bangs"
+          ],
+          "avoid": [
+            "Flat straight bob",
+            "Blunt one-length cuts"
+          ]
+        },
+
+        "Heart": {
+          "name": "Heart",
+          "traits": "Wide forehead • Narrow pointed chin",
+          "do": [
+            "Chin-length bob",
+            "Wavy shoulder-length cuts",
+            "Soft side bangs"
+          ],
+          "avoid": [
+            "Volume-heavy top areas"
+          ]
+        },
+
+        "Triangle": {
+          "name": "Triangle",
+          "traits": "Narrow forehead • Wider jaw",
+          "do": [
+            "Volume on top",
+            "Soft waves",
+            "Layered fringe"
+          ],
+          "avoid": [
+            "Heavy jaw-length volume"
+          ]
+        },
+
+        "Diamond": {
+          "name": "Diamond",
+          "traits": "Narrow forehead & jaw • High prominent cheekbones",
+          "do": [
+            "Chin-length bob",
+            "Soft curls",
+            "Side-swept bangs"
+          ],
+          "avoid": [
+            "Too much volume at sides"
+          ]
+        }
+      },
+
+      "learn": {
+        "title": "Start Learning Personal Color",
+        "subtitle": "Understand your undertone, contrast, and chroma",
+
+        "what": {
+          "header": "What is Personal Color?",
+          "title": "Core elements",
+          "desc": "Personal color identifies tones that harmonize with your skin’s undertone and contrast.",
+          "list": [
+            "Undertone: Warm • Cool • Neutral",
+            "Value: Light or Deep",
+            "Chroma: Soft or Vivid",
+            "Contrast: Low / Medium / High"
+          ],
+          "core": "Fundamental aspects"
+        },
+
+        "check": {
+          "header": "Self Check",
+          "title": "How to check your tone",
+          "list": [
+            "Look at veins under natural light",
+            "Check metal preference: gold vs silver",
+            "Observe how your skin reacts to bright/dusty colors"
+          ],
+          "note": "*This guide gives general direction. AI analysis improves accuracy.",
+          "testTitle": "Additional tests",
+          "testList": [
+            "White vs cream cloth test",
+            "Soft vs vivid color test",
+            "Hair color suitability check"
+          ]
+        }
+      },
+
+      "season": {
+        "Spring": {
+          "name": "Spring",
+          "undertone": "Warm • Clear • Fresh",
+          "desc": "Bright warm tones that enhance radiance.",
+          "best": ["Peach", "Coral", "Warm Pink", "Apple Green"],
+          "avoid": ["Icy blue", "Blue-violet"],
+          "makeup": ["Peach blush", "Coral lips"],
+          "hair": ["Honey Brown", "Golden Brown"],
+          "metal": "Gold",
+          "palette": ["#FFD4B8", "#FFBC99", "#FFE5C2", "#FCE3B0"]
+        },
+
+        "Summer": {
+          "name": "Summer",
+          "undertone": "Cool • Soft • Calm",
+          "desc": "Soft pastel tones complement your skin.",
+          "best": ["Baby pink", "Lavender", "Rose brown"],
+          "avoid": ["Orange", "Neon tones"],
+          "makeup": ["Soft pink blush"],
+          "hair": ["Ash Brown", "Rosy Brown"],
+          "metal": "Silver",
+          "palette": ["#E5D3F0", "#F2C6DE", "#C8DDF0", "#DDEBF7"]
+        },
+
+        "Autumn": {
+          "name": "Autumn",
+          "undertone": "Warm • Rich • Deep",
+          "desc": "Earthy warm tones enhance depth and warmth.",
+          "best": ["Terracotta", "Olive", "Mustard"],
+          "avoid": ["Icy tones", "Blue-based pink"],
+          "makeup": ["Brick lipstick"],
+          "hair": ["Chocolate brown", "Caramel brown"],
+          "metal": "Gold",
+          "palette": ["#DAA97C", "#B86F40", "#AF8D4A", "#C7A369"]
+        },
+
+        "Winter": {
+          "name": "Winter",
+          "undertone": "Cool • Deep • High Contrast",
+          "desc": "Sharp cool tones make your features pop.",
+          "best": ["Black", "True red", "Emerald"],
+          "avoid": ["Warm yellow", "Brownish orange"],
+          "makeup": ["Berry lipstick"],
+          "hair": ["Jet black", "Cool brown"],
+          "metal": "Silver",
+          "palette": ["#3A4D88", "#A3B4F0", "#E6E6E6", "#192C4C"]
+        }
+      },
+
+      "table": {
+        "title": "Season Snapshot Table",
+        "subtitle": "Quick comparison of all 4 seasons",
+        "season": "Season",
+        "undertone": "Undertone",
+        "best": "Best Colors",
+        "avoid": "Avoid",
+        "makeup": "Makeup",
+        "hair": "Hair & Metal"
+      },
+
+      "cta": {
+        "title": "Try full AI analysis now",
+        "subtitle": "Upload your photo and get your full personal color report",
+        "primary": "Analyze with AI",
+        "secondary": "Back to Advisor"
+      }
+    }
+  },
+
+
+  "th": {
+    "advisor": {
+      "hero": {
+        "badge": "ที่ปรึกษาโทนสีผิว",
+        "title": "ค้นหาโทนสีผิวและรูปหน้าของคุณ",
+        "subtitle": "AI วิเคราะห์ใบหน้าและโทนสีเพื่อแนะนำลุคที่ใช่ที่สุดสำหรับคุณ",
+        "btnQuiz": "เริ่มทำแบบทดสอบรูปหน้า",
+        "btnSeason": "ดูโทนต่างๆ"
+      },
+
+      "quiz": {
+        "title": "แบบทดสอบรูปหน้า",
+        "subtitle": "ตอบคำถาม 6 ข้อเพื่อตรวจหารูปหน้าของคุณ",
+        "next": "ถัดไป",
+        "finish": "เสร็จสิ้น",
+        "restart": "เริ่มใหม่",
+
+        "ratio": {
+          "q": "สัดส่วนใบหน้าของคุณ?",
+          "opt1": "กว้างมากกว่ายาว",
+          "opt2": "สมดุล",
+          "opt3": "ยาวมากกว้าง"
+        },
+        "jaw": {
+          "q": "รูปกรามของคุณ?",
+          "opt1": "มน นุ่ม",
+          "opt2": "เหลี่ยม / คม",
+          "opt3": "เรียวแหลม"
+        },
+        "forehead": {
+          "q": "ความกว้างหน้าผาก?",
+          "opt1": "กว้าง",
+          "opt2": "ปกติ",
+          "opt3": "แคบ"
+        },
+        "cheekbone": {
+          "q": "ตำแหน่งโหนกแก้ม?",
+          "opt1": "สูง เด่นชัด",
+          "opt2": "ปกติ",
+          "opt3": "ต่ำ / นุ่ม"
+        },
+        "chin": {
+          "q": "คางของคุณ?",
+          "opt1": "มน",
+          "opt2": "แหลม",
+          "opt3": "กว้าง"
+        },
+        "overall": {
+          "q": "ภาพรวมรูปหน้า?",
+          "opt1": "โค้งมน",
+          "opt2": "เหลี่ยม คม",
+          "opt3": "เรียวแหลม"
+        }
+      },
+
+      "mini": {
+        "title": "เช็ครูปหน้าแบบเร็ว",
+        "subtitle": "ถ้าไม่แน่ใจ ใช้วิธีนี้เพื่อประเมินเบื้องต้น",
+        "forehead": "หน้าผาก",
+        "cheek": "โหนกแก้ม",
+        "jaw": "กราม",
+        "chin": "คาง",
+        "optionWide": "กว้าง",
+        "optionNarrow": "แคบ",
+        "optionAvg": "ทั่วไป",
+        "optionHigh": "สูง",
+        "optionSoft": "นุ่ม",
+        "optionSquare": "เหลี่ยม",
+        "optionPointy": "แหลม",
+        "predicted": "คาดว่าคุณเป็น:"
+      },
+
+      "faceResult": {
+        "badge": "ผลลัพธ์รูปหน้า",
+        "retry": "ลองใหม่",
+        "toAnalysis": "ไปหน้า AI วิเคราะห์"
+      },
+
+      "shape": {
+        "Round": {
+          "name": "กลม",
+          "traits": "คางมน แก้มอิ่ม ใบหน้ากว้างพอๆ กับยาว",
+          "do": ["แสกข้าง", "ทรงเลเยอร์เพิ่มมิติ", "ลอนคลายช่วยให้หน้าดูยาวขึ้น"],
+          "avoid": ["หน้าม้าตรงทื่อ", "บ็อบสั้นระดับคางแบบไม่มีเลเยอร์"]
+        },
+
+        "Oval": {
+          "name": "วงรี",
+          "traits": "สัดส่วนสมดุล คางเรียวเล็กน้อย",
+          "do": ["เข้ากับทรงเกือบทุกแบบ", "หน้าม้าม่าน", "ผมยาวเลเยอร์"],
+          "avoid": ["ทรงแบนเกินไป", "หน้าม้าสั้นเต่อ"]
+        },
+
+        "Square": {
+          "name": "เหลี่ยม",
+          "traits": "กรามชัด เหลี่ยมด้านล่างของใบหน้า",
+          "do": ["ลอนอ่อน", "เลเยอร์ยาว", "หน้าม้าปัดข้าง"],
+          "avoid": ["บ็อบตรงแบน", "ตัดผมปลายทื่อเกินไป"]
+        },
+
+        "Heart": {
+          "name": "หัวใจ",
+          "traits": "หน้าผากกว้าง คางแหลม",
+          "do": ["บ็อบระดับคาง", "ผมยาวลอนอ่อน", "หน้าม้าปัด"],
+          "avoid": ["ทรงที่เพิ่มวอลุ่มด้านบนมากเกินไป"]
+        },
+
+        "Triangle": {
+          "name": "สามเหลี่ยม",
+          "traits": "หน้าผากแคบ ช่วงกรามกว้าง",
+          "do": ["เพิ่มวอลุ่มด้านบน", "ลอนนุ่ม", "หน้าม้าซีทรูลดความแข็ง"],
+          "avoid": ["ผมฟูหนักบริเวณกราม"]
+        },
+
+        "Diamond": {
+          "name": "เพชร",
+          "traits": "หน้าผากแคบ กรามแคบ โหนกแก้มสูงเด่น",
+          "do": ["บ็อบระดับคาง", "ลอนอ่อน", "หน้าม้าปัด"],
+          "avoid": ["วอลุ่มด้านข้างมากเกินไป"]
+        }
+      },
+
+      "learn": {
+        "title": "เริ่มทำความเข้าใจ Personal Color",
+        "subtitle": "รู้จักอันเดอร์โทน คอนทราสต์ และความสดของสีที่เหมาะกับคุณ",
+        "what": {
+          "header": "Personal Color คืออะไร?",
+          "title": "องค์ประกอบหลัก",
+          "desc": "โทนสีที่เสริมความโดดเด่นของผิว ขึ้นอยู่กับอันเดอร์โทนและระดับคอนทราสต์",
+          "core": "สิ่งสำคัญประกอบด้วย",
+          "list": [
+            "อันเดอร์โทน: อุ่น • เย็น • นิวทรัล",
+            "Value: สว่างหรือเข้ม",
+            "Chroma: สีอ่อนหรือสด",
+            "Contrast: ต่ำ ปานกลาง สูง"
+          ]
+        },
+
+        "check": {
+          "header": "เช็กโทนด้วยตัวเอง",
+          "title": "ลองทดสอบง่ายๆ",
+          "list": [
+            "ดูเส้นเลือดใต้แสงธรรมชาติ",
+            "ลองทอง/เงินว่าแบบไหนเข้ากว่า",
+            "ลองสีสด/สีหม่นว่าแบบไหนให้หน้าสว่าง"
+          ],
+          "note": "*ใช้เป็นแนวทางเบื้องต้น — การวิเคราะห์ด้วย AI แม่นยำกว่า",
+          "testTitle": "แบบทดสอบเพิ่มเติม",
+          "testList": [
+            "ทดสอบด้วยผ้าขาว/ครีม",
+            "ทดสอบสีสด/สีหม่น",
+            "ดูสีผมที่เข้ากับผิว"
+          ]
+        }
+      },
+
+      "season": {
+        "Spring": {
+          "name": "Spring",
+          "undertone": "อุ่น • สดใส • ผ่อง",
+          "desc": "เฉดโทนอุ่นสดใสช่วยให้ผิวเปล่งประกาย",
+          "best": ["พีช", "คอรัล", "ชมพูอุ่น", "เขียวแอปเปิ้ล"],
+          "avoid": ["น้ำเงินเย็น", "ม่วงน้ำเงิน"],
+          "makeup": ["บลัชพีช", "ลิปคอรัล"],
+          "hair": ["น้ำตาลประกายทอง", "น้ำตาลทอง"],
+          "metal": "ทอง",
+          "palette": ["#FFD4B8", "#FFBC99", "#FFE5C2", "#FCE3B0"]
+        },
+
+        "Summer": {
+          "name": "Summer",
+          "undertone": "เย็น • ซอฟต์ • สงบ",
+          "desc": "สีพาสเทลอ่อนๆ ช่วยให้หน้าดูละมุน",
+          "best": ["ชมพูอ่อน", "ลาเวนเดอร์", "สีน้ำตาลชมพู"],
+          "avoid": ["สีส้ม", "สีสดนีออน"],
+          "makeup": ["บลัชชมพูซอฟต์"],
+          "hair": ["Ash Brown", "Rosy Brown"],
+          "metal": "เงิน",
+          "palette": ["#E5D3F0", "#F2C6DE", "#C8DDF0", "#DDEBF7"]
+        },
+
+        "Autumn": {
+          "name": "Autumn",
+          "undertone": "อุ่น • ลึก • มีมิติ",
+          "desc": "เฉดเอิร์ธโทนเข้ากับอันเดอร์โทนอุ่นลึก",
+          "best": ["น้ำตาลอิฐ", "มะกอก", "มัสตาร์ด"],
+          "avoid": ["โทนเย็นจัด", "ชมพูอมฟ้า"],
+          "makeup": ["ลิปโทนอิฐ"],
+          "hair": ["Chocolate Brown", "Caramel Brown"],
+          "metal": "ทอง",
+          "palette": ["#DAA97C", "#B86F40", "#AF8D4A", "#C7A369"]
+        },
+
+        "Winter": {
+          "name": "Winter",
+          "undertone": "เย็น • คมชัด • ตัดกันสูง",
+          "desc": "สีคูลโทนคมๆ ทำให้ใบหน้าดูโดดเด่น",
+          "best": ["ดำ", "แดงสด", "เขียวมรกต"],
+          "avoid": ["เหลืองอุ่น", "ส้ม"],
+          "makeup": ["ลิปเบอร์รี่"],
+          "hair": ["Jet Black", "Cool Brown"],
+          "metal": "เงิน",
+          "palette": ["#3A4D88", "#A3B4F0", "#E6E6E6", "#192C4C"]
+        }
+      },
+
+      "table": {
+        "title": "ตารางสรุปโทนสี",
+        "subtitle": "เปรียบเทียบทั้ง 4 ฤดูในครั้งเดียว",
+        "season": "ฤดู",
+        "undertone": "อันเดอร์โทน",
+        "best": "สีที่เหมาะที่สุด",
+        "avoid": "ควรเลี่ยง",
+        "makeup": "เมกอัพ",
+        "hair": "สีผม & เครื่องประดับ"
+      },
+
+      "cta": {
+        "title": "ลองวิเคราะห์ด้วย AI แบบเต็ม",
+        "subtitle": "อัปโหลดรูปเพื่อตรวจโทนสี รูปหน้า และลุคที่เหมาะสมที่สุด",
+        "primary": "วิเคราะห์ด้วย AI",
+        "secondary": "กลับไปหน้า Advisor"
+      }
+    }
+  }
+}

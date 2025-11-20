@@ -1,12 +1,14 @@
 // src/lib/i18n.js
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import advisor from "../locales/advisor.json";
 
 const savedLang = localStorage.getItem("lang") || "th";
 
 const resources = {
   en: {
     translation: {
+      
       /* ───────────────── NAVBAR ───────────────── */
       "nav.home": "HOME",
       "nav.analysis": "ANALYSIS",
@@ -217,7 +219,7 @@ const resources = {
       makeover: {
         title: "Makeover Studio",
         subtitle: "Choose brows, eyes, lips, hairstyle and hair color",
-
+      
         common: {
           none: "None",
         },
