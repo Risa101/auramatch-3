@@ -1,317 +1,182 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
-const BRAND = {
-  bgFrom: "#faf2f6",
-  bgTo:   "#f0ebf7",
-  primary:"#75464A",
-  accent: "#E6DCEB",
-  hover:  "#D85E79",
-};
-
-const VALUES = [
-  { title: "Human-first AI", desc: "เราออกแบบด้วยหัวใจ เน้นประสบการณ์ผู้ใช้เหนือสิ่งอื่นใด" },
-  { title: "Beauty for All", desc: "ความงามเข้าถึงได้สำหรับทุกโทนสีผิวและสไตล์" },
-  { title: "Transparency", desc: "อธิบายได้ ไม่ซ่อนสูตรลับ ให้ผู้ใช้ตัดสินใจอย่างมั่นใจ" },
-];
-
-const TIMELINE = [
-  { year: "2023", text: "เริ่มต้นไอเดีย AuraMatch เพื่อแก้ปัญหาเลือกสี/ลุคไม่มั่นใจ" },
-  { year: "2024", text: "ทดลองต้นแบบ AI วิเคราะห์โครงหน้า + Personal Color สำเร็จ" },
-  { year: "2025", text: "เปิดรุ่นสำหรับโปรเจกต์จบ เพิ่มหน้า Advisor / Cosmetics / Analysis" },
-];
-
-const TEAM = [
-  {
-    name: "Sarid B.",
-    role: "Product & AI",
-    img: "/about/team1.jpg",
-    bio: "ดูแลภาพรวมโปรดักต์และโมเดลวิเคราะห์ความงาม",
-  },
-  {
-    name: "Mint T.",
-    role: "UI/UX Designer",
-    img: "/about/team2.jpg",
-    bio: "ออกแบบประสบการณ์ใช้งานให้เรียบหรู ใช้ง่าย",
-  },
-  {
-    name: "Jo P.",
-    role: "Frontend Engineer",
-    img: "/about/team3.jpg",
-    bio: "พัฒนาเว็บด้วย React + Tailwind ดูแลคุณภาพโค้ด",
-  },
-];
-
-/** ---------- Small shared UI ---------- */
-const Card = ({ className = "", children }) => (
-  <div
-    className={`rounded-3xl border bg-white/70 shadow-sm backdrop-blur-md ${className}`}
-    style={{ borderColor: BRAND.accent }}
-  >
+/** --- UI Components (Editorial Style) --- */
+const SectionLabel = ({ children }) => (
+  <h2 className="text-[10px] tracking-[0.5em] font-bold uppercase text-[#C5A358] mb-6">
     {children}
-  </div>
-);
-
-const Pill = ({ children, tone = "default" }) => {
-  const map = {
-    default: "bg-white text-[#75464A] ring-1 ring-[#E6DCEB]",
-    dark: "bg-[#75464A] text-white",
-  };
-  return (
-    <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${map[tone]}`}>
-      {children}
-    </span>
-  );
-};
-
-const SectionTitle = ({ children, sub }) => (
-  <div className="text-center">
-    <h2 className="text-2xl md:text-3xl font-bold text-[#75464A]">{children}</h2>
-    {sub && <p className="mt-2 text-gray-600">{sub}</p>}
-  </div>
-);
-
-const Check = () => (
-  <svg viewBox="0 0 24 24" className="h-4 w-4 text-emerald-500"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-);
-
-/** ---------- Decorative orbs ---------- */
-const Orb = ({ className = "", from = "#fadcdc", to = "#e6dceb" }) => (
-  <div
-    aria-hidden
-    className={`pointer-events-none absolute blur-3xl opacity-60 ${className}`}
-    style={{
-      background: `radial-gradient(400px 200px at 50% 50%, ${from}aa 0%, transparent 70%), radial-gradient(300px 160px at 60% 40%, ${to}aa 0%, transparent 70%)`,
-    }}
-  />
+  </h2>
 );
 
 export default function AboutUs() {
+  const { t } = useTranslation();
+
+  // Scroll Reveal Logic (Same as Analysis page)
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll(".luxury-reveal").forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div
-      className="relative min-h-screen"
-      style={{ background: `linear-gradient(180deg, ${BRAND.bgFrom} 0%, ${BRAND.bgTo} 100%)` }}
-    >
-      {/* animated gradient blobs */}
-      <Orb className="top-[-180px] left-[-80px] h-[420px] w-[720px] animate-float-slow" />
-      <Orb className="top-[120px] right-[-120px] h-[360px] w-[560px] animate-float" from="#fce0ea" to="#dcd3f4" />
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light selection:bg-[#C5A358]/20 transition-colors duration-1000">
+      
+      {/* 1. NAVIGATION SPACE (Minimalist) */}
+      <nav className="fixed top-0 w-full z-50 px-10 py-10 flex justify-between items-center mix-blend-difference text-white">
+        <span className="text-[10px] tracking-[0.6em] font-bold uppercase pointer-events-none">AuraMatch / Maison</span>
+        <div className="w-8 h-[1px] bg-white opacity-50"></div>
+      </nav>
 
-      {/* HERO */}
-      <section className="relative mx-auto max-w-7xl px-6 pt-16 pb-10">
-        <Card className="p-8 md:p-10 text-center relative overflow-hidden">
-          {/* sheen */}
-          <div className="pointer-events-none absolute -top-10 right-0 h-40 w-40 rotate-12 bg-white/40 blur-2xl" />
-          <Pill tone="default">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: BRAND.hover }} />
-            About AuraMatch
-          </Pill>
-          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#75464A] animate-rise">
-            สร้างความมั่นใจด้วย AI ความงาม
+      {/* 2. HERO: THE PHILOSOPHY */}
+      <section className="relative min-h-screen flex items-center justify-center px-10 pt-20">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <span className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[25vw] font-serif italic text-gray-100/30 select-none uppercase leading-none">
+            Maison
+          </span>
+        </div>
+
+        <div className="relative z-10 w-full max-w-[1400px] text-center luxury-reveal">
+          <SectionLabel>The Philosophy</SectionLabel>
+          <h1 className="text-7xl md:text-[10rem] font-serif leading-[0.8] tracking-tighter mb-12">
+            Beauty is <br />
+            <span className="italic text-[#C5A358]">Intelligence.</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
-            เราเชื่อว่าความงามเริ่มจาก “ตัวตนที่ใช่” — AuraMatch พัฒนา
-            <strong> ผู้ช่วยเลือกโทนสีและลุคด้วย AI</strong> เพื่อให้คุณตัดสินใจได้ง่ายขึ้นและสนุกขึ้น
+          <p className="max-w-xl mx-auto text-sm md:text-base leading-relaxed text-gray-500 font-light tracking-wide italic">
+            "เราเชื่อว่าความสง่างามที่แท้จริงเริ่มต้นจากการเข้าใจโครงสร้างและโทนสีดั้งเดิมของตนเอง 
+            AuraMatch จึงถูกสร้างขึ้นเพื่อเป็นสะพานเชื่อมระหว่างเทคโนโลยี AI ชั้นสูงและความงามที่เป็นเอกลักษณ์"
           </p>
-
-          <div className="mt-6 inline-flex items-center gap-2">
-            <Pill tone="dark">✨ Face Analysis & Personal Color</Pill>
-            <Pill>Explainable • Human-first</Pill>
-          </div>
-
-          {/* floating tiny dots */}
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute left-10 top-8 h-2 w-2 animate-ping rounded-full bg-pink-300" />
-            <div className="absolute right-12 bottom-10 h-2 w-2 animate-ping rounded-full bg-purple-300" />
-          </div>
-        </Card>
-      </section>
-
-      {/* MISSION + WHAT WE BUILD (interactive) */}
-      <section className="mx-auto max-w-7xl px-6 pb-12">
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="p-8 group overflow-hidden">
-            <SectionTitle>Our Mission</SectionTitle>
-            <p className="mt-3 text-gray-600">
-              ทำให้ “การเลือกเครื่องสำอาง” ง่ายและมั่นใจ ด้วยการจับคู่สีและสไตล์ที่แมตช์กับโครงหน้า โทนผิว และบุคลิกของคุณ
-              ลดการลองผิดลองถูก ประหยัดทั้งเวลาและงบประมาณ
-            </p>
-            <ul className="mt-5 space-y-2 text-gray-700">
-              <li className="flex items-start gap-2"><Check /> <span>แนะนำเฉดสีที่ใช่ตั้งแต่ครั้งแรก</span></li>
-              <li className="flex items-start gap-2"><Check /> <span>ลุคที่สอดคล้องบุคลิก/ไลฟ์สไตล์</span></li>
-              <li className="flex items-start gap-2"><Check /> <span>เชื่อมต่อกับหน้า Cosmetics เพื่อช้อปต่อ</span></li>
-            </ul>
-            <div className="pointer-events-none absolute -right-16 -bottom-16 h-48 w-48 rounded-full bg-gradient-to-tr from-pink-200 to-purple-200 opacity-60 blur-2xl transition group-hover:scale-110" />
-          </Card>
-
-          <Card className="p-8">
-            <SectionTitle>What We Build</SectionTitle>
-            <div className="mt-4 grid gap-3 text-sm text-gray-700">
-              <div className="group rounded-2xl border bg-white/80 p-4 transition hover:-translate-y-0.5 hover:shadow-md" style={{ borderColor: BRAND.accent }}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-pink-50">📷</span>
-                  <div><div className="font-semibold text-[#75464A]">Analysis</div><div className="text-gray-600">อัปโหลดรูปเพื่อวิเคราะห์โครงหน้า + โทนสี</div></div>
-                </div>
-              </div>
-              <div className="group rounded-2xl border bg-white/80 p-4 transition hover:-translate-y-0.5 hover:shadow-md" style={{ borderColor: BRAND.accent }}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-purple-50">🧭</span>
-                  <div><div className="font-semibold text-[#75464A]">Advisor</div><div className="text-gray-600">อธิบายโครงหน้า 7 แบบ + Personal Color</div></div>
-                </div>
-              </div>
-              <div className="group rounded-2xl border bg-white/80 p-4 transition hover:-translate-y-0.5 hover:shadow-md" style={{ borderColor: BRAND.accent }}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-rose-50">🛍</span>
-                  <div><div className="font-semibold text-[#75464A]">Cosmetics</div><div className="text-gray-600">ช้อปไอเท็ม/เฉดที่แมตช์กับผลวิเคราะห์</div></div>
-                </div>
-              </div>
-            </div>
-          </Card>
         </div>
       </section>
 
-      {/* VALUES (hover accents) */}
-      <section className="mx-auto max-w-7xl px-6 pb-12">
-        <Card className="p-8">
-          <SectionTitle>Our Values</SectionTitle>
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
-            {VALUES.map((v, i) => (
-              <div
-                key={i}
-                className="group relative overflow-hidden rounded-2xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                style={{ borderColor: BRAND.accent }}
-              >
-                <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-pink-200 via-purple-200 to-pink-200 animate-gradient-x" />
-                <h3 className="text-lg font-semibold text-[#75464A]">{v.title}</h3>
-                <p className="mt-2 text-gray-600">{v.desc}</p>
-                <div className="pointer-events-none absolute -right-8 -bottom-8 h-24 w-24 rounded-full bg-pink-100 opacity-0 blur-2xl transition group-hover:opacity-60" />
-              </div>
-            ))}
-          </div>
-        </Card>
-      </section>
-
-      {/* TIMELINE (animated line) */}
-      <section className="mx-auto max-w-7xl px-6 pb-12">
-        <Card className="p-8">
-          <SectionTitle>Our Journey</SectionTitle>
-          <div className="relative mx-auto mt-6 max-w-3xl">
-            {/* animated vertical line */}
-            <div className="absolute left-5 top-0 h-full w-[3px] rounded-full bg-gradient-to-b from-pink-200 via-purple-200 to-pink-200 animate-gradient-y" />
-            <ul className="space-y-6">
-              {TIMELINE.map((t, i) => (
-                <li key={i} className="relative pl-12">
-                  <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-white ring-2 ring-[#E6DCEB]">
-                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: BRAND.primary }} />
-                  </span>
-                  <div className="rounded-2xl border bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5"
-                       style={{ borderColor: BRAND.accent }}>
-                    <div className="text-sm font-semibold text-[#75464A]">{t.year}</div>
-                    <div className="text-gray-600">{t.text}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Card>
-      </section>
-
-      {/* TEAM (tilt & overlays) */}
-      <section className="mx-auto max-w-7xl px-6 pb-16">
-        <SectionTitle>Meet the Team</SectionTitle>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {TEAM.map((m, i) => (
-            <div
-              key={i}
-              className="group overflow-hidden rounded-3xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              style={{ borderColor: BRAND.accent }}
-            >
-              <div className="relative">
-                <img src={m.img} alt={m.name} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-70" />
-                <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#75464A] shadow">
-                  {m.role}
-                </span>
-              </div>
-              <div className="p-5">
-                <div className="text-[15px] font-semibold text-gray-800">{m.name}</div>
-                <p className="mt-2 text-sm text-gray-600">{m.bio}</p>
-                <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                  <span className="inline-block h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: BRAND.hover }} />
-                  Available for collab
-                </div>
-              </div>
+      {/* 3. CORE VALUES: EDITORIAL GRID */}
+      <section className="max-w-[1400px] mx-auto px-10 py-40">
+        <div className="grid lg:grid-cols-12 gap-20 items-start">
+          <div className="lg:col-span-5 luxury-reveal">
+            <SectionLabel>Our Values</SectionLabel>
+            <h3 className="text-6xl font-serif italic mb-10 leading-tight">Defining the <br /> New Standard.</h3>
+            <div className="space-y-16">
+              <ValueItem 
+                num="01" 
+                title="Human-Centric AI" 
+                desc="เราพัฒนาอัลกอริทึมที่ไม่ได้มองแค่ตัวเลข แต่คำนึงถึงความรู้สึกและบุคลิกภาพของผู้ใช้เป็นหัวใจสำคัญ" 
+              />
+              <ValueItem 
+                num="02" 
+                title="Transparent Beauty" 
+                desc="ทุกคำแนะนำถูกออกแบบมาให้อธิบายได้ (Explainable AI) เพื่อให้คุณตัดสินใจบนพื้นฐานของเหตุผลและความมั่นใจ" 
+              />
             </div>
-          ))}
+          </div>
+          <div className="lg:col-span-7 luxury-reveal" style={{ transitionDelay: '0.3s' }}>
+            <div className="relative aspect-[4/5] overflow-hidden grayscale hover:grayscale-0 transition-all duration-1000 group">
+                <img 
+                  src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1774&auto=format&fit=crop" 
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                  alt="Aesthetic" 
+                />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <Card className="p-8 text-center relative overflow-hidden">
-          <h3 className="text-xl md:text-2xl font-extrabold text-[#75464A]">
-            มาร่วมสร้างนิยามความงามแบบ “คุณ”
-          </h3>
-          <p className="mt-2 text-gray-600">เริ่มต้นด้วยการวิเคราะห์ใบหน้าและโทนสีผิวในไม่กี่วินาที</p>
-          <a
-            href="/analysis"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2"
-            style={{ backgroundColor: BRAND.primary }}
+      {/* 4. THE COLLECTIVE (TEAM) */}
+      <section className="max-w-[1400px] mx-auto px-10 pb-40">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-gray-100 pb-10 mb-20 luxury-reveal">
+          <h3 className="text-5xl font-serif italic">The Collective.</h3>
+          <p className="text-[9px] tracking-[0.4em] font-bold uppercase text-gray-400">Architects of Aura</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
+          <TeamMember 
+            name="Sarid B." 
+            role="AI Architect" 
+            img="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop"
+          />
+          <TeamMember 
+            name="Mint T." 
+            role="Creative Director" 
+            img="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop"
+            delay="0.2s"
+          />
+          <TeamMember 
+            name="Jo P." 
+            role="Lead Engineer" 
+            img="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1974&auto=format&fit=crop"
+            delay="0.4s"
+          />
+        </div>
+      </section>
+
+      {/* 5. CTA: FINAL STATEMENT */}
+      <section className="py-60 luxury-reveal text-center">
+        <div className="max-w-4xl mx-auto px-10">
+          <h2 className="text-5xl md:text-8xl font-serif italic leading-none mb-12">Start your <br /> transformation.</h2>
+          <a 
+            href="/analysis" 
+            className="group relative inline-flex items-center gap-6 px-16 py-6 border border-[#1A1A1A] overflow-hidden transition-all hover:text-white"
           >
-            เริ่มวิเคราะห์ตอนนี้ <span aria-hidden>↗</span>
+            <div className="absolute inset-0 w-0 bg-[#1A1A1A] transition-all duration-500 group-hover:w-full"></div>
+            <span className="relative text-[10px] tracking-[0.5em] font-bold uppercase">Begin Analysis</span>
           </a>
-
-          {/* glow accents */}
-          <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-pink-200 blur-2xl" />
-          <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-purple-200 blur-2xl" />
-        </Card>
+        </div>
       </section>
 
-      {/* Floating help bubble */}
-      <a
-        href="/contact"
-        className="fixed bottom-6 right-6 z-50 grid h-12 w-12 place-items-center rounded-full bg-[#75464A] text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-        title="Contact us"
-      >
-        💬
-      </a>
+      {/* FOOTER */}
+      <footer className="py-20 border-t border-gray-50 text-center">
+        <p className="text-[10px] tracking-[0.6em] font-bold uppercase text-gray-300">© 2026 AuraMatch Atelier / Paris — Bangkok</p>
+      </footer>
 
-      {/* custom keyframes */}
+      {/* Custom Styles (Keep Analysis classes for consistency) */}
       <style>{`
-        @keyframes float {
-          0% { transform: translateY(0px) }
-          50% { transform: translateY(-10px) }
-          100% { transform: translateY(0px) }
+        .luxury-reveal {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        @keyframes float-slow {
-          0% { transform: translateY(0px) translateX(0) }
-          50% { transform: translateY(-8px) translateX(6px) }
-          100% { transform: translateY(0px) translateX(0) }
-        }
-        @keyframes rise {
-          0% { opacity: 0; transform: translateY(6px) }
-          100% { opacity: 1; transform: translateY(0) }
-        }
-        @keyframes gradient-x {
-          0% { background-position: 0% 50% }
-          50% { background-position: 100% 50% }
-          100% { background-position: 0% 50% }
-        }
-        @keyframes gradient-y {
-          0% { background-position: 50% 0% }
-          50% { background-position: 50% 100% }
-          100% { background-position: 50% 0% }
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-float-slow { animation: float-slow 10s ease-in-out infinite; }
-        .animate-rise { animation: rise .6s ease-out both; }
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 6s ease infinite;
-        }
-        .animate-gradient-y {
-          background-size: 200% 200%;
-          animation: gradient-y 8s ease infinite;
+        .luxury-reveal.is-visible {
+          opacity: 1;
+          transform: translateY(0);
         }
       `}</style>
+    </div>
+  );
+}
+
+/** --- Sub-components --- */
+function ValueItem({ num, title, desc }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <span className="text-[10px] font-bold text-[#C5A358]">{num}</span>
+        <div className="h-[1px] w-8 bg-[#C5A358]"></div>
+        <h4 className="text-xl font-serif italic">{title}</h4>
+      </div>
+      <p className="text-sm text-gray-400 font-light leading-relaxed pl-14">{desc}</p>
+    </div>
+  );
+}
+
+function TeamMember({ name, role, img, delay = "0s" }) {
+  return (
+    <div className="luxury-reveal space-y-8 group" style={{ transitionDelay: delay }}>
+      <div className="aspect-[3/4] overflow-hidden grayscale hover:grayscale-0 transition-all duration-1000">
+        <img 
+          src={img} 
+          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+          alt={name} 
+        />
+      </div>
+      <div className="text-center">
+        <p className="text-[9px] tracking-[0.4em] font-bold uppercase text-[#C5A358] mb-2">{role}</p>
+        <p className="text-3xl font-serif italic">{name}</p>
+      </div>
     </div>
   );
 }

@@ -1,33 +1,110 @@
 /* src/components/MakeoverStudio.css */
 
-/* เส้นตกแต่งหัวข้อ */
-.headerLine {
-  background: linear-gradient(90deg, rgba(230,220,235,.9), rgba(230,220,235,0));
+/* --- 1. Custom Scrollbar (Invisible but functional) --- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* reveal animation */
+/* --- 2. Luxury Scanner Effect (สำหรับตอนกดวิเคราะห์หรือเปลี่ยนไอเทม) --- */
+.animate-scan {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(to bottom, transparent, rgba(197, 163, 88, 0.5), transparent);
+  box-shadow: 0 0 15px rgba(197, 163, 88, 0.3);
+  animation: scan-move 2.5s ease-in-out infinite;
+  z-index: 30;
+}
+
+@keyframes scan-move {
+  0% { top: 0; }
+  50% { top: 100%; }
+  100% { top: 0; }
+}
+
+/* --- 3. Fluid Reveal Animation --- */
 .reveal {
   opacity: 0;
-  transform: translateY(6px);
-  transition: all 0.4s ease;
-}
-.reveal.reveal-in {
-  opacity: 1;
-  transform: none;
+  transform: translateY(12px);
+  filter: blur(4px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ปุ่ม ripple effect */
+.reveal.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* --- 4. Micro-Interactions (ปุ่มและไอเทม) --- */
+.pressed {
+  transform: scale(0.96);
+  transition: transform 0.1s ease;
+}
+
+/* Hover effect สำหรับช่องเลือกเครื่องสำอาง */
+.option-card-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.option-card-hover:hover {
+  border-color: #C5A358;
+  box-shadow: 0 10px 20px rgba(45, 36, 36, 0.05);
+  transform: translateY(-2px);
+}
+
+/* --- 5. Image Blend & Overlay Transitions --- */
+.makeover-layer {
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-out;
+  mix-blend-mode: multiply; /* ช่วยให้เมคอัพเนียนไปกับผิว */
+}
+
+/* --- 6. Luxury Ripple (ขาวนวลแบบ Silk) --- */
 .btn-ripple {
   position: absolute;
-  border-radius: 999px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
   transform: scale(0);
-  animation: ripple .6s ease-out;
-  background: #ffffff55;
+  animation: ripple-lux 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
-@keyframes ripple {
+
+@keyframes ripple-lux {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
   to {
-    transform: scale(2.4);
+    transform: scale(4);
     opacity: 0;
   }
+}
+
+/* --- 7. Floating UI Animation --- */
+.float-up {
+  animation: float-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- 8. Section Lines --- */
+.headerLine {
+  height: 1px;
+  background: linear-gradient(90deg, #C5A358 0%, rgba(197, 163, 88, 0.1) 100%);
+  opacity: 0.6;
 }

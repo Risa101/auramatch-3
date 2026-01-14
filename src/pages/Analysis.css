@@ -1,141 +1,40 @@
-/* ===== AuraMatch Analysis Styles (pink theme) ===== */
+/* Analysis.css */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:italic,wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
 
-/* ------------ BG ไล่สีชมพูอ่อนลง ------------ */
-.siteBG{
-  background:
-    radial-gradient(1200px 600px at -10% -10%, rgba(255, 192, 203, .25), transparent 60%),
-    radial-gradient(900px 480px at 110% 0%, rgba(230, 220, 235, .28), transparent 60%),
-    linear-gradient(180deg, #fff 0%, #fffafd 28%, #fff0f5 55%, #ffeef2 78%, #ffe4ec 100%);
-  background-attachment: fixed;
-  animation: bgShift 18s ease-in-out infinite;
-}
-@keyframes bgShift {
-  0% { background-position: 0% 0%, 0% 0%, 0% 0% }
-  50% { background-position: 2% 1%, -2% 1%, 0% 20% }
-  100% { background-position: 0% 0%, 0% 0%, 0% 0% }
+body {
+  font-family: 'Montserrat', sans-serif;
 }
 
-/* ------------ Header divider animation ------------ */
-.headerLine {
-  background: linear-gradient(90deg, #E6DCEB, #FADCDC, #ffd2e1, #d4c6ff);
-  background-size: 200% 100%;
-  animation: headerShift 6s linear infinite;
-  border-radius: 2px;
-  height: 2px;
-}
-@keyframes headerShift {
-  0% { background-position: 0% 50% }
-  50% { background-position: 100% 50% }
-  100% { background-position: 0% 50% }
+.font-serif {
+  font-family: 'Playfair Display', serif;
 }
 
-/* ------------ Reveal on scroll ------------ */
-.reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
-.reveal-in { opacity: 1 !important; transform: translateY(0) !important; }
-
-/* ------------ Card border glow ------------ */
-/* ใช้ longhand mask + gradient light ring */
-.borderGlow {
-  position: relative; /* สำคัญ: ให้ ::before ซ้อนทับขอบได้ */
-}
-.borderGlow::before{
-  content: "";
-  position: absolute;
-  inset: -1px;                  /* ไล่แสงนอกเส้นขอบนิดนึง */
-  padding: 1px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: .85;
-  transition: filter .3s, opacity .3s;
-
-  /* ไล่สีเรือง ๆ */
-  background:
-    conic-gradient(from 40deg at 10% 10%, #ffd2e155, #E6DCEB55, #FADCDC66, #d4c6ff55, #ffd2e155),
-    linear-gradient(#fff, #fff);
-
-  /* ----- MASK (longhand) ----- */
-  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
-  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
-  -webkit-mask-origin: content-box, border-box;
-  mask-origin: content-box, border-box;
-  -webkit-mask-clip: content-box, border-box;
-  mask-clip: content-box, border-box;
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-.borderGlow:hover::before { filter: blur(2px); opacity: .95; }
-
-/* ------------ Tag pulse (ชิปเล็กๆ ใน HERO) ------------ */
-.tagPulse { 
-  box-shadow: 0 0 0 0 rgba(216,94,121,.3);
-  animation: tagPulse 2.8s infinite; 
-  display:inline-flex 
-}
-@keyframes tagPulse {
-  0% { box-shadow: 0 0 0 0 rgba(216,94,121,.35) }
-  70% { box-shadow: 0 0 0 12px rgba(216,94,121,0) }
-  100% { box-shadow: 0 0 0 0 rgba(216,94,121,0) }
+/* Luxury Reveal Animation */
+.luxury-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  filter: blur(10px);
+  transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ------------ Burst confetti (ตอนคลิก badge/การ์ด) ------------ */
-.pressed { transform: scale(.995); }
-.burst-piece {
-  position: absolute; width: 6px; height: 6px; border-radius: 2px;
-  transform: translate(-50%, -50%); top: 50%; left: 50%;
-  animation: burst .7s ease-out forwards;
-}
-@keyframes burst {
-  to {
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot));
-    opacity: 0;
-  }
+.luxury-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
 }
 
-/* ------------ Button ripple (ใช้กับ MagneticButton) ------------ */
-.btn-ripple {
-  position: absolute; border-radius: 9999px; transform: scale(0); opacity: .35;
-  background: white; animation: ripple .6s ease-out; pointer-events: none;
-}
-@keyframes ripple { to { transform: scale(2.6); opacity: 0; } }
-
-/* ------------ Progress bar ------------ */
-@keyframes progress {
+/* Scan Line Effect */
+@keyframes scan-line {
   0% { transform: translateX(-100%); }
-  50% { transform: translateX(50%); }
-  100% { transform: translateX(200%); }
+  100% { transform: translateX(100%); }
 }
 
-/* ------------ YouTube Reels (แถวการ์ดวิดีโอแบบเลื่อน) ------------ */
-.reels{ position:relative; }
-.reel-track{
-  display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory;
-  padding:4px 36px;
+.animate-scan-line {
+  width: 100%;
+  animation: scan-line 2s infinite ease-in-out;
 }
-.reel-track::-webkit-scrollbar{ height:8px; }
-.reel-track::-webkit-scrollbar-thumb{ background:#E6DCEB; border-radius:999px; }
 
-.reel-card{
-  flex:0 0 320px; scroll-snap-align:start;
-  background:#fff; border:1px solid #E6DCEB; border-radius:22px;
-  box-shadow:0 10px 28px rgba(0,0,0,.06); overflow:hidden;
-}
-.reel-iframe{ width:100%; height:560px; border:0; background:#000; display:block; }
-.reel-caption{ padding:10px 12px; font-size:13px; color:#75464A; border-top:1px solid #E6DCEB; }
-
-.reel-nav{
-  position:absolute; top:50%; transform:translateY(-50%);
-  width:36px; height:36px; border-radius:999px; border:1px solid #E6DCEB;
-  background:#fff; box-shadow:0 8px 18px rgba(0,0,0,.08); z-index:10;
-}
-.reel-nav--left{ left:8px; }
-.reel-nav--right{ right:8px; }
-
-/* ------------ Motion accessibility ------------ */
-@media (prefers-reduced-motion: reduce){
-  .siteBG{ animation:none }
-  .reveal, .reveal-in, .tagPulse { 
-    animation: none !important; 
-    transition: none !important; 
-    transform: none !important; 
-  }
+/* Custom Gradients */
+.bg-atelier {
+  background: radial-gradient(circle at top right, #FDFCFB 0%, #F5F5F5 100%);
 }

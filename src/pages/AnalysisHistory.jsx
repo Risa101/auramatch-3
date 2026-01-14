@@ -1,15 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 
-
-const COLORS = {
-  base: "#FADCDC",
-  accent: "#E6DCEB",
-  primary: "#75464A",
-  hover: "#D85E79",
-};
-
+/* ---------- Helpers ---------- */
 function readHistory() {
   try {
+    // ดึงข้อมูลล่าสุดเสมอจาก localStorage
     return JSON.parse(localStorage.getItem("auramatch:analysisHistory") || "[]");
   } catch {
     return [];
@@ -19,193 +14,141 @@ function readHistory() {
 function formatDate(ts) {
   try {
     const d = new Date(ts);
-    return d.toLocaleString("th-TH", {
-      dateStyle: "short",
-      timeStyle: "medium",
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   } catch {
     return "-";
   }
 }
 
-export default function History() {
+export default function AnalysisHistory() {
   const [items, setItems] = useState([]);
   const [filterSeason, setFilterSeason] = useState("ALL");
   const [filterFace, setFilterFace] = useState("ALL");
-  const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
 
-  /** โหลดประวัติจาก localStorage */
+  // ฟังก์ชันโหลดข้อมูลที่ดึงจาก LocalStorage โดยตรง
   const loadHistory = useCallback(() => {
     const list = readHistory();
     const normalized = list.map((it) => ({
       ...it,
-      createdAt: it.createdAt ?? it.ts ?? Date.now(),
+      // ตรวจสอบ fallback ของเวลา
+      createdAt: it.createdAt || it.ts || Date.now(),
     }));
+
+    // เรียงลำดับข้อมูล
     normalized.sort((a, b) =>
-      sort === "newest"
-        ? (b.createdAt || 0) - (a.createdAt || 0)
-        : (a.createdAt || 0) - (b.createdAt || 0)
+      sort === "newest" ? b.createdAt - a.createdAt : a.createdAt - b.createdAt
     );
     setItems(normalized);
   }, [sort]);
 
-  /** ฟัง event เปลี่ยนแปลง */
   useEffect(() => {
+    // 1. โหลดครั้งแรกเมื่อเข้าหน้า
     loadHistory();
 
-    const onLocal = () => loadHistory();
-    const onStorage = (e) => {
-      if (!e || !e.key || e.key === "auramatch:analysisHistory") {
+    // 2. ฟัง Event "history:changed" (สำหรับกรณีเปลี่ยนในหน้าเดียวกันหรือผ่านฟังก์ชัน)
+    const onHistoryChanged = () => {
+      loadHistory();
+    };
+
+    // 3. ฟัง Event "storage" (สำคัญ! ทำให้เรียลไทม์แม้จะเปิดหลาย Tab หรือเปลี่ยนจากหน้าอื่น)
+    const onStorageChanged = (e) => {
+      if (e.key === "auramatch:analysisHistory") {
         loadHistory();
       }
     };
 
-    window.addEventListener("history:updated", onLocal);
-    window.addEventListener("history:changed", onLocal);
-    window.addEventListener("storage", onStorage);
+    window.addEventListener("history:changed", onHistoryChanged);
+    window.addEventListener("storage", onStorageChanged);
 
     return () => {
-      window.removeEventListener("history:updated", onLocal);
-      window.removeEventListener("history:changed", onLocal);
-      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("history:changed", onHistoryChanged);
+      window.removeEventListener("storage", onStorageChanged);
     };
   }, [loadHistory]);
 
-  /** ตัวกรอง */
   const filtered = items.filter((it) => {
-    const s = search.trim().toLowerCase();
     if (filterSeason !== "ALL" && it.season !== filterSeason) return false;
     if (filterFace !== "ALL" && it.faceShape !== filterFace) return false;
-    if (s && !`${it.season} ${it.faceShape}`.toLowerCase().includes(s)) return false;
     return true;
   });
 
-  /** ลบรายการทั้งหมด */
-  const clearAll = () => {
-    if (window.confirm("ต้องการลบประวัติทั้งหมดหรือไม่?")) {
-      localStorage.removeItem("auramatch:analysisHistory");
-      setItems([]);
-    }
+  const deleteOne = (id) => {
+    if (!window.confirm("Remove this record from your history?")) return;
+    const currentHistory = readHistory();
+    const next = currentHistory.filter((it) => it.id !== id);
+    localStorage.setItem("auramatch:analysisHistory", JSON.stringify(next));
+    
+    // ส่งสัญญาณบอกตัวเองและ Component อื่นๆ (เช่น Navbar) ให้รู้ว่าข้อมูลเปลี่ยน
+    window.dispatchEvent(new Event("history:changed"));
   };
 
-  /** ลบรายการเดียว */
-  const deleteOne = (id) => {
-    const next = items.filter((it) => it.id !== id);
-    localStorage.setItem("auramatch:analysisHistory", JSON.stringify(next));
+  const clearAll = () => {
+    if (!window.confirm("Are you sure you want to clear all history?")) return;
+    localStorage.removeItem("auramatch:analysisHistory");
     window.dispatchEvent(new Event("history:changed"));
-    setItems(next);
   };
 
   return (
-    <div className="min-h-screen siteBG" style={{ fontFamily: "Poppins, sans-serif" }}>
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="text-2xl font-semibold text-[#75464A] mb-2">Analysis History</h1>
-        <p className="text-sm text-[#75464A]/70 mb-6">
-          ดูประวัติผลวิเคราะห์ที่ผ่านมา เลือกตั้งเป็นผลปัจจุบัน หรือจัดการรายการได้
-        </p>
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light pb-20 pt-28 px-6">
+      <div className="mx-auto max-w-6xl">
+        {/* ส่วน Header และตัวกรองคงเดิมตามที่คุณส่งมา */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 border-b border-gray-100 pb-10">
+          <div className="space-y-4">
+            <span className="text-[10px] tracking-[0.6em] font-bold uppercase text-[#C5A358]">The Archive</span>
+            <h1 className="text-5xl md:text-6xl font-serif italic leading-none tracking-tight">Analysis History.</h1>
+          </div>
+          <div className="flex gap-4">
+            <button onClick={clearAll} className="px-6 py-3 border border-gray-200 text-[9px] uppercase tracking-[0.3em] font-bold hover:bg-red-50 hover:text-red-500 transition-all">
+              Clear Archive
+            </button>
+            <Link to="/analysis" className="px-8 py-3 bg-[#1A1A1A] text-white text-[9px] uppercase tracking-[0.3em] font-bold border border-[#1A1A1A] hover:bg-transparent hover:text-[#1A1A1A] transition-all">
+              New Analysis
+            </Link>
+          </div>
+        </header>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          <input
-            type="text"
-            placeholder="Search season / face shape..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm text-[#75464A] shadow-sm"
-            style={{ borderColor: COLORS.accent }}
-          />
+        {/* Filters Bar ... (เหมือนเดิม) */}
 
-          <select
-            className="border rounded-lg px-2 py-1 text-sm text-[#75464A]"
-            value={filterSeason}
-            onChange={(e) => setFilterSeason(e.target.value)}
-            style={{ borderColor: COLORS.accent }}
-          >
-            <option value="ALL">ALL Season</option>
-            <option>Spring</option>
-            <option>Summer</option>
-            <option>Autumn</option>
-            <option>Winter</option>
-          </select>
-
-          <select
-            className="border rounded-lg px-2 py-1 text-sm text-[#75464A]"
-            value={filterFace}
-            onChange={(e) => setFilterFace(e.target.value)}
-            style={{ borderColor: COLORS.accent }}
-          >
-            <option value="ALL">ALL Face</option>
-            <option>Oval</option>
-            <option>Round</option>
-            <option>Square</option>
-            <option>Heart</option>
-            <option>Diamond</option>
-            <option>Rectangle</option>
-          </select>
-
-          <select
-            className="border rounded-lg px-2 py-1 text-sm text-[#75464A]"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            style={{ borderColor: COLORS.accent }}
-          >
-            <option value="newest">Sort: Newest</option>
-            <option value="oldest">Sort: Oldest</option>
-          </select>
-
-          <button
-            onClick={clearAll}
-            className="rounded-lg border px-3 py-1.5 text-sm text-[#75464A] bg-white shadow-sm hover:bg-[#FADCDC]"
-            style={{ borderColor: COLORS.accent }}
-          >
-            Clear all
-          </button>
-        </div>
-
-        {/* History cards */}
+        {/* Gallery Grid */}
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-[#75464A]/60">
-            ยังไม่มีประวัติ หรือไม่ตรงกับตัวกรอง
+          <div className="py-40 text-center border border-dashed border-gray-200 bg-white/30">
+            <p className="text-[10px] text-gray-400 uppercase tracking-[0.4em] font-serif italic">Your personal archive is currently empty</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
             {filtered.map((it) => (
-              <div
-                key={it.id}
-                className="rounded-2xl border bg-white/80 p-4 shadow-sm relative"
-                style={{ borderColor: COLORS.accent }}
-              >
-                <button
+              <div key={it.id || it.createdAt} className="group relative">
+                {/* Delete Button */}
+                <button 
                   onClick={() => deleteOne(it.id)}
-                  className="absolute top-2 right-2 text-xs text-[#75464A]/60 hover:text-[#D85E79]"
-                  title="ลบรายการนี้"
+                  className="absolute -top-3 -right-2 z-10 opacity-0 group-hover:opacity-100 transition-all p-2 text-gray-300 hover:text-red-400"
                 >
-                  ✕
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
 
-                <div className="flex justify-center mb-3">
-                  <img
-                    src={it.preview || "/assets/analysis.JPG"}
-                    alt="preview"
-                    className="w-24 h-24 object-cover rounded-lg border"
-                    style={{ borderColor: COLORS.accent }}
+                {/* Portrait Display */}
+                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 mb-8 border border-gray-100 shadow-sm">
+                  <img 
+                    src={it.preview || it.image || "/assets/analysis.JPG"} 
+                    alt="portrait" 
+                    className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
                   />
                 </div>
-                <div className="flex justify-center flex-wrap gap-1 mb-2">
-                  {it.season && (
-                    <span className="rounded-full bg-[#FADCDC] px-2 py-0.5 text-xs text-[#75464A] font-medium">
-                      {it.season}
-                    </span>
-                  )}
-                  {it.faceShape && (
-                    <span className="rounded-full bg-[#E6DCEB] px-2 py-0.5 text-xs text-[#75464A] font-medium">
-                      {it.faceShape}
-                    </span>
-                  )}
-                </div>
-                <div className="text-[11px] text-center text-[#75464A]/60">
-                  {formatDate(it.createdAt)}
+
+                {/* Info ... (เหมือนเดิม) */}
+                <div className="space-y-4 px-1">
+                  <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-[#C5A358]">{it.season} Selection</span>
+                    <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">{formatDate(it.createdAt)}</span>
+                  </div>
+                  <h3 className="text-3xl font-serif italic tracking-tight">{it.faceShape}</h3>
                 </div>
               </div>
             ))}

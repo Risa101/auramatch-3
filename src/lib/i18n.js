@@ -8,7 +8,7 @@ const savedLang = localStorage.getItem("lang") || "th";
 const resources = {
   en: {
     translation: {
-      
+
       /* ───────────────── NAVBAR ───────────────── */
       "nav.home": "HOME",
       "nav.analysis": "ANALYSIS",
@@ -34,9 +34,8 @@ const resources = {
       /* ───────────────── HOME PAGE ───────────────── */
       "home.pageTitle": "AuraMatch – AI Beauty Advisor",
       "home.hero.badge": "AI Beauty Advisor",
-      "home.hero.title": "Facial structure & color tone analysis for you",
-      "home.hero.desc":
-        "Upload your face photo and let AI analyze your facial structure and personal color, then receive makeup recommendations and products that match your tone.",
+      "home.hero.title": "Aura Match",
+      "home.hero.desc": "Define Your True Elegance",
       "home.hero.uploadBtn": "Upload photo",
       "home.hero.viewProductsBtn": "View products",
       "home.hero.meta":
@@ -219,7 +218,7 @@ const resources = {
       makeover: {
         title: "Makeover Studio",
         subtitle: "Choose brows, eyes, lips, hairstyle and hair color",
-      
+
         common: {
           none: "None",
         },
@@ -274,8 +273,69 @@ const resources = {
           save: "Save Look",
         },
       },
+      // เพิ่มต่อท้ายก้อน makeover ใน en: { translation: { ... } }
+      advisor: {
+        hero: { title: "Personal Advisor" },
+        quiz: {
+          ratio: {
+            q: "What is your face ratio?",
+            opt1: "Length and width are almost equal",
+            opt2: "Length is significantly more than width",
+            opt3: "Width is slightly more than length"
+          },
+          jaw: {
+            q: "How would you describe your jawline?",
+            opt1: "Soft and rounded",
+            opt2: "Sharp and angular",
+            opt3: "Pointed or V-shaped"
+          },
+          forehead: {
+            q: "Which part of your face is the widest?",
+            opt1: "Equally distributed",
+            opt2: "The forehead area",
+            opt3: "The jaw area"
+          },
+          cheekbone: {
+            q: "Are your cheekbones prominent?",
+            opt1: "High and very visible",
+            opt2: "Subtle and balanced",
+            opt3: "Soft and hidden"
+          },
+          chin: {
+            q: "What does your chin look like?",
+            opt1: "Small and rounded",
+            opt2: "Pointed",
+            opt3: "Square or flat"
+          },
+          overall: {
+            q: "Overall, what is the most noticeable feature?",
+            opt1: "Soft curves",
+            opt2: "Strong lines/bones",
+            opt3: "Tapered downwards"
+          },
+          restart: "Restart Quiz",
+          next: "Next Question",
+          finish: "See Result"
+        },
+        shape: {
+          do: "Recommended Style",
+          avoid: "Avoid",
+          Round: { name: "Round Face", traits: "Soft features with equal width and length." },
+          Oval: { name: "Oval Face", traits: "Balanced proportions, slightly longer than wide." },
+          Square: { name: "Square Face", traits: "Strong jawline and broad forehead." },
+          Heart: { name: "Heart Face", traits: "Wide forehead tapering to a narrow chin." },
+          Triangle: { name: "Triangle Face", traits: "Narrow forehead with a wider jawline." },
+          Diamond: { name: "Diamond Face", traits: "Wide cheekbones with narrow forehead and chin." }
+        },
+        faceResult: {
+          badge: "Analysis Success",
+          retry: "Try Again",
+          toAnalysis: "Go to AI Analysis"
+        }
+      }
     },
   },
+
 
   /* ───────────────────────────── THAI ───────────────────────────── */
   th: {
@@ -305,9 +365,8 @@ const resources = {
       /* HOME PAGE */
       "home.pageTitle": "AuraMatch – ผู้ช่วยความงามด้วย AI",
       "home.hero.badge": "ผู้ช่วยด้านความงามด้วย AI",
-      "home.hero.title": "วิเคราะห์โครงหน้าและโทนสีผิวสำหรับคุณ",
-      "home.hero.desc":
-        "อัปโหลดรูปใบหน้าให้ AI วิเคราะห์โครงหน้าและโทนสีผิว จากนั้นรับคำแนะนำการแต่งหน้าและผลิตภัณฑ์ที่เหมาะกับคุณ",
+      "home.hero.title": "Aura Match",
+      "home.hero.desc": "นิยามความสง่างามที่แท้จริงของคุณ",
       "home.hero.uploadBtn": "อัปโหลดรูป",
       "home.hero.viewProductsBtn": "ดูสินค้า",
       "home.hero.meta":
@@ -546,6 +605,169 @@ const resources = {
           save: "บันทึกผลลัพธ์",
         },
       },
+      /* ───────────────── ADVISOR (ที่ปรึกษา) ───────────────── */
+      advisor: {
+        hero: {
+          title: "Personal Advisor"
+        },
+        quiz: {
+          ratio: {
+            q: "สัดส่วนใบหน้าของคุณเป็นอย่างไร?",
+            opt1: "ความกว้างและความยาวพอๆ กัน",
+            opt2: "ความยาวมากกว่าความกว้างอย่างเห็นได้ชัด",
+            opt3: "ความกว้างช่วงโหนกแก้มมากกว่าความยาวเล็กน้อย"
+          },
+          jaw: {
+            q: "ลักษณะแนวกรามของคุณเป็นแบบไหน?",
+            opt1: "โค้งมน นุ่มนวล",
+            opt2: "เป็นเหลี่ยมชัดเจน",
+            opt3: "แหลม หรือเป็นรูปตัว V"
+          },
+          forehead: {
+            q: "ส่วนไหนของใบหน้ากว้างที่สุด?",
+            opt1: "กว้างเท่าๆ กันทุกส่วน",
+            opt2: "หน้าผากกว้างที่สุด",
+            opt3: "กรามกว้างที่สุด"
+          },
+          cheekbone: {
+            q: "โหนกแก้มของคุณชัดเจนไหม?",
+            opt1: "ชัดเจนมากและอยู่ตำแหน่งสูง",
+            opt2: "เห็นได้ชัดแต่มีความสมดุล",
+            opt3: "ไม่ค่อยชัดเจนหรือค่อนข้างนุ่มนวล"
+          },
+          chin: {
+            q: "ลักษณะคางของคุณเป็นอย่างไร?",
+            opt1: "เล็กและโค้งมน",
+            opt2: "แหลมหรือยาว",
+            opt3: "เป็นเหลี่ยมหรือตัดตรง"
+          },
+          overall: {
+            q: "โดยรวมแล้ว จุดเด่นที่สุดบนใบหน้าคุณคืออะไร?",
+            opt1: "เส้นสายที่มีความโค้งมน",
+            opt2: "โครงกระดูกหรือกรามที่ชัดเจน",
+            opt3: "ส่วนล่างของหน้าค่อยๆ สอบแหลมลงไป"
+          },
+          restart: "เริ่มทำแบบทดสอบใหม่",
+          next: "ข้อต่อไป",
+          finish: "ดูผลลัพธ์"
+        },
+        shape: {
+          do: "สไตล์ที่แนะนำ",
+          avoid: "สิ่งที่ควรเลี่ยง",
+          Round: { 
+            name: "หน้ากลม (Round Face)", 
+            traits: "ใบหน้ามีความโค้งมน ความกว้างและความยาวเกือบเท่ากัน" 
+          },
+          Oval: { 
+            name: "หน้าเรียว (Oval Face)", 
+            traits: "สัดส่วนสมดุล มีความยาวมากกว่าความกว้างเล็กน้อย" 
+          },
+          Square: { 
+            name: "หน้าเหลี่ยม (Square Face)", 
+            traits: "แนวกรามชัดเจน หน้าผากและกรามกว้างพอๆ กัน" 
+          },
+          Heart: { 
+            name: "รูปหน้าหัวใจ (Heart Face)", 
+            traits: "หน้าผากกว้างและค่อยๆ สอบแหลมลงไปที่คาง" 
+          },
+          Triangle: { 
+            name: "หน้าทรงสามเหลี่ยม (Triangle Face)", 
+            traits: "หน้าผากแคบและกว้างออกที่ช่วงแนวกราม" 
+          },
+          Diamond: { 
+            name: "หน้าทรงเพชร (Diamond Face)", 
+            traits: "โหนกแก้มชัดและกว้าง หน้าผากและคางแคบ" 
+          }
+        },
+        faceResult: {
+          badge: "วิเคราะห์สำเร็จ",
+          retry: "ทดสอบใหม่อีกครั้ง",
+          toAnalysis: "ไปหน้าวิเคราะห์ด้วย AI"
+        },
+        learn: {
+          whatis: {
+            title: "Personal Color คืออะไร?",
+            desc: "คือการหาโทนสีที่เข้ากับเรามากที่สุด โดยวิเคราะห์จาก Undertone ผิว, สีตา, และสีผมตามธรรมชาติ เพื่อช่วยขับผิวให้ดูเปล่งประกาย",
+            tag: {
+              undertone: "อันเดอร์โทน",
+              value: "ความสว่าง",
+              chroma: "ความสดของสี",
+              contrast: "คอนทราสต์"
+            }
+          },
+          axis: {
+            title: "แกนการวิเคราะห์",
+            undertone: "อุณหภูมิสีผิว (ร้อน/เย็น)",
+            value: "น้ำหนักความอ่อนเข้ม",
+            chroma: "ความสดใสหรือความหม่น",
+            contrast: "ความแตกต่างของสีผิวและเส้นผม"
+          },
+          selfcheck: {
+            title1: "วิธีการเช็คเบื้องต้น",
+            item1: "ตรวจสอบสีเส้นเลือดที่ข้อมือ",
+            item2: "เทียบผิวกับเครื่องประดับทองและเงิน",
+            item3: "สังเกตสีผิวเมื่อออกแดด",
+            item4: "ใช้กระดาษสีเทียบข้างใบหน้า",
+            note: "*แนะนำให้เช็คภายใต้แสงธรรมชาติ",
+            title2: "เช็ค Undertone",
+            test1: "เส้นเลือดสีม่วง/น้ำเงิน = Cool Tone",
+            test2: "เส้นเลือดสีเขียว = Warm Tone",
+            test3: "เส้นเลือดหลายสี = Neutral Tone",
+            test4: "ใส่สีขาวแล้วผิวผ่อง = Cool / สีครีมแล้วผิวผ่อง = Warm"
+          }
+        },
+        accordion: {
+          basics: "พื้นฐานความงาม",
+          seasons: "พาเล็ตต์สีทั้ง 4 ฤดู",
+          selfCheck: "วิธีวิเคราะห์ตัวเองเบื้องต้น"
+        },
+        season: {
+          Spring: {
+            name: "ฤดูใบไม้ผลิ (Spring)",
+            undertone: "Warm Tone",
+            desc: "สดใส มีพลัง เหมือนแสงแดดยามเช้า",
+            best: ["สีส้มพีช", "สีเขียวแอปเปิ้ล", "สีเหลืองทอง"],
+            avoid: ["สีดำสนิท", "สีเทาหม่น"],
+            makeup: ["สีส้มชานม", "สีชมพูพีช"],
+            hair: ["น้ำตาลทอง", "น้ำตาลน้ำผึ้ง"],
+            metal: "ทองเหลืองเงา",
+            palette: ["#FFB347", "#FFCC33", "#99CC33", "#F08080"]
+          },
+          Summer: {
+            name: "ฤดูร้อน (Summer)",
+            undertone: "Cool Tone",
+            desc: "นุ่มนวล ละมุนตา เหมือนสีพาสเทล",
+            best: ["สีชมพูนม", "สีฟ้าลาเวนเดอร์", "สีเทาควันบุหรี่"],
+            avoid: ["สีส้มสด", "สีเหลืองสด"],
+            makeup: ["สีชมพูกุหลาบ", "สีม่วงอ่อน"],
+            hair: ["น้ำตาลหม่น", "เทาหม่น"],
+            metal: "เงินผิวแมตต์",
+            palette: ["#F4C2C2", "#B19CD9", "#AEC6CF", "#CFCFC4"]
+          },
+          Autumn: {
+            name: "ฤดูใบไม้ร่วง (Autumn)",
+            undertone: "Warm Tone",
+            desc: "อบอุ่น มั่นคง เหมือนสีของป่าไม้",
+            best: ["สีส้มอิฐ", "สีเขียวขี้ม้า", "สีน้ำตาลไหม้"],
+            avoid: ["สีชมพูบานเย็น", "สีฟ้าสด"],
+            makeup: ["สีส้มอิฐ", "สีแดงก่ำ"],
+            hair: ["น้ำตาลแดง", "ช็อกโกแลต"],
+            metal: "ทองโบราณ",
+            palette: ["#8B4513", "#556B2F", "#D2691E", "#B8860B"]
+          },
+          Winter: {
+            name: "ฤดูหนาว (Winter)",
+            undertone: "Cool Tone",
+            desc: "ชัดเจน โดดเด่น มีคอนทราสต์สูง",
+            best: ["สีแดงสด", "สีน้ำเงินเข้ม", "สีดำ", "สีขาว"],
+            avoid: ["สีส้ม", "สีน้ำตาลทอง"],
+            makeup: ["สีแดงเชอร์รี่", "สีชมพูสด"],
+            hair: ["ดำสนิท", "น้ำตาลเข้มจัด"],
+            metal: "เงินเงา หรือแพลทินัม",
+            palette: ["#FF0000", "#0000FF", "#000000", "#FFFFFF"]
+          }
+        }
+      }
     },
   },
 };
