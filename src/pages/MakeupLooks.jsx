@@ -4,8 +4,7 @@ import { toggleLike, isLiked } from "../utils/likes";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-const API_URL = "http://127.0.0.1:5010"; 
-const BASE_PATH = "/AURAMATCH-VER2";
+const BASE_PATH = import.meta.env.BASE_URL;
 
 export default function MakeupLooks() {
   const [season, setSeason] = useState("Spring");
@@ -16,28 +15,59 @@ export default function MakeupLooks() {
   const [likedTrigger, setLikedTrigger] = useState(0);
 
   useEffect(() => {
-    AOS.init({ duration: 800, easing: "ease-out-quart", once: true });
+    AOS.init({
+  duration: 800,
+  easing: "ease-out-quart",
+  once: false,
+});
+
   }, []);
 
   useEffect(() => {
-    const fetchLooks = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_URL}/looks`, { params: { personal_color: season } });
-        if (response.data?.status === "success") setLooks(response.data.data);
-        else setLooks([]);
-        setTimeout(() => AOS.refresh(), 100);
-      } catch (error) { setLooks([]); }
-      finally { setLoading(false); }
-    };
-    fetchLooks();
-  }, [season]);
+  const fetchLooks = async () => {
+    setLoading(true);
+
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/looks`,
+        {
+          params: { personal_color: season },
+        }
+      );
+
+      if (res.data?.status === "success") {
+        setLooks(res.data.data || []);
+      } else {
+        setLooks([]);
+      }
+
+      // refresh AOS หลัง render
+      setTimeout(() => AOS.refresh(), 100);
+
+    } catch (err) {
+      console.error("Fetch looks error:", err);
+      setLooks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (season) fetchLooks();
+}, [season]);
+
 
   const filteredLooks = useMemo(() => 
     looks.filter(look => look.look_name.toLowerCase().includes(query.toLowerCase())), [looks, query]
   );
 
-  const getFullImagePath = (path) => path ? `${BASE_PATH}${path}` : `${BASE_PATH}/assets/default-product.png`;
+  const getFullImagePath = (path) => {
+  if (!path) return `${BASE_PATH}assets/default-product.png`;
+  if (path.startsWith("http")) return path;
+
+  const clean = path.startsWith("/") ? path.slice(1) : path;
+  return `${BASE_PATH}${clean}`;
+};
+
 
   // ฟังก์ชันกด Like
   const handleToggleLike = (e, look) => {

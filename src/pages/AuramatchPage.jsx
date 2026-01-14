@@ -8,14 +8,12 @@ import "aos/dist/aos.css";
 import { getBestSellerProducts, getLooksBySeason } from "../callapi/call_api_user";
 import { getFavoritesByUser, toggleFavorite } from "../callapi/call_api_favorite";
 
-/* ========== 1. Config ========== */
-const BASE_PATH = "/AURAMATCH-VER2/";
 
 /* ========== 2. Sub-Components ========== */
 
 const FaceShapeIcon = ({ type }) => {
   const strokeColor = "currentColor";
-  const strokeWidth = "2.5"; 
+  const strokeWidth = "2.5";
   switch (type) {
     case "round": return <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
     case "oval": return <svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="28" ry="38" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
@@ -28,7 +26,7 @@ const FaceShapeIcon = ({ type }) => {
 };
 
 const SectionHeader = ({ title, subtitle, align = "center", aosType = "fade-up" }) => (
-  <div 
+  <div
     className={`mb-24 ${align === "center" ? "text-center" : "text-left"}`}
     data-aos={aosType}
   >
@@ -64,11 +62,15 @@ export default function AuramatchPage() {
   }, [favorites]);
 
   const getImageUrl = useCallback((path) => {
-    if (!path || path === "null") return "https://images.unsplash.com/photo-1596462502278-27bfac4033c8?q=80&w=1000";
-    if (path.startsWith('http')) return path; 
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    return `${BASE_PATH}${cleanPath}`;
+    if (!path || path === "null") {
+      return "https://images.unsplash.com/photo-1596462502278-27bfac4033c8?q=80&w=1000";
+    }
+    if (path.startsWith("http")) return path;
+
+    // รูปที่อยู่ใน public/
+    return `/${path.replace(/^\/+/, "")}`;
   }, []);
+
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -87,10 +89,10 @@ export default function AuramatchPage() {
         seasonLooks[s] = data || [];
       }));
       setLooksBySeason(seasonLooks);
-    } catch (err) { 
-      console.error("Fetch Data Error:", err); 
-    } finally { 
-      setIsLoading(false); 
+    } catch (err) {
+      console.error("Fetch Data Error:", err);
+    } finally {
+      setIsLoading(false);
       // Refresh AOS after data loads
       setTimeout(() => AOS.refresh(), 100);
     }
@@ -107,8 +109,8 @@ export default function AuramatchPage() {
       setFavorites(updatedFavs || []);
     } catch (e) {
       console.error("Toggle Favorite Error", e);
-    } finally { 
-      setIsActionLoading(false); 
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -120,19 +122,19 @@ export default function AuramatchPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] overflow-x-hidden">
-      
+
       {/* 1. HERO SECTION */}
       <section className="relative h-screen flex items-center px-10 md:px-24">
         <div className="absolute top-0 right-0 w-full md:w-3/5 h-full overflow-hidden" data-aos="fade-left">
-          <img 
-            src={getImageUrl("assets/IMG_7259.PNG")} 
-            className="w-full h-full object-cover scale-105 hero-zoom opacity-90" 
+          <img
+            src={getImageUrl("assets/IMG_7259.PNG")}
+            className="w-full h-full object-cover scale-105 hero-zoom opacity-90"
             alt="Hero"
             onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1596462502278-27bfac4033c8?q=80&w=1500"; }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#FDFCFB] via-transparent to-transparent" />
         </div>
-        
+
         <div className="relative z-10 max-w-3xl" data-aos="fade-right" data-aos-delay="300">
           <span className="text-[12px] font-black tracking-[0.8em] text-[#C5A358] uppercase mb-8 block">The Art of Radiance</span>
           <h1 className="text-7xl md:text-[9rem] font-serif italic leading-[0.85] mb-12 tracking-tighter font-bold">Aura Match.</h1>
@@ -148,17 +150,20 @@ export default function AuramatchPage() {
         <SectionHeader title="The Seasons Collection" subtitle="Curation" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {["Spring", "Summer", "Autumn", "Winter"].map((season, i) => (
-            <div 
-              key={season} 
+            <div
+              key={season}
               className="group relative aspect-[3/4] overflow-hidden cursor-pointer shadow-sm"
               data-aos="fade-up"
               data-aos-delay={i * 150}
-              onClick={() => navigate(`/looks?personal_color=${season}`)}
+              onClick={() => navigate(`/looks`, {
+                state: { personal_color: season }
+              })}
+
             >
-              <img 
-                src={getImageUrl(looksBySeason[season]?.[0]?.image_url)} 
-                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" 
-                alt={season} 
+              <img
+                src={getImageUrl(looksBySeason[season]?.[0]?.image_url)}
+                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
+                alt={season}
                 onError={(e) => { e.target.src = `https://via.placeholder.com/600x800?text=${season}`; }}
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
@@ -176,23 +181,23 @@ export default function AuramatchPage() {
         <SectionHeader title="Atelier Essentials" subtitle="Best Sellers" align="left" aosType="fade-right" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
           {bestSellers.length > 0 ? bestSellers.slice(0, 6).map((p, i) => (
-            <article 
-              key={p.product_id} 
+            <article
+              key={p.product_id}
               className="group"
               data-aos="fade-up"
               data-aos-delay={(i % 3) * 150}
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-white mb-8 border border-gray-100 shadow-sm group-hover:shadow-2xl transition-all duration-700">
-                <button 
+                <button
                   onClick={() => handleToggleFavorite(p.product_id)}
                   className={`absolute top-6 right-6 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg transition-all duration-300 ${isFavorite(p.product_id) ? "text-red-500 scale-110" : "text-gray-300 hover:text-[#C5A358]"}`}
                 >
                   {isFavorite(p.product_id) ? "♥" : "♡"}
                 </button>
-                <img 
-                  src={getImageUrl(p.image_url)} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                  alt={p.name} 
+                <img
+                  src={getImageUrl(p.image_url)}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  alt={p.name}
                   onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000"; }}
                 />
               </div>
@@ -202,7 +207,7 @@ export default function AuramatchPage() {
               </div>
             </article>
           )) : (
-             <div className="col-span-full py-20 text-center text-gray-300 uppercase tracking-widest text-xs">No products found</div>
+            <div className="col-span-full py-20 text-center text-gray-300 uppercase tracking-widest text-xs">No products found</div>
           )}
         </div>
       </section>
@@ -213,8 +218,8 @@ export default function AuramatchPage() {
           <SectionHeader title="Facial Identity" subtitle="Precision Analysis" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
             {["round", "oval", "square", "heart", "triangle", "diamond"].map((type, i) => (
-              <div 
-                key={type} 
+              <div
+                key={type}
                 className="flex flex-col items-center justify-center p-12 bg-white shadow-sm hover:shadow-2xl transition-all duration-700 group cursor-pointer rounded-sm border border-transparent hover:border-[#C5A358]/30"
                 data-aos="zoom-in"
                 data-aos-delay={i * 100}
@@ -234,8 +239,8 @@ export default function AuramatchPage() {
 
       {/* FOOTER */}
       <footer className="py-20 text-center bg-[#FDFCFB]" data-aos="fade-up">
-         <p className="text-[10px] font-bold tracking-[0.8em] uppercase text-[#C5A358] mb-4">Maison AuraMatch • Est. 2026</p>
-         <div className="w-12 h-[1px] bg-gray-200 mx-auto"></div>
+        <p className="text-[10px] font-bold tracking-[0.8em] uppercase text-[#C5A358] mb-4">Maison AuraMatch • Est. 2026</p>
+        <div className="w-12 h-[1px] bg-gray-200 mx-auto"></div>
       </footer>
 
       <style>{`
