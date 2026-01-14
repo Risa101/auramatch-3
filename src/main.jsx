@@ -1,19 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "./index.postcss";
+import "./index.postcss"; // ✅ ถูกแล้ว ถ้าไฟล์อยู่ src/index.postcss
 import "./lib/i18n";
 
-// ✅ AOS
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-// ✅ init AOS (ครั้งเดียว)
 AOS.init({
-  duration: 800,              // ความเร็ว animation
-  easing: "ease-out-cubic",   // easing สวย ๆ
-  once: true,                 // เล่นครั้งเดียวตอน scroll
-  offset: 80,                 // ระยะก่อน trigger
+  duration: 800,
+  easing: "ease-out-cubic",
+  once: true,
+  offset: 80,
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
