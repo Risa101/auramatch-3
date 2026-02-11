@@ -79,7 +79,7 @@ function ChromeWrapper({ children }) {
 // ── App Root ──────────────────────────────────────────────────────────────────
 export default function App() {
   return (
-    <Router basename="/AURAMATCH-VER2"> 
+    <Router basename="/"> 
       <ChromeWrapper>
         <Routes>
           {/* Public Routes (เข้าได้ทุกคน) */}
