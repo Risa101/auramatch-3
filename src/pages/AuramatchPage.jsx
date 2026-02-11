@@ -36,6 +36,14 @@ export default function AuramatchDailyDose() {
     { label: "Analysis", to: "/analysis" },
     { label: "Shop", to: "/shop" }
   ];
+  const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  const buildApiImage = (path) => {
+    if (!path) return "/assets/home.PNG";
+    if (String(path).startsWith("http")) return path;
+    if (!apiBase) return path;
+    return `${apiBase}/${String(path).replace(/^\//, "")}`;
+  };
+
 
   const personalColorData1 = [
   {
@@ -373,7 +381,7 @@ export default function AuramatchDailyDose() {
                 {/* Container รูปภาพ */}
                 <div className="relative aspect-[3/4] rounded-[3.5rem] overflow-hidden bg-[#F9F9F9] mb-10 group-hover:shadow-2xl transition-all duration-700">
                   <img
-                    src={`${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/${p.image_url.replace(/^\//, '')}`}
+                    src={buildApiImage(p.image_url)}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     alt={p.name}
                   />
