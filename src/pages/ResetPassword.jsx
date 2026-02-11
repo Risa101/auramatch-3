@@ -1,31 +1,110 @@
-// src/pages/ResetPassword.jsx
 import { useState } from "react";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../firebase";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function ResetPassword() {
-  const [email,setEmail] = useState(""); const [msg,setMsg]=useState(""); const [err,setErr]=useState(""); const [loading,setLoading]=useState(false);
-  const isEmail = (s)=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
-  const onSubmit=async(e)=>{e.preventDefault(); setErr(""); setMsg(""); if(!isEmail(email)) return setErr("รูปแบบอีเมลไม่ถูกต้อง");
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const token = searchParams.get("token") || "";
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    setErr(""); setMsg("");
+    if (!token) {
+      setErr("ลิงก์ไม่ถูกต้องหรือหมดอายุ");
+      return;
+    }
+    if (pw.length < 8) {
+      setErr("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+      return;
+    }
+    if (pw !== pw2) {
+      setErr("ยืนยันรหัสผ่านไม่ตรงกัน");
+      return;
+    }
     setLoading(true);
-    try{ await sendPasswordResetEmail(auth, email.trim().toLowerCase()); setMsg("ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลแล้ว"); }
-    catch(e){ console.error(e); setErr("ไม่สามารถส่งอีเมลรีเซ็ตได้"); }
-    finally{ setLoading(false); }
-  };
-  return(
-    <div className="login-container">
-      <div className="login-box big-box">
-        <h2 className="login-title">Reset your password</h2>
-        {msg && <div className="lp-success" role="status">{msg}</div>}
-        {err && <div className="lp-error" role="alert">{err}</div>}
-        <form onSubmit={onSubmit}>
-          <div className="input-wrap">
-            <input type="email" className="login-input" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)} required />
-          </div>
-          <button className="login-btn" disabled={loading || !isEmail(email)}>
-            {loading ? <span className="lp-spinner" /> : "Send reset link"}
-          </button>
-        </form>
+    try {
+      const res = await fetch(`${apiBaseUrl}/password/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password: pw }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr((data.error || "ขออภัย กรุณาลองใหม่อีกครั้ง").toString());
+        return;
+      }
+      setMsg("รีเซ็ตรหัสผ่านสำเร็จ กำลังพาไปหน้าเข้าสู่ระบบ...");
+      setTimeout(() => navigate("/login"), 1200);
+    } catch (e) {
+      setErr("ขออภัย กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light flex items-center justify-center px-6 pt-20 selection:bg-[#C5A358]/20">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+        <span className="text-[15vw] font-serif italic text-gray-100 select-none uppercase leading-none opacity-40">
+          Reset
+        </span>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md bg-white/40 p-10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm">
+        <div className="text-center mb-10 space-y-4">
+          <span className="text-[10px] tracking-[0.6em] font-bold uppercase text-[#C5A358]">AuraMatch Atelier</span>
+          <h1 className="text-4xl font-serif italic leading-none">Reset Password.</h1>
+          <p className="text-[10px] text-gray-400 tracking-[0.2em] uppercase max-w-[250px] mx-auto leading-relaxed">
+            Set a new password for your account
+          </p>
+        </div>
+
+        {msg && <div className="mb-8 py-4 border-l-2 border-green-500 bg-white px-4 text-[11px] font-bold text-green-600 uppercase tracking-widest">{msg}</div>}
+        {err && <div className="mb-8 py-4 border-l-2 border-[#C5A358] bg-white px-4 text-[11px] font-bold text-red-500 uppercase tracking-widest">{err}</div>}
+
+        {!msg && (
+          <form onSubmit={onSubmit} className="space-y-8">
+            <input
+              type="password"
+              placeholder="NEW PASSWORD"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              className="w-full bg-transparent border-b border-gray-200 py-4 text-xs tracking-[0.2em] focus:outline-none focus:border-[#C5A358] transition-all placeholder:text-gray-300 uppercase"
+              required
+            />
+            <input
+              type="password"
+              placeholder="CONFIRM PASSWORD"
+              value={pw2}
+              onChange={(e) => setPw2(e.target.value)}
+              className="w-full bg-transparent border-b border-gray-200 py-4 text-xs tracking-[0.2em] focus:outline-none focus:border-[#C5A358] transition-all placeholder:text-gray-300 uppercase"
+              required
+            />
+            <p className="text-[9px] uppercase tracking-[0.2em] text-gray-400">
+              Password must be 8+ characters with letters and numbers
+            </p>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-5 border border-[#1A1A1A] bg-[#1A1A1A] text-white text-[10px] tracking-[0.4em] font-bold uppercase transition-all hover:bg-transparent hover:text-[#1A1A1A]"
+            >
+              {loading ? "Saving..." : "Reset Password"}
+            </button>
+          </form>
+        )}
+
+        <div className="mt-12 text-center">
+          <Link to="/login" className="text-[10px] tracking-widest text-gray-400 uppercase hover:text-[#C5A358] transition-colors inline-flex items-center gap-3 group">
+            <span className="w-8 h-[1px] bg-gray-200 group-hover:bg-[#C5A358] transition-all"></span>
+            Return to Login
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -2,27 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import i18n from "../lib/i18n";
 import { useTranslation } from "react-i18next";
+import { ShoppingBag, Menu, X, History, User, LogOut, ChevronDown } from "lucide-react";
 
-export default function Navbar() {
+export default function NavbarDailyDose() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [acctOpen, setAcctOpen] = useState(false);
+  const [acctOpen, setAcctOpen] = useState(false); // ควบคุม Dropdown
   const [me, setMe] = useState(null);
 
-  // ฟังก์ชันดึงข้อมูลผู้ใช้ใหม่ล่าสุดจาก LocalStorage
   const syncUser = useCallback(() => {
     const logged = localStorage.getItem("auramatch:isLoggedIn") === "true";
     const uRaw = JSON.parse(localStorage.getItem("auramatch:user") || "null");
-    
     if (logged && uRaw) {
-      setMe({ 
-        ...uRaw, 
-        // ตรวจสอบทั้ง avatar และ photoURL เผื่อมีการใช้ชื่อ Key ที่ต่างกัน
-        photoURL: uRaw.avatar || uRaw.photoURL || "" 
-      });
+      setMe({ ...uRaw, photoURL: uRaw.avatar || uRaw.photoURL || "" });
     } else {
       setMe(null);
     }
@@ -30,14 +25,10 @@ export default function Navbar() {
 
   useEffect(() => {
     syncUser();
-    // ฟังคำสั่ง "auth:changed" เพื่ออัปเดตรูปและชื่อทันที
     window.addEventListener("auth:changed", syncUser);
-    // ฟังคำสั่ง "storage" เผื่อมีการเปลี่ยนจาก Tab อื่น
-    window.addEventListener("storage", syncUser);
-
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("storage", syncUser); // ตรวจจับการเปลี่ยนแปลงข้าม Tab
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
-
     return () => {
       window.removeEventListener("auth:changed", syncUser);
       window.removeEventListener("storage", syncUser);
@@ -45,15 +36,19 @@ export default function Navbar() {
     };
   }, [syncUser]);
 
-  useEffect(() => { 
-    setMobileOpen(false); 
-    setAcctOpen(false); 
+  // ปิดเมนูเมื่อเปลี่ยนหน้า
+  useEffect(() => {
+    setMobileOpen(false);
+    setAcctOpen(false);
   }, [pathname]);
 
-  const logout = () => {
+  const handleLogout = () => {
     localStorage.removeItem("auramatch:isLoggedIn");
-    localStorage.removeItem("auramatch:user"); // ล้างข้อมูล user ออกด้วย
+    localStorage.removeItem("auramatch:user");
+    localStorage.removeItem("auramatch:token");
+    localStorage.removeItem("auramatch:isAdmin");
     window.dispatchEvent(new Event("auth:changed"));
+    setAcctOpen(false);
     navigate("/login");
   };
 
@@ -63,60 +58,55 @@ export default function Navbar() {
     { label: t("nav.advisor"), to: "/advisor" },
     { label: t("nav.look"), to: "/looks" },
     { label: t("nav.cosmetics"), to: "/cosmetics" },
-    { label: t("nav.coupons"), to: "/coupons" },
+    { label: t("coupon") || "Coupons", to: "/coupons" },
   ];
 
   return (
     <header
       className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
         isScrolled 
-          ? "py-4 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100" 
-          : "py-7 bg-transparent"
+          ? "py-3 bg-white/95 backdrop-blur-md shadow-md" 
+          : "py-6 bg-[#FFEBF0]/50"
       }`}
     >
-      <div className="max-w-[1500px] mx-auto px-8 md:px-16 flex items-center justify-between">
+      <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between relative">
         
-        {/* BRAND LOGO */}
-        <Link to="/" className="shrink-0 group relative z-[101]">
-          <div className="flex flex-col leading-none">
-            <span className="text-2xl font-serif font-medium tracking-tight text-[#1A1A1A]">AuraMatch</span>
-            <span className="text-[9px] font-sans font-bold tracking-[0.4em] text-[#D4AF37] uppercase mt-1">Atelier</span>
-          </div>
-        </Link>
+        {/* LEFT: BRAND LOGO */}
+        <div className="flex-none z-10">
+          <Link to="/" className="group block">
+            <h1 className="text-2xl font-[900] tracking-tighter text-[#D23669] leading-none transition-transform group-hover:scale-105">
+              aura<br/>
+              <span className="font-light italic text-[#FF85A2] -mt-1 block">match</span>
+            </h1>
+          </Link>
+        </div>
 
-        {/* DESKTOP NAVIGATION */}
-        <nav className="hidden lg:flex items-center gap-8 xl:gap-12">
+        {/* CENTER: ALL DESKTOP LINKS */}
+        <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) => `
-                relative py-1 font-tenor text-[12px] tracking-[0.2em] uppercase transition-all duration-300
-                ${isActive ? "text-[#1A1A1A]" : "text-[#1A1A1A]/40 hover:text-[#1A1A1A]"}
+                text-[10px] font-black uppercase tracking-widest transition-all px-2 py-1 rounded-lg
+                ${isActive ? "text-[#D23669] bg-[#FFEBF0]" : "text-gray-400 hover:text-[#D23669]"}
               `}
             >
-              {({ isActive }) => (
-                <div className="flex flex-col items-center">
-                  <span className="grid place-items-center">
-                    <span className="invisible font-bold h-0 col-start-1 row-start-1">{item.label}</span>
-                    <span className={`${isActive ? "font-bold" : "font-normal"} col-start-1 row-start-1 transition-all`}>{item.label}</span>
-                  </span>
-                  <span className={`absolute -bottom-1 h-[1px] bg-[#D4AF37] transition-all duration-500 ${isActive ? "w-full" : "w-0"}`} />
-                </div>
-              )}
+              {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* ACTIONS */}
-        <div className="flex items-center gap-6 xl:gap-10">
-          <div className="hidden md:flex items-center gap-4">
+        {/* RIGHT: PROFILE + LANG + SHOPPING */}
+        <div className="flex items-center gap-4 z-10">
+          {/* Lang Switcher */}
+          <div className="hidden md:flex bg-white rounded-full p-1 border border-[#FFD1DC] shadow-sm">
             {['TH', 'EN'].map((l) => (
               <button
                 key={l}
                 onClick={() => i18n.changeLanguage(l.toLowerCase())}
-                className={`font-jost text-[11px] font-bold tracking-widest ${
-                  i18n.language.toUpperCase() === l ? "text-[#D4AF37]" : "text-gray-300 hover:text-[#1A1A1A]"
+                className={`px-3 py-1 text-[9px] font-black rounded-full transition-all ${
+                  i18n.language.toUpperCase() === l ? "bg-[#D23669] text-white" : "text-gray-300 hover:text-[#D23669]"
                 }`}
               >
                 {l}
@@ -124,72 +114,96 @@ export default function Navbar() {
             ))}
           </div>
 
+          {/* Account/Login Section */}
           {!me ? (
-            <Link to="/login" className="px-8 py-2.5 bg-[#1A1A1A] text-white font-jost text-[10px] font-bold tracking-widest uppercase hover:bg-[#D4AF37] transition-all shadow-md">
-              {t("nav.login")}
+            <Link to="/login" className="p-2 text-[#D23669] hover:scale-110 transition-transform bg-white rounded-full border border-[#FFD1DC] shadow-sm">
+              <ShoppingBag size={20} strokeWidth={2.5} />
             </Link>
           ) : (
             <div className="relative" onMouseEnter={() => setAcctOpen(true)} onMouseLeave={() => setAcctOpen(false)}>
-              <button className="flex items-center outline-none">
-                <div className="w-10 h-10 rounded-full border-2 border-transparent hover:border-[#D4AF37] overflow-hidden transition-all duration-300 shadow-sm">
-                  {/* แสดงรูปจาก me.photoURL ที่อัปเดตแล้ว */}
+              <button className="flex items-center gap-2 p-1 pr-3 rounded-full border-2 border-[#FFD1DC] hover:border-[#D23669] transition-all bg-white group">
+                <div className="w-8 h-8 rounded-full overflow-hidden shadow-inner">
                   <img 
-                    key={me.photoURL} // ใช้ key เพื่อบังคับให้ React re-render รูปเมื่อ URL เปลี่ยน
-                    src={me.photoURL || `https://ui-avatars.com/api/?name=${me.name}`} 
+                    src={me.photoURL || `https://ui-avatars.com/api/?name=${me.name}&background=D23669&color=fff`} 
                     className="w-full h-full object-cover" 
                     alt="Profile" 
                   />
                 </div>
+                <ChevronDown size={14} className={`text-[#D23669] transition-transform duration-300 ${acctOpen ? "rotate-180" : ""}`} />
               </button>
 
-              <div className={`absolute right-0 mt-0 pt-4 w-56 transition-all duration-500 ${acctOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}>
-                <div className="bg-white shadow-2xl border border-gray-50 p-6">
-                  <div className="mb-4 pb-4 border-b border-gray-100">
-                    <p className="font-serif text-base italic text-[#1A1A1A] truncate">{me.name || "Member"}</p>
-                    <p className="text-[9px] font-jost text-[#D4AF37] uppercase tracking-[0.1em] mt-1">Premium Member</p>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <Link to="/account" className="font-jost text-[10px] font-bold text-[#1A1A1A]/60 hover:text-[#D4AF37] uppercase tracking-[0.2em] transition-colors">{t("nav.account")}</Link>
-                    <Link to="/history" className="font-jost text-[10px] font-bold text-[#1A1A1A]/60 hover:text-[#D4AF37] uppercase tracking-[0.2em] transition-colors">{t("nav.history")}</Link>
-                    <button onClick={logout} className="text-[10px] font-bold text-red-400 hover:text-red-600 text-left uppercase tracking-[0.2em] transition-colors mt-2">Logout</button>
-                  </div>
+              {/* DROPDOWN MENU */}
+              <div className={`absolute right-0 mt-2 w-48 bg-white border-2 border-black rounded-[24px] p-2 shadow-[8px_8px_0px_0px_rgba(210,54,105,0.2)] transition-all duration-300 ${acctOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
+                <div className="px-4 py-3 border-b border-gray-100 mb-2">
+                  <p className="text-[10px] font-black text-[#D23669] uppercase truncate">{me.name}</p>
+                  <p className="text-[8px] font-bold text-gray-400 truncate">{me.email}</p>
                 </div>
+                
+                <Link to="/account" className="flex items-center gap-3 p-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
+                  <User size={16} className="text-[#D23669]" /> Profile
+                </Link>
+                <Link to="/history" className="flex items-center gap-3 p-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
+                  <History size={16} className="text-[#D23669]" /> History
+                </Link>
+                
+                <div className="h-px bg-gray-100 my-2 mx-2" />
+                
+                <button 
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 p-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                >
+                  <LogOut size={16} /> Logout
+                </button>
               </div>
             </div>
           )}
 
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden flex flex-col gap-1.5 z-[101] p-2">
-            <span className={`h-px bg-[#1A1A1A] transition-all duration-300 w-6 ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
-            <span className={`h-px bg-[#1A1A1A] transition-all duration-300 w-6 ${mobileOpen ? "opacity-0" : ""}`} />
-            <span className={`h-px bg-[#1A1A1A] transition-all duration-300 w-6 ${mobileOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          {/* Mobile Toggle */}
+          <button 
+            onClick={() => setMobileOpen(!mobileOpen)} 
+            className="lg:hidden text-[#D23669] p-1 hover:bg-[#FFEBF0] rounded-full transition-colors"
+          >
+            {mobileOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
       </div>
 
-      {/* FULL SCREEN MENU */}
-      <div className={`fixed inset-0 bg-[#FDFCFB] z-[99] flex flex-col items-center justify-center transition-all duration-700 ease-expo ${mobileOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"}`}>
-        <nav className="flex flex-col items-center gap-8">
-          {[...navItems, {label: t("nav.history"), to: "/history"}].map((item, idx) => (
+      {/* MOBILE MENU */}
+      <div className={`fixed inset-0 bg-[#FFEBF0] z-[99] pt-32 px-10 transition-all duration-500 ease-in-out lg:hidden ${mobileOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
+        <nav className="flex flex-col gap-4 text-center">
+          {navItems.map((item, idx) => (
             <Link
               key={item.to}
               to={item.to}
-              className={`text-4xl font-serif italic text-[#1A1A1A] hover:text-[#D4AF37] transition-all duration-500 ${mobileOpen ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
-              style={{ transitionDelay: `${idx * 70}ms` }}
+              className={`text-4xl font-[900] uppercase tracking-tighter text-[#D23669] hover:scale-105 transition-all ${mobileOpen ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
+              style={{ transitionDelay: `${idx * 50}ms` }}
               onClick={() => setMobileOpen(false)}
             >
               {item.label}
             </Link>
           ))}
+          
+          <div className="h-[2px] bg-[#D23669]/10 my-6" />
+          
+          {!me ? (
+            <button 
+              onClick={() => { navigate("/login"); setMobileOpen(false); }}
+              className="bg-[#D23669] text-white py-4 rounded-full font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(210,54,105,0.4)]"
+            >
+              Sign In
+            </button>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <Link to="/account" onClick={() => setMobileOpen(false)} className="text-[#D23669] font-black uppercase tracking-widest">My Account</Link>
+              <button onClick={handleLogout} className="text-red-500 font-black uppercase tracking-widest">Sign Out</button>
+            </div>
+          )}
         </nav>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@500;700&family=Tenor+Sans&display=swap');
-        html { scrollbar-gutter: stable; }
-        .font-serif { font-family: 'Cormorant Garamond', serif; }
-        .font-jost { font-family: 'Jost', sans-serif; }
-        .font-tenor { font-family: 'Tenor Sans', sans-serif; }
-        .ease-expo { transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        header { font-family: 'Montserrat', sans-serif; }
       `}</style>
     </header>
   );

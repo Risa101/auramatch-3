@@ -1,11 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../lib/firebase";
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  sendEmailVerification,
-} from "firebase/auth";
 import { getOrCreateWelcomeCoupon, notifyCouponChanged } from "../utils/coupon";
 
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@example.com")
@@ -26,20 +20,12 @@ export default function RegisterPage() {
   const [info, setInfo] = useState("");
 
   const navigate = useNavigate();
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
 
   function validatePassword(p) {
-    if (p.length < 6) return "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร";
-    if (!/[A-Za-z]/.test(p) || !/[0-9]/.test(p)) return "รหัสผ่านควรมีทั้งตัวอักษรและตัวเลข";
+    if (p.length < 8) return "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร";
+    if (!/[A-Za-z]/.test(p) || !/[0-9]/.test(p)) return "รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข";
     return "";
-  }
-
-  async function signUpFirebase(emailNorm, password, displayName) {
-    const cred = await createUserWithEmailAndPassword(auth, emailNorm, password);
-    try {
-      if (displayName) await updateProfile(cred.user, { displayName });
-      sendEmailVerification(cred.user).catch(() => {});
-    } catch {}
-    return cred.user;
   }
 
   async function onSubmit(e) {
@@ -57,34 +43,32 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      let user;
-      try {
-        user = await signUpFirebase(emailNorm, pw, nm);
-      } catch (fbErr) {
-        const localUser = {
-          uid: "local-" + emailNorm,
-          email: emailNorm,
-          displayName: nm,
-          photoURL: "",
-          providerId: "password",
-        };
-        const dbRaw = JSON.parse(localStorage.getItem("auramatch:users") || "[]");
-        if (dbRaw.some((u) => u.email === emailNorm)) throw new Error("อีเมลนี้ถูกใช้งานแล้วในระบบ");
-        localStorage.setItem("auramatch:users", JSON.stringify([...dbRaw, localUser]));
-        user = localUser;
+      const res = await fetch(`${apiBaseUrl}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: nm, email: emailNorm, password: pw }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr((data.error || "ขออภัย สมัครสมาชิกไม่สำเร็จ").toString());
+        return;
       }
-
+      const userPayload = data.user || data;
       const userlike = {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName || nm,
-        photoURL: user.photoURL || "",
-        provider: user.providerId || "password",
+        uid: String(userPayload.user_id || ""),
+        email: userPayload.email || emailNorm,
+        name: userPayload.username || nm,
+        photoURL: userPayload.avatar || "",
+        role: userPayload.role || "user",
+        provider: "password",
       };
+      if (data.token) {
+        localStorage.setItem("auramatch:token", data.token);
+      }
 
       localStorage.setItem("auramatch:isLoggedIn", "true");
       localStorage.setItem("auramatch:user", JSON.stringify(userlike));
-      const adminFlag = isAdminEmail(userlike.email);
+      const adminFlag = userlike.role === "admin" || isAdminEmail(userlike.email);
       localStorage.setItem("auramatch:isAdmin", adminFlag ? "true" : "false");
 
       await getOrCreateWelcomeCoupon({ uid: userlike.uid });

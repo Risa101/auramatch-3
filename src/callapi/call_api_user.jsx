@@ -1,9 +1,33 @@
 import axios from "axios";
 
-/* ===============================
-   API CONFIGURATION
-================================ */
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("auramatch:token");
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("auramatch:token");
+      localStorage.removeItem("auramatch:isLoggedIn");
+      localStorage.removeItem("auramatch:user");
+      localStorage.removeItem("auramatch:isAdmin");
+      window.dispatchEvent(new Event("auth:changed"));
+    }
+    return Promise.reject(error);
+  }
+);
 
 /* ===============================
    ADMIN & AUTHENTICATION
@@ -17,18 +41,57 @@ export async function GetLogin(email, password) {
     );
     return res.data;
   } catch (error) {
-    throw new Error(
-      error.response?.data?.message || "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
-    );
+    throw new Error(error.response?.data?.message || "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ");
   }
 }
+
+/* ===============================
+   ANALYSIS HISTORY (เชื่อมต่อกับหน้า History)
+================================ */
+// ดึงประวัติการวิเคราะห์
+export const getAnalysisHistory = async (userId) => {
+  try {
+    if (!userId) return [];
+    // Path ตาม backend: /api/analysis-history/<user_id>
+    const response = await apiClient.get(`/api/analysis-history/${userId}`);
+    
+    // ตรวจสอบโครงสร้างข้อมูลที่ส่งกลับมา
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.data || []);
+  } catch (error) {
+    console.error("Error fetching history:", error);
+    return [];
+  }
+};
+
+export const saveAnalysisHistory = async (payload) => {
+  try {
+    const response = await apiClient.post(`/api/save-analysis`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error saving analysis:", error);
+    return null;
+  }
+};
+
+// ลบประวัติการวิเคราะห์ (ฟังก์ชันที่หายไป)
+export const deleteAnalysis = async (id) => {
+  try {
+    // ไม่มี endpoint ลบใน backend ชุดนี้
+    const response = await apiClient.delete(`/delete_analysis/${id}`);
+    return response.status === 200;
+  } catch (error) {
+    console.error("Error deleting analysis:", error);
+    return false;
+  }
+};
 
 /* ===============================
    PRODUCTS
 ================================ */
 export async function getBestSellerProducts() {
   try {
-    const res = await axios.get(`${API_BASE_URL}/products/stats/best-seller`);
+    const res = await apiClient.get(`/products/stats/best-seller`);
     return res.data.data || [];
   } catch (error) {
     console.error("Error fetching best sellers:", error);
@@ -36,36 +99,56 @@ export async function getBestSellerProducts() {
   }
 }
 
-export async function getdataProducts() {
+export const getdataProducts = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/products`);
-    return res.data.data || [];
+    const response = await apiClient.get(`/products`);
+    if (response.data && response.data.status === "success") {
+        return response.data.data || [];
+    }
+    return response.data || [];
   } catch (error) {
-    console.error("Error fetching products:", error);
-    throw new Error("ไม่สามารถโหลดสินค้าได้");
+    console.error("Error fetching all products:", error);
+    return [];
+  }
+};
+
+export const getProductsBySeason = async (season) => {
+  try {
+    const response = await apiClient.get(`/products`, {
+      params: { season: season } 
+    });
+    return response.data.data || [];
+  } catch (error) {
+    console.error(`Error fetching products for ${season}:`, error);
+    return [];
+  }
+};
+
+/* ===============================
+   PROMOTIONS
+================================ */
+export async function getPromotions() {
+  try {
+    const res = await apiClient.get(`/promotions`);
+    const data = res.data.status === "success" ? res.data.data : res.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Error fetching promotions:", error);
+    return [];
   }
 }
 
-export async function adddataProducts(data) {
+/* ===============================
+   BRANDS
+================================ */
+export async function getdataBrands() {
   try {
-    const res = await axios.post(
-      `${API_BASE_URL}/products`,
-      {
-        name: data.name,
-        price: data.price,
-        image_url: data.image_url,
-        description: data.description,
-        category: data.category,
-        suitable_for_color: data.suitable_for_color,
-        personal_color_tags: data.personal_color_tags,
-        status: data.status || "active",
-      },
-      { headers: { "Content-Type": "application/json" } }
-    );
-    return res.data;
+    const res = await apiClient.get(`/brands`);
+    const data = res.data.status === "success" ? res.data.data : res.data;
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Error adding product:", error);
-    throw new Error("ไม่สามารถเพิ่มสินค้าได้");
+    console.error("Error fetching brands:", error);
+    return [];
   }
 }
 
@@ -74,10 +157,13 @@ export async function adddataProducts(data) {
 ================================ */
 export async function getLooksBySeason(season) {
   try {
-    const res = await axios.get(`${API_BASE_URL}/looks`, {
+    const res = await apiClient.get(`/looks`, {
       params: { personal_color: season },
     });
-    return res.data.data || [];
+    if (res.data && res.data.status === "success") {
+      return res.data.data || [];
+    }
+    return [];
   } catch (error) {
     console.error(`Error fetching looks for ${season}:`, error);
     return [];
@@ -85,21 +171,40 @@ export async function getLooksBySeason(season) {
 }
 
 /* ===============================
-   PROMOTIONS (ปรับปรุงให้ตรงกับ Backend)
+   FAVORITES
 ================================ */
-export async function getdatapromotions() {
+export const toggleFavoriteApi = async (userId, productId) => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/promotions`);
-    // ตรวจสอบว่า Backend ส่งข้อมูลกลับมาในรูปแบบไหน
-    if (res.data && res.data.status === "success") {
-      return Array.isArray(res.data.data) ? res.data.data : [];
-    }
-    // ถ้าส่งกลับมาเป็น Array ตรงๆ
-    if (Array.isArray(res.data)) return res.data;
-    
-    return [];
+    const response = await apiClient.post(`/favorites/toggle`, {
+      user_id: userId,
+      product_id: productId
+    });
+    return response.data;
   } catch (error) {
-    console.error("API Call failed:", error);
-    return []; // ห้าม throw error เพื่อไม่ให้หน้าจอขาว
+    console.error("Error toggling favorite:", error);
+    throw error;
   }
-}
+};
+
+export const getFavoritesByUserApi = async (userId) => {
+  try {
+    const response = await apiClient.get(`/favorites/${userId}`);
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error fetching favorites:", error);
+    return [];
+  }
+};
+
+/* ===============================
+   ADMIN DASHBOARD
+================================ */
+export const getAdminOverview = async () => {
+  try {
+    const response = await apiClient.get("/admin/overview");
+    return response.data || null;
+  } catch (error) {
+    console.error("Error fetching admin overview:", error);
+    return null;
+  }
+};

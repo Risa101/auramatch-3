@@ -1,7 +1,5 @@
 // src/pages/ForgotPassword.jsx
 import { useState } from "react";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../lib/firebase";
 import { Link } from "react-router-dom";
 
 export default function ForgotPassword() {
@@ -9,15 +7,29 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const [resetLink, setResetLink] = useState("");
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
 
   async function onSubmit(e) {
     e.preventDefault();
-    setErr(""); setMsg(""); setLoading(true);
+    setErr(""); setMsg(""); setResetLink(""); setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim());
-      setMsg("เราได้ส่งลิงก์รีเซ็ตไปที่อีเมลของคุณเรียบร้อยแล้ว");
+      const res = await fetch(`${apiBaseUrl}/password/forgot`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr((data.error || "ขออภัย กรุณาลองใหม่อีกครั้ง").toString());
+        return;
+      }
+      setMsg("ถ้ามีอีเมลนี้ในระบบ เราได้ส่งลิงก์รีเซ็ตไปให้แล้ว");
+      if (data.reset_link) {
+        setResetLink(data.reset_link);
+      }
     } catch (e) {
-      setErr("ไม่พบข้อมูลอีเมลนี้ในระบบสมาชิกของเรา");
+      setErr("ขออภัย กรุณาลองใหม่อีกครั้ง");
     } finally {
       setLoading(false);
     }
@@ -42,7 +54,16 @@ export default function ForgotPassword() {
           </p>
         </div>
 
-        {msg && <div className="mb-8 py-4 border-l-2 border-green-500 bg-white px-4 text-[11px] font-bold text-green-600 uppercase tracking-widest">{msg}</div>}
+        {msg && (
+          <div className="mb-8 py-4 border-l-2 border-green-500 bg-white px-4 text-[11px] font-bold text-green-600 uppercase tracking-widest">
+            {msg}
+            {resetLink && (
+              <div className="mt-3 text-[10px] tracking-[0.1em] uppercase text-gray-500 break-all">
+                Reset link: <a href={resetLink} className="text-[#C5A358] underline">{resetLink}</a>
+              </div>
+            )}
+          </div>
+        )}
         {err && <div className="mb-8 py-4 border-l-2 border-[#C5A358] bg-white px-4 text-[11px] font-bold text-red-500 uppercase tracking-widest">{err}</div>}
 
         {!msg && (

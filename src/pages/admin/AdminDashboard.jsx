@@ -1,24 +1,24 @@
 // src/pages/admin/SalesDashboard.jsx
-import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { getAdminOverview } from "../../callapi/call_api_user";
 
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "THB" }).format(n);
 const num = (n) => new Intl.NumberFormat("en-US").format(n);
 
 export default function SalesDashboard() {
-  const nav = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
     AOS.init({ duration: 1000, easing: "ease-out-quart" });
-    // Simulate Fetching Sales Data
-    setTimeout(() => {
-      setStats(mockSalesData);
+    const fetchOverview = async () => {
+      const data = await getAdminOverview();
+      setStats(data);
       setLoading(false);
-    }, 800);
+    };
+    fetchOverview();
   }, []);
 
   if (loading) return <LoadingState />;
@@ -43,27 +43,26 @@ export default function SalesDashboard() {
       <main className="max-w-7xl mx-auto px-10 pt-12">
         
         {/* Top Tier: Primary KPIs */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-12">
           <KpiCard 
-            label="Total Revenue" 
-            value={fmt(stats.revenue)} 
-            delta="+14.5%" 
-            sub="vs last month"
-            up={true}
+            label="Total Users" 
+            value={num(stats?.kpis?.users || 0)} 
+            sub="active accounts"
           />
           <KpiCard 
-            label="Orders Processed" 
-            value={num(stats.orders)} 
-            delta="+5.2%" 
-            sub="daily average 42"
-            up={true}
+            label="Total Products" 
+            value={num(stats?.kpis?.products || 0)} 
+            sub="catalog items"
           />
           <KpiCard 
-            label="Average Order Value" 
-            value={fmt(stats.aov)} 
-            delta="-1.2%" 
-            sub="vs last month"
-            up={false}
+            label="Promotions" 
+            value={num(stats?.kpis?.promotions || 0)} 
+            sub="active promos"
+          />
+          <KpiCard 
+            label="Reviews" 
+            value={num(stats?.kpis?.reviews || 0)} 
+            sub="customer feedback"
           />
         </section>
 
@@ -72,50 +71,30 @@ export default function SalesDashboard() {
           {/* Main Content: Sales Charts & Best Sellers */}
           <div className="lg:col-span-2 space-y-12">
             
-            {/* Sales Chart */}
-            <div className="bg-white p-10 rounded-[2rem] border border-gray-100 shadow-sm" data-aos="fade-up">
-              <div className="flex justify-between items-end mb-10">
-                <div>
-                  <h3 className="font-serif text-2xl italic">Revenue Stream</h3>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">Daily Performance (Current Month)</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-2xl font-serif italic text-[#C5A358]">{fmt(stats.dailyMax)}</span>
-                  <p className="text-[9px] text-gray-400 uppercase tracking-tighter">Peak Day</p>
-                </div>
-              </div>
-              <SalesLineChart series={stats.dailySales} />
-            </div>
-
             {/* Best Sellers Table */}
             <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm" data-aos="fade-up">
               <div className="p-10 border-b border-gray-50 flex justify-between items-center">
                 <h3 className="font-serif text-2xl italic">Best Sellers</h3>
-                <span className="text-[10px] font-black uppercase tracking-widest border border-gray-100 px-4 py-2">View All</span>
+                <span className="text-[10px] font-black uppercase tracking-widest border border-gray-100 px-4 py-2">Top 6</span>
               </div>
               <table className="w-full text-left">
                 <thead className="bg-[#FAF9F8] text-[9px] uppercase tracking-[0.2em] font-black text-gray-400">
                   <tr>
                     <th className="px-10 py-4">Product Name</th>
-                    <th className="px-10 py-4">Status</th>
                     <th className="px-10 py-4 text-right">Units Sold</th>
                     <th className="px-10 py-4 text-right">Revenue</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {stats.topProducts.map((p) => (
-                    <tr key={p.id} className="group hover:bg-[#FDFCFB] transition-colors">
+                  {(stats?.best_sellers || []).map((p) => (
+                    <tr key={p.product_id} className="group hover:bg-[#FDFCFB] transition-colors">
                       <td className="px-10 py-6">
                         <div className="text-sm font-bold">{p.name}</div>
-                        <div className="text-[10px] text-[#C5A358] uppercase tracking-widest">{p.brand}</div>
                       </td>
-                      <td className="px-10 py-6">
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded ${p.stock > 20 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                          {p.stock > 20 ? 'In Stock' : 'Low Stock'}
-                        </span>
+                      <td className="px-10 py-6 text-right font-mono text-xs">{num(p.total_sold || 0)}</td>
+                      <td className="px-10 py-6 text-right font-bold text-sm">
+                        {fmt((p.price || 0) * (p.total_sold || 0))}
                       </td>
-                      <td className="px-10 py-6 text-right font-mono text-xs">{num(p.sold)}</td>
-                      <td className="px-10 py-6 text-right font-bold text-sm">{fmt(p.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -126,35 +105,33 @@ export default function SalesDashboard() {
           {/* Right Sidebar: Quick Insights */}
           <div className="space-y-10">
             
-            {/* Sales by Brand */}
-            <div className="bg-[#1A1A1A] text-white p-10 rounded-[2rem] shadow-xl" data-aos="fade-left">
-              <h3 className="font-serif text-xl italic mb-8">Brand Share</h3>
-              <div className="space-y-6">
-                {stats.brandShare.map(brand => (
-                  <div key={brand.name}>
-                    <div className="flex justify-between text-[10px] uppercase tracking-widest font-black mb-2">
-                      <span>{brand.name}</span>
-                      <span className="text-[#C5A358]">{brand.percent}%</span>
+            {/* Recent Users */}
+            <div className="bg-white p-10 rounded-[2rem] border border-gray-100" data-aos="fade-left">
+              <h3 className="font-serif text-xl italic mb-6">Recent Users</h3>
+              <div className="space-y-5">
+                {(stats?.recent_users || []).map((u) => (
+                  <div key={u.user_id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold leading-tight">{u.username || "Guest"}</p>
+                      <span className="text-[10px] text-gray-400 uppercase tracking-tighter">{u.email}</span>
                     </div>
-                    <div className="h-[2px] w-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-[#C5A358]" style={{ width: `${brand.percent}%` }} />
-                    </div>
+                    <span className="text-[9px] uppercase tracking-widest text-[#C5A358]">New</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Recent Orders Insight */}
-            <div className="bg-white p-10 rounded-[2rem] border border-gray-100" data-aos="fade-left">
-              <h3 className="font-serif text-xl italic mb-6">Recent Activity</h3>
-              <div className="space-y-6">
-                {stats.recentActivity.map((act, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 ${i === 0 ? 'bg-[#C5A358] animate-pulse' : 'bg-gray-200'}`} />
+            {/* Low Stock */}
+            <div className="bg-[#1A1A1A] text-white p-10 rounded-[2rem] shadow-xl" data-aos="fade-left">
+              <h3 className="font-serif text-xl italic mb-8">Low Stock</h3>
+              <div className="space-y-4">
+                {(stats?.low_stock || []).map((item) => (
+                  <div key={item.product_id} className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-bold leading-tight">{act.msg}</p>
-                      <span className="text-[10px] text-gray-400 uppercase tracking-tighter">{act.time}</span>
+                      <p className="text-xs font-bold">{item.name || "Unknown"}</p>
+                      <span className="text-[9px] uppercase tracking-widest text-white/60">Product #{item.product_id}</span>
                     </div>
+                    <span className="text-[10px] font-black text-[#C5A358]">{item.quantity}</span>
                   </div>
                 ))}
               </div>
@@ -169,37 +146,14 @@ export default function SalesDashboard() {
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, delta, up, sub }) {
+function KpiCard({ label, value, sub }) {
   return (
     <div className="bg-white p-10 rounded-[2rem] border border-gray-50 shadow-sm group hover:border-[#C5A358] transition-all duration-500" data-aos="zoom-in">
       <p className="text-[10px] uppercase tracking-[0.3em] font-black text-gray-400 mb-6">{label}</p>
       <h2 className="text-4xl font-serif italic mb-4">{value}</h2>
       <div className="flex items-center gap-2">
-        <span className={`text-[10px] font-black ${up ? 'text-green-500' : 'text-red-400'}`}>
-          {up ? "▲" : "▼"} {delta}
-        </span>
         <span className="text-[10px] text-gray-300 uppercase tracking-widest font-bold">{sub}</span>
       </div>
-    </div>
-  );
-}
-
-function SalesLineChart({ series }) {
-  const max = Math.max(...series);
-  const points = series.map((v, i) => `${(i / (series.length - 1)) * 100},${100 - (v / max) * 100}`).join(" ");
-  
-  return (
-    <div className="w-full h-40 mt-10">
-      <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#C5A358" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#C5A358" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <polyline fill="none" stroke="#C5A358" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
-        <path d={`M0,100 L${points} L100,100 Z`} fill="url(#salesGrad)" />
-      </svg>
     </div>
   );
 }
@@ -214,29 +168,3 @@ function LoadingState() {
     </div>
   );
 }
-
-// ── Mock Sales Data ───────────────────────────────────────────────────────────
-const mockSalesData = {
-  revenue: 842500,
-  orders: 1240,
-  aov: 679,
-  dailyMax: 42000,
-  dailySales: [12, 18, 15, 25, 30, 22, 40, 35, 28, 42, 38, 50, 45, 60],
-  topProducts: [
-    { id: 1, name: "Velvet Rose Lip Tint", brand: "Aura Essentials", sold: 420, revenue: 125500, stock: 12 },
-    { id: 2, name: "Silk Finish Foundation", brand: "Maison Glow", sold: 210, revenue: 189000, stock: 45 },
-    { id: 3, name: "Hydro Toner 200ml", brand: "Lumiére", sold: 180, revenue: 94000, stock: 5 },
-    { id: 4, name: "Solar SPF 50", brand: "Sunia", sold: 155, revenue: 72000, stock: 80 },
-  ],
-  brandShare: [
-    { name: "Aura Essentials", percent: 45 },
-    { name: "Maison Glow", percent: 25 },
-    { name: "Lumiére", percent: 20 },
-    { name: "Others", percent: 10 },
-  ],
-  recentActivity: [
-    { msg: "Large Order: 12 items by Sophia L.", time: "2 MINS AGO" },
-    { msg: "Stock Alert: Hydro Toner is running out", time: "15 MINS AGO" },
-    { msg: "Daily revenue goal reached", time: "1 HOUR AGO" },
-  ]
-};

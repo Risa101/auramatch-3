@@ -1,257 +1,586 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, Link, NavLink } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { TUTORIAL_RESOURCES } from "../data/tutorialResources";
+import PersonalColorTikTokCard from "../components/PersonalColorTikTokCard";
+import TikTokModal from "../components/TikTokModal";
+import { Star, ArrowRight, Sparkles, PlayCircle, Heart, ShoppingBag, Menu, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import i18n from "../lib/i18n";
 
-// ✅ ดึงฟังก์ชันที่เชื่อมต่อกับ Backend จริง
-import { getBestSellerProducts, getLooksBySeason } from "../callapi/call_api_user";
-import { getFavoritesByUser, toggleFavorite } from "../callapi/call_api_favorite";
+// ✅ API Connections
+import {
+  getBestSellerProducts, getLooksBySeason, getFavoritesByUserApi, // 👈 เพิ่มตัวนี้
+  toggleFavoriteApi
+} from "../callapi/call_api_user";
 
+const BASE_PATH = "/";
 
-/* ========== 2. Sub-Components ========== */
-
-const FaceShapeIcon = ({ type }) => {
-  const strokeColor = "currentColor";
-  const strokeWidth = "2.5";
-  switch (type) {
-    case "round": return <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
-    case "oval": return <svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="28" ry="38" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
-    case "square": return <svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" rx="2" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
-    case "heart": return <svg viewBox="0 0 100 100"><path d="M50 80 C20 60 15 35 35 25 C45 20 50 30 50 30 C50 30 55 20 65 25 C85 35 80 60 50 80 Z" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
-    case "triangle": return <svg viewBox="0 0 100 100"><path d="M50 25 L80 75 L20 75 Z" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
-    case "diamond": return <svg viewBox="0 0 100 100"><path d="M50 20 L80 50 L50 80 L20 50 Z" fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /></svg>;
-    default: return null;
-  }
-};
-
-const SectionHeader = ({ title, subtitle, align = "center", aosType = "fade-up" }) => (
-  <div
-    className={`mb-24 ${align === "center" ? "text-center" : "text-left"}`}
-    data-aos={aosType}
-  >
-    {subtitle && <span className="text-[11px] font-black tracking-[0.6em] text-[#C5A358] uppercase block mb-6">{subtitle}</span>}
-    <h2 className="text-5xl md:text-7xl font-serif italic text-[#1A1A1A] leading-tight font-bold">{title}</h2>
-  </div>
-);
-
-/* ========== 3. Main Page Component ========== */
-export default function AuramatchPage() {
-  const { t } = useTranslation();
+export default function AuramatchDailyDose() {
   const navigate = useNavigate();
-  const userId = 1;
-
-  const [favorites, setFavorites] = useState([]);
+  const { t } = useTranslation();
   const [bestSellers, setBestSellers] = useState([]);
-  const [looksBySeason, setLooksBySeason] = useState({ Spring: [], Summer: [], Autumn: [], Winter: [] });
+  const [selectedVideo, setSelectedVideo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [makeupLooks, setMakeupLooks] = useState([]);
+  const [activeColor, setActiveColor] = useState("Spring"); // สำหรับ Filter
+  const [likedProducts, setLikedProducts] = useState({});
 
-  // Initialize AOS
+  // ✅ Fixed Missing Nav Items
+  const navItems = [
+    { label: "Home", to: "/" },
+    { label: "Academy", to: "/academy" },
+    { label: "Analysis", to: "/analysis" },
+    { label: "Shop", to: "/shop" }
+  ];
+
+  const personalColorData1 = [
+  {
+    id: '01',
+    name: 'Spring',
+    tag: 'Warm, Bright & Vitality',
+    desc: 'กลุ่มสีโทนอุ่นที่สดใส สว่าง และมีความใส (Clarity) สูง ช่วยขับให้ผิวดูเปล่งปลั่งมีเลือดฝาด',
+    color: 'bg-[#FFF5F0]',
+    textColor: 'text-[#E67E22]',
+    palette: [
+      '#FFDAB9', '#FF8C69', '#FFD700', '#FFA07A', '#98FB98', '#FF69B4', // 1-6
+      '#00FA9A', '#F0E68C', '#FF7F50', '#87CEEB', '#DEB887', '#FFEFD5', // 7-12
+      '#F4A460', '#FFFFE0', '#9ACD32', '#FF4500', '#FFCC00', '#FA8072', // 13-18
+      '#7CFC00', '#EEDC82', '#FFB6C1', '#00CED1', '#FFDAB9', '#F08080'  // 19-24
+    ],
+  },
+  {
+    id: '02',
+    name: 'Summer',
+    tag: 'Cool, Soft & Elegant',
+    desc: 'กลุ่มสีโทนเย็นที่มีความละมุน (Muted) และเจือเทา ให้ลุคที่ดูสุภาพ เรียบหรู และอ่อนโยน',
+    color: 'bg-[#F0F5FF]',
+    textColor: 'text-[#7D8CC4]',
+    palette: [
+      '#E6CFCD', '#A7B9D4', '#FBB1BD', '#C8B2D1', '#B0C4DE', '#D8BFD8', // 1-6
+      '#E0FFFF', '#BDB76B', '#95A5A6', '#7FB3D5', '#D2B4DE', '#FADBD8', // 7-12
+      '#708090', '#B0E0E6', '#AFEEEE', '#DB7093', '#BC8F8F', '#4682B4', // 13-18
+      '#DCDCDC', '#B4CFEC', '#C3949E', '#91A3B0', '#997A8D', '#82A1B1'  // 19-24
+    ],
+  },
+  {
+    id: '03',
+    name: 'Autumn',
+    tag: 'Warm, Rich & Earthy',
+    desc: 'กลุ่มสีโทนอุ่นที่เข้มและลึก (Deep) มีความหม่นและคลาสสิก เหมือนสีสันของธรรมชาติฤดูใบไม้ร่วง',
+    color: 'bg-[#F9F4E8]',
+    textColor: 'text-[#8B4513]',
+    palette: [
+      '#A0522D', '#B8860B', '#5D4037', '#CD5C5C', '#556B2F', '#D2691E', // 1-6
+      '#BC8F8F', '#DAA520', '#808000', '#6B8E23', '#A52A2A', '#E9967A', // 7-12
+      '#3D2B1F', '#4B3621', '#6E4B1F', '#832A0D', '#556B2F', '#434B2A', // 13-18
+      '#B87333', '#915F6D', '#7B3F00', '#8A3324', '#C19A6B', '#4E5754'  // 19-24
+    ],
+  },
+  {
+    id: '04',
+    name: 'Winter',
+    tag: 'Cool, Vivid & Sharp',
+    desc: 'กลุ่มสีโทนเย็นที่เข้มข้น ชัดเจน และมี Contrast สูง ช่วยขับเน้นเครื่องหน้าให้ดูคมชัดและโดดเด่น',
+    color: 'bg-[#F4F4F4]',
+    textColor: 'text-[#2C3E50]',
+    palette: [
+      '#1C1C1C', '#003366', '#800020', '#C0C0C0', '#4B0082', '#008080', // 1-6
+      '#FF00FF', '#FFFFFF', '#00008B', '#FF1493', '#00CED1', '#333333', // 7-12
+      '#4169E1', '#8B008B', '#000000', '#0047AB', '#E0115F', '#50C878', // 13-18
+      '#0F0F0F', '#66023C', '#240A40', '#082567', '#002147', '#36454F'  // 19-24
+    ],
+  }
+];
+
+
   useEffect(() => {
-    AOS.init({
-      duration: 1000,
-      easing: "ease-out-cubic",
-      once: false, // ให้เล่นแอนิเมชั่นซ้ำได้เวลาเลื่อนขึ้นลง
-      offset: 100,
-    });
+    const fetchInitialData = async () => {
+      const userRaw = localStorage.getItem("auramatch:user");
+      const user = userRaw ? JSON.parse(userRaw) : null;
+      const userId = user?.uid ? Number(user.uid) : null;
+      if (!userId) return;
+      const favs = await getFavoritesByUserApi(userId);
+
+      // แปลงข้อมูล Array เป็น Object เพื่อให้เช็คสถานะหัวใจได้เร็วขึ้น
+      const favMap = {};
+      favs.forEach(item => {
+        favMap[item.product_id] = true;
+      });
+      setLikedProducts(favMap);
+    };
+    fetchInitialData();
   }, []);
 
-  const isFavorite = useCallback((productId) => {
-    return favorites.some(fav => String(fav.product_id) === String(productId));
-  }, [favorites]);
 
-  const getImageUrl = useCallback((path) => {
-    if (!path || path === "null") {
-      return "https://images.unsplash.com/photo-1596462502278-27bfac4033c8?q=80&w=1000";
+  const toggleLike = async (productId) => {
+    const userRaw = localStorage.getItem("auramatch:user");
+    const user = userRaw ? JSON.parse(userRaw) : null;
+    const userId = user?.uid ? Number(user.uid) : null;
+    if (!userId) {
+      alert("กรุณาเข้าสู่ระบบก่อนใช้งานรายการโปรด");
+      return;
     }
-    if (path.startsWith("http")) return path;
 
-    // รูปที่อยู่ใน public/
-    return `/${path.replace(/^\/+/, "")}`;
-  }, []);
+    // 1. Update UI ทันที (Optimistic Update)
+    setLikedProducts(prev => ({ ...prev, [productId]: !prev[productId] }));
 
+    try {
+      // 2. เรียก API ที่เราเขียนไว้ใน favorite_bp
+      await toggleFavoriteApi(userId, productId);
+    } catch (error) {
+      // 3. ถ้า Error ให้คืนค่าเดิม (Rollback)
+      setLikedProducts(prev => ({ ...prev, [productId]: !prev[productId] }));
+      alert("ไม่สามารถบันทึกรายการโปรดได้ในขณะนี้");
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [bsData, favData] = await Promise.all([
+      // ใช้ Promise.all ดึงทั้งสินค้าขายดี และ Looks ตามฤดูกาลพร้อมกัน
+      const [bsData, looksData] = await Promise.all([
         getBestSellerProducts(),
-        getFavoritesByUser(userId)
+        getLooksBySeason(activeColor) // เรียกใช้ API looks โดยส่งค่า activeColor (Spring, Summer, etc.)
       ]);
-      setBestSellers(bsData || []);
-      setFavorites(Array.isArray(favData) ? favData : []);
 
-      const seasons = ["Spring", "Summer", "Autumn", "Winter"];
-      const seasonLooks = {};
-      await Promise.all(seasons.map(async (s) => {
-        const data = await getLooksBySeason(s);
-        seasonLooks[s] = data || [];
-      }));
-      setLooksBySeason(seasonLooks);
+      setBestSellers(bsData || []);
+      setMakeupLooks(looksData || []); // อัปเดตข้อมูลที่ดึงมาจากหลังบ้านลงใน State
     } catch (err) {
       console.error("Fetch Data Error:", err);
     } finally {
       setIsLoading(false);
-      // Refresh AOS after data loads
-      setTimeout(() => AOS.refresh(), 100);
+      // ให้ AOS (Animation) ทำงานหลังจากโหลดข้อมูลเสร็จ
+      setTimeout(() => AOS.refresh(), 500);
     }
-  }, [userId]);
+  }, [activeColor]); // 👈 สำคัญมาก: ต้องใส่ [activeColor] เพื่อให้โหลดใหม่เมื่อคลิกเปลี่ยนสี
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleToggleFavorite = async (productId) => {
-    if (isActionLoading) return;
-    setIsActionLoading(true);
-    try {
-      await toggleFavorite(userId, productId);
-      const updatedFavs = await getFavoritesByUser(userId);
-      setFavorites(updatedFavs || []);
-    } catch (e) {
-      console.error("Toggle Favorite Error", e);
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchData();
+    AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [fetchData]);
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
-      <div className="animate-pulse text-[12px] font-bold tracking-[0.8em] uppercase text-[#C5A358]">Maison AuraMatch...</div>
+    <div className="h-screen bg-[#E8D9F2] flex items-center justify-center">
+      <div className="relative flex flex-col items-center gap-4">
+        <div className="w-16 h-16 border-4 border-[#D23669]/20 border-t-[#D23669] rounded-full animate-spin"></div>
+        <span className="text-[10px] tracking-[0.3em] uppercase text-[#D23669] font-black italic">Preparing Your Dose...</span>
+      </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] overflow-x-hidden">
+    <div className="bg-white text-[#4A4A4A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
 
-      {/* 1. HERO SECTION */}
-      <section className="relative h-screen flex items-center px-10 md:px-24">
-        <div className="absolute top-0 right-0 w-full md:w-3/5 h-full overflow-hidden" data-aos="fade-left">
-          <img
-            src={getImageUrl("assets/IMG_7259.PNG")}
-            className="w-full h-full object-cover scale-105 hero-zoom opacity-90"
-            alt="Hero"
-            onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1596462502278-27bfac4033c8?q=80&w=1500"; }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FDFCFB] via-transparent to-transparent" />
+      {/* --- 1. HERO --- */}
+      <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
+        <div className="absolute inset-0 z-0">
+          <video autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover opacity-100">
+            <source src={`${BASE_PATH}dior1.mov`} type="video/mp4" />
+          </video>
         </div>
-
-        <div className="relative z-10 max-w-3xl" data-aos="fade-right" data-aos-delay="300">
-          <span className="text-[12px] font-black tracking-[0.8em] text-[#C5A358] uppercase mb-8 block">The Art of Radiance</span>
-          <h1 className="text-7xl md:text-[9rem] font-serif italic leading-[0.85] mb-12 tracking-tighter font-bold">Aura Match.</h1>
-          <button onClick={() => navigate("/analysis")} className="group relative px-12 py-5 bg-[#1A1A1A] text-white text-[11px] font-bold tracking-[0.4em] uppercase overflow-hidden transition-all duration-500 hover:shadow-2xl">
-            <span className="relative z-10">START ANALYSIS</span>
-            <div className="absolute inset-0 bg-[#C5A358] translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-          </button>
-        </div>
-      </section>
-
-      {/* 2. LOOKBOOK SECTION (Seasons) */}
-      <section className="py-40 px-10 md:px-24 bg-white border-y border-gray-50">
-        <SectionHeader title="The Seasons Collection" subtitle="Curation" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {["Spring", "Summer", "Autumn", "Winter"].map((season, i) => (
-            <div
-              key={season}
-              className="group relative aspect-[3/4] overflow-hidden cursor-pointer shadow-sm"
-              data-aos="fade-up"
-              data-aos-delay={i * 150}
-              onClick={() => navigate(`/looks`, {
-                state: { personal_color: season }
-              })}
-
-            >
-              <img
-                src={getImageUrl(looksBySeason[season]?.[0]?.image_url)}
-                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
-                alt={season}
-                onError={(e) => { e.target.src = `https://via.placeholder.com/600x800?text=${season}`; }}
-              />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-              <div className="absolute bottom-10 left-10">
-                <p className="text-[10px] font-bold tracking-[0.4em] text-white/80 uppercase mb-2">Palette</p>
-                <h3 className="text-4xl font-serif italic text-white font-bold">{season}</h3>
-              </div>
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
+          <div data-aos="fade-right" className="max-w-xl space-y-6">
+            <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1 rounded-full border border-white/20 backdrop-blur-sm">
+              <Sparkles size={10} className="text-white" />
+              <span className="text-[8px] tracking-[0.2em] uppercase text-white font-black">Innovation 2026</span>
             </div>
+            {/* Base Font Reference */}
+            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-white uppercase">
+              The <span className="text-[#FF85A2]">Aura</span> <br /> Match <span className="font-light italic text-white">Dose</span>
+            </h1>
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.15em] text-white/90 max-w-sm leading-relaxed">
+              The highly-absorbable, biometric-based, and enjoyable solution to your perfect beauty match.
+            </p>
+            <div className="pt-4">
+              <button onClick={() => navigate("/analysis")} className="bg-[#D23669] text-white px-8 py-4 rounded-full text-[9px] font-[900] uppercase tracking-widest hover:scale-105 transition-all">
+                Begin Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* --- 2. MARQUEE --- */}
+      <div className="bg-[#D23669] py-5 overflow-hidden border-y border-white/10 relative z-20">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(10)].map((_, i) => (
+            <span key={i} className="text-white text-[10px] font-[900] tracking-[0.5em] uppercase mx-12">
+              • DISCOVER YOUR SHAPE • ANALYSE YOUR COLOR • BOOST YOUR AURA •
+            </span>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* 3. BEST SELLERS SECTION */}
-      <section className="py-40 px-10 md:px-24">
-        <SectionHeader title="Atelier Essentials" subtitle="Best Sellers" align="left" aosType="fade-right" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
-          {bestSellers.length > 0 ? bestSellers.slice(0, 6).map((p, i) => (
-            <article
-              key={p.product_id}
-              className="group"
-              data-aos="fade-up"
-              data-aos-delay={(i % 3) * 150}
-            >
-              <div className="relative aspect-[4/5] overflow-hidden bg-white mb-8 border border-gray-100 shadow-sm group-hover:shadow-2xl transition-all duration-700">
-                <button
-                  onClick={() => handleToggleFavorite(p.product_id)}
-                  className={`absolute top-6 right-6 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg transition-all duration-300 ${isFavorite(p.product_id) ? "text-red-500 scale-110" : "text-gray-300 hover:text-[#C5A358]"}`}
-                >
-                  {isFavorite(p.product_id) ? "♥" : "♡"}
-                </button>
-                <img
-                  src={getImageUrl(p.image_url)}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                  alt={p.name}
-                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000"; }}
-                />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-[12px] font-black tracking-[0.2em] uppercase text-[#1A1A1A]">{p.name}</h4>
-                <p className="text-xl font-serif italic text-[#C5A358] font-bold">฿{p.price.toLocaleString()}</p>
-              </div>
-            </article>
-          )) : (
-            <div className="col-span-full py-20 text-center text-gray-300 uppercase tracking-widest text-xs">No products found</div>
-          )}
-        </div>
-      </section>
-
-      {/* 4. FACIAL IDENTITY SECTION */}
-      <section className="py-40 bg-[#F9F7F5] border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-10">
-          <SectionHeader title="Facial Identity" subtitle="Precision Analysis" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-            {["round", "oval", "square", "heart", "triangle", "diamond"].map((type, i) => (
-              <div
-                key={type}
-                className="flex flex-col items-center justify-center p-12 bg-white shadow-sm hover:shadow-2xl transition-all duration-700 group cursor-pointer rounded-sm border border-transparent hover:border-[#C5A358]/30"
-                data-aos="zoom-in"
-                data-aos-delay={i * 100}
-              >
-                <div className="w-16 h-16 mb-8 text-[#1A1A1A] group-hover:text-[#C5A358] group-hover:scale-110 transition-all duration-700">
-                  <FaceShapeIcon type={type} />
+      {/* --- 3. FACE SHAPE LIBRARY --- */}
+      <section className="py-32 bg-white overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+            <div data-aos="fade-right" className="space-y-4">
+              <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669]">Face Geometry</span>
+              {/* Scaled to Match Hero */}
+              <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
+                Which <span className="text-[#FF85A2]">Shape</span> <br /> Are You?
+              </h2>
+            </div>
+            <p data-aos="fade-left" className="text-[10px] font-black text-gray-400 uppercase tracking-widest max-w-xs leading-loose text-left md:text-right pb-2">
+              Every face shape has its own unique charm. Discover yours through AI analysis.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {[
+              { label: "Oval", desc: "หน้ารูปไข่", color: "bg-[#FFEBF0]" },
+              { label: "Round", desc: "หน้ากลม", color: "bg-[#E0F2FE]" },
+              { label: "Square", desc: "หน้าเหลี่ยม", color: "bg-[#F3F4F6]" },
+              { label: "Heart", desc: "รูปหัวใจ", color: "bg-[#FFF4E0]" },
+              { label: "Diamond", desc: "รูปเพชร", color: "bg-[#E8D9F2]" },
+              { label: "Long", desc: "หน้ายาว", color: "bg-[#E2F3E7]" }
+            ].map((shape, i) => (
+              <div key={shape.label} data-aos="zoom-in" data-aos-delay={i * 100} className={`group ${shape.color} p-8 rounded-[2.5rem] flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-3 hover:shadow-xl cursor-pointer`}>
+                <div className="w-12 h-16 mb-4 border border-[#D23669]/20 rounded-full flex items-center justify-center group-hover:border-[#D23669] transition-colors">
+                  <span className="text-[10px] font-black text-[#D23669] opacity-40 group-hover:opacity-100 uppercase">{shape.label[0]}</span>
                 </div>
-                <span className="text-[11px] font-black tracking-[0.4em] uppercase text-gray-400 group-hover:text-[#1A1A1A] transition-colors">
-                  {type}
-                </span>
-                <div className="w-0 group-hover:w-10 h-[2px] bg-[#C5A358] mt-4 transition-all duration-500"></div>
+                <h5 className="text-[11px] font-[900] text-[#4A4A4A] uppercase tracking-tighter mb-1">{shape.label}</h5>
+                <p className="text-[8px] font-black text-[#D23669]/40 uppercase tracking-widest">{shape.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="py-20 text-center bg-[#FDFCFB]" data-aos="fade-up">
-        <p className="text-[10px] font-bold tracking-[0.8em] uppercase text-[#C5A358] mb-4">Maison AuraMatch • Est. 2026</p>
-        <div className="w-12 h-[1px] bg-gray-200 mx-auto"></div>
+      {/* --- 4. PERSONAL COLOR (Balanced Palette Version) --- */}
+      <section className="py-20 bg-[#F9F9F9] overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="mb-12 text-center">
+            <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-2">Color Harmony</span>
+            <h2 className="text-3xl md:text-4xl font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
+              Discover Your <span className="text-[#D23669]">Season</span>
+            </h2>
+          </div>
+
+          <div className="flex flex-col md:flex-row h-[500px] gap-3 w-full items-stretch">
+            {personalColorData1.map((item, idx) => (
+              <div
+                key={item.name}
+                className={`group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25, 1, 0.35, 1)] cursor-pointer overflow-hidden rounded-[2.5rem] ${item.color} shadow-sm border border-black/5`}
+              >
+                <div className="absolute inset-0 p-8 flex flex-col z-20">
+
+                  {/* Top Section */}
+                  <div className="relative">
+                    <span className={`text-4xl font-[900] opacity-10 block transition-transform duration-700 group-hover:-translate-y-2 ${item.textColor}`}>
+                      {item.id}
+                    </span>
+
+                    <div className="mt-2 transform transition-all duration-500 group-hover:translate-x-1">
+                      <h4 className={`text-2xl font-[900] tracking-tighter uppercase leading-none mb-1 ${item.textColor}`}>
+                        {item.name}
+                      </h4>
+                      <p className={`text-[9px] font-black uppercase tracking-[0.2em] opacity-70 ${item.textColor}`}>
+                        {item.tag}
+                      </p>
+                    </div>
+                  </div>
+
+                 
+                {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
+<div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* ล็อคความสูง Container */}
+  <div className="relative w-full">
+    {/* ใช้ Grid เพื่อให้ทุกอันวางในตำแหน่งที่เท่ากันเป๊ะ */}
+    <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
+      {item.palette.map((color, pIdx) => (
+        <div
+          key={pIdx}
+          className={`
+            relative rounded-full border border-white/40 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23, 1, 0.32, 1)]
+            
+            /* กำหนดรูปทรงวงรีให้คงที่ */
+            h-10 w-full max-w-[30px] mx-auto
+            
+            /* สถานะปกติ: โชว์ 4 สีแรกในแถวแรก */
+            ${pIdx < 4 
+              ? 'opacity-100' 
+              : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
+            }
+            
+            /* Interaction: เมื่อ Hover ที่วงรีแต่ละอัน */
+            hover:scale-125 hover:z-50 hover:shadow-lg hover:border-white
+          `}
+          style={{ 
+            backgroundColor: color,
+            /* สั่งให้ทยอยโผล่มาทีละเม็ดอย่างเป็นระเบียบ */
+            transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
+          }}
+        >
+          {/* Glass Reflection เอฟเฟกต์แก้วสะท้อน */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
+        </div>
+      ))}
+    </div>
+
+    {/* Footer Hint: ปรับตำแหน่งให้คงที่ */}
+    <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
+      <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
+      <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
+        24 Shades Palette
+      </p>
+    </div>
+  </div>
+</div>
+
+                  {/* Bottom Section */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-300 transform translate-y-6 group-hover:translate-y-0">
+                    <p className="text-[12px] font-medium leading-relaxed text-gray-600 mb-5 max-w-[280px]">
+                      {item.desc}
+                    </p>
+
+                    <button className={`flex items-center gap-2 font-black text-[9px] uppercase tracking-[0.15em] py-3 px-6 rounded-full bg-white shadow-sm hover:shadow-md transition-all ${item.textColor}`}>
+                      Details
+                      <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Background Highlight */}
+                <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+                  <div className={`absolute -bottom-10 left-1/2 -translate-x-1/2 w-[120%] h-1/3 bg-white opacity-30 blur-[60px] rounded-[100%] transform translate-y-32 group-hover:translate-y-0 transition-all duration-1000`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- 5. THE EDIT --- */}
+      <section className="py-32 bg-white">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="flex justify-between items-center mb-20">
+            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter uppercase text-[#4A4A4A]">
+              The Best Sellers.
+            </h2>
+            <button className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669] border-b-2 border-[#D23669]/10 pb-1">View All</button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {bestSellers.slice(0, 3).map((p, i) => (
+              <div key={p.product_id ?? i} data-aos="fade-up" className="group text-center">
+                {/* Container รูปภาพ */}
+                <div className="relative aspect-[3/4] rounded-[3.5rem] overflow-hidden bg-[#F9F9F9] mb-10 group-hover:shadow-2xl transition-all duration-700">
+                  <img
+                    src={`${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/${p.image_url.replace(/^\//, '')}`}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                    alt={p.name}
+                  />
+
+                  {/* --- ปุ่มหัวใจที่เพิ่มเข้ามา --- */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // กันไม่ให้ไปเปิด Modal สินค้า
+                      toggleLike(p.product_id);
+                    }}
+                    className="absolute top-8 right-8 z-20 p-4 rounded-full bg-white/90 backdrop-blur-md shadow-lg transition-all active:scale-90 hover:bg-white"
+                  >
+                    <Heart
+                      size={20}
+                      className={`transition-colors duration-300 ${likedProducts[p.product_id] ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                    />
+                  </button>
+                  {/* ------------------------- */}
+                </div>
+
+                <h5 className="text-[13px] font-[900] uppercase tracking-wider text-[#4A4A4A] mb-2">{p.name}</h5>
+                <p className="text-sm font-black text-[#D23669]">฿{parseFloat(p.price || 0).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- 5.5 THE LOOKS ARCHIVE (ดึงจากหลังบ้าน) --- */}
+      <section className="py-32 bg-[#F9F9F9]">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
+            <div data-aos="fade-right" className="space-y-4">
+              <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669]">Curated Style</span>
+              <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
+                Makeup <span className="text-[#FF85A2]">Looks</span>
+              </h2>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {["Spring", "Summer", "Autumn", "Winter"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setActiveColor(c)}
+                  className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeColor === c ? "bg-[#D23669] text-white" : "bg-white text-gray-400 border border-gray-100"
+                    }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {makeupLooks.length > 0 ? (
+              makeupLooks.map((look, i) => (
+                <div
+                  key={look.look_id ?? i}
+                  data-aos="fade-up"
+                  data-aos-delay={i * 100}
+                  className="group relative bg-white rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500"
+                >
+                  <div className="aspect-[4/5] overflow-hidden">
+                    {/* ในส่วน THE LOOKS ARCHIVE */}
+                    <img
+                      src={`${import.meta.env.VITE_API_URL}${look.image_url}`} // ✅ ใช้ตัวแปรแวดล้อมแทนการระบุ IP ตรงๆ
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                      alt={look.look_name}
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-10">
+                    <span className="text-[10px] text-[#FF85A2] font-black uppercase tracking-[0.3em] mb-2">
+                      {look.personal_color} Collection
+                    </span>
+                    <h4 className="text-2xl font-[900] text-white uppercase tracking-tighter mb-4">
+                      {look.look_name}
+                    </h4>
+                    <button className="w-fit bg-white text-black px-6 py-3 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#D23669] hover:text-white transition-colors">
+                      Explore Details
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300">No looks found for this season.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* --- 6. FILM ARCHIVE --- */}
+      <section className="py-24 bg-[#E8D9F2]/10">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="flex items-center gap-6 mb-16">
+            {/* Scaled to Match Hero */}
+            <h3 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none text-[#D23669] uppercase tracking-tighter">
+              Film Archive
+            </h3>
+            <div className="h-[2px] flex-grow bg-[#D23669]/10 mt-4" />
+            <PlayCircle size={40} className="text-[#D23669]/20" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {Object.values(TUTORIAL_RESOURCES).slice(0, 4).map((video, idx) => (
+              <div key={idx} className="transform scale-[0.98] hover:scale-100 transition-all">
+                <PersonalColorTikTokCard video={video} onSelect={setSelectedVideo} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- 7. FAQ --- */}
+      <section className="py-32 bg-white">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="max-w-4xl mx-auto">
+            {/* Scaled to Match Hero */}
+            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none text-[#D23669] uppercase tracking-tighter text-center mb-20">
+              FAQ.
+            </h2>
+            <div className="space-y-4">
+              {[
+                { q: "ศิลปะแห่งการประมวลผล?", a: "AI ของเราวิเคราะห์โครงสร้างความงามในระดับ Biometric Mapping เพื่อหาจุดที่สมบูรณ์แบบที่สุดของคุณ" },
+                { q: "เอกสิทธิ์เฉพาะบุคคล?", a: "ทุกผลลัพธ์คือลิขสิทธิ์ความงามเฉพาะตัวคุณ ข้อมูลจะถูกจัดเก็บแบบส่วนตัวเพื่อความปลอดภัย" }
+              ].map((item, i) => (
+                <details key={i} className="group bg-[#F9F9F9] rounded-[2rem] px-10 py-8 cursor-pointer hover:bg-white hover:shadow-xl transition-all">
+                  <summary className="flex justify-between items-center list-none font-[900] text-xs uppercase tracking-[0.2em] text-[#4A4A4A]">
+                    {item.q}
+                    <ArrowRight size={16} className="group-open:rotate-90 transition-all text-[#D23669]" />
+                  </summary>
+                  <p className="mt-6 text-[11px] font-bold uppercase tracking-widest leading-loose text-gray-400 border-t border-gray-100 pt-6">{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 8. PRESTIGE CALL TO ACTION --- */}
+      <section className="py-20 bg-black text-white">
+        <div className="max-w-[1400px] mx-auto px-10 text-center space-y-8">
+          <div data-aos="fade-up">
+            <h2 className="text-4xl md:text-6xl font-[900] tracking-tighter uppercase leading-none">
+              Ready to <span className="text-[#FF85A2]">Reveal</span> <br /> Your Inner Aura?
+            </h2>
+            <p className="text-[10px] tracking-[0.3em] font-bold text-gray-500 uppercase mt-6">
+              Experience the future of biometric beauty analysis.
+            </p>
+          </div>
+          <div data-aos="zoom-in" data-aos-delay="200">
+            <button
+              onClick={() => navigate("/analysis")}
+              className="group relative overflow-hidden bg-white text-black px-12 py-5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:pr-16"
+            >
+              <span className="relative z-10">Start Your Analysis</span>
+              <ArrowRight className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all" size={16} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 9. LUXURY FOOTER --- */}
+      <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
+            <div className="col-span-1 md:col-span-2 space-y-6">
+              <h3 className="text-2xl font-[900] tracking-tighter uppercase">Aura<span className="text-[#D23669]">Match</span></h3>
+              <p className="text-[11px] font-bold text-gray-400 uppercase leading-loose max-w-sm">
+                Leading the intersection of biometric technology and premium beauty aesthetics.
+                Your personalized dose of confidence, delivered daily.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest">Navigation</h4>
+              <ul className="space-y-2">
+                {navItems.map((item) => (
+                  <li key={item.to}><Link to={item.to} className="text-[10px] font-bold text-gray-400 hover:text-[#D23669] transition-colors uppercase">{item.label}</Link></li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest">Connect</h4>
+              <div className="flex gap-4">
+                {/* ใส่ Social Icons ตรงนี้ */}
+                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">INSTAGRAM</span>
+                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">TIKTOK</span>
+              </div>
+            </div>
+          </div>
+          <div className="text-center pt-10 border-t border-gray-50">
+            <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em]">
+              © 2026 AURAMATCH BIOMETRIC BEAUTY LAB. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </div>
       </footer>
 
+      {selectedVideo && <TikTokModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />}
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;600;800;900&display=swap');
-        .font-serif { font-family: 'Playfair Display', serif; }
-        body { font-family: 'Montserrat', sans-serif; }
-        .hero-zoom { animation: heroZoom 20s infinite alternate ease-in-out; }
-        @keyframes heroZoom { from { transform: scale(1); } to { transform: scale(1.1); } }
-        [data-aos] { pointer-events: none; }
-        [data-aos].aos-animate { pointer-events: auto; }
-      `}</style>
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-marquee { animation: marquee 30s linear infinite; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #D23669; border-radius: 10px; }
+      `}</style >
     </div>
   );
-}
+} 

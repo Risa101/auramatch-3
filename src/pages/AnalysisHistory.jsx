@@ -1,21 +1,17 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { Trash2, Plus, Filter, Calendar, Sparkles } from "lucide-react";
+import { lsGet } from "../utils/storage";
+// ตรวจสอบว่า Path และชื่อฟังก์ชันตรงกับในไฟล์ call_api_user.js
+import { getAnalysisHistory, deleteAnalysis } from "../callapi/call_api_user";
 
-/* ---------- Helpers ---------- */
-function readHistory() {
+/* ---------- 1. Helpers ---------- */
+function formatDate(dateStr) {
   try {
-    // ดึงข้อมูลล่าสุดเสมอจาก localStorage
-    return JSON.parse(localStorage.getItem("auramatch:analysisHistory") || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function formatDate(ts) {
-  try {
-    const d = new Date(ts);
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
     return d.toLocaleDateString("en-US", {
-      month: "short",
+      month: "long",
       day: "numeric",
       year: "numeric",
     });
@@ -26,135 +22,226 @@ function formatDate(ts) {
 
 export default function AnalysisHistory() {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterSeason, setFilterSeason] = useState("ALL");
-  const [filterFace, setFilterFace] = useState("ALL");
   const [sort, setSort] = useState("newest");
+  
+  // ดึงข้อมูล User (ใช้ค่า Default เผื่อกรณี localStorage ว่าง)
+  const me = lsGet("auramatch:user", null);
+  const userId = me?.uid || me?.user_id || me?.id || null;
 
-  // ฟังก์ชันโหลดข้อมูลที่ดึงจาก LocalStorage โดยตรง
-  const loadHistory = useCallback(() => {
-    const list = readHistory();
-    const normalized = list.map((it) => ({
-      ...it,
-      // ตรวจสอบ fallback ของเวลา
-      createdAt: it.createdAt || it.ts || Date.now(),
-    }));
+  const normalizeItem = (row) => {
+    const imagePath = row?.image_path || row?.preview || "";
+    return {
+      id: row?.history_id || row?.analysis_id || row?.id,
+      season: row?.season,
+      face_shape: row?.face_shape,
+      created_at: row?.analysis_date || row?.created_at,
+      image_path: imagePath,
+    };
+  };
 
-    // เรียงลำดับข้อมูล
-    normalized.sort((a, b) =>
-      sort === "newest" ? b.createdAt - a.createdAt : a.createdAt - b.createdAt
-    );
-    setItems(normalized);
-  }, [sort]);
+  const resolveImageSrc = (value) => {
+    if (!value) return "";
+    if (value.startsWith("data:") || value.startsWith("http")) return value;
+    return value.startsWith("/") ? value : `/${value}`;
+  };
+
+  // 2. Load Data from Database
+  const loadHistory = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const data = await getAnalysisHistory(userId);
+      
+      // ป้องกัน Error ถ้า data ไม่ใช่ Array
+      const safeData = Array.isArray(data) ? data : (data?.data || []);
+
+      const normalized = safeData.map(normalizeItem);
+      const sortedData = [...normalized].sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return sort === "newest" ? dateB - dateA : dateA - dateB;
+      });
+      
+      setItems(sortedData);
+    } catch (err) {
+      console.error("Failed to load history:", err);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, sort]);
 
   useEffect(() => {
-    // 1. โหลดครั้งแรกเมื่อเข้าหน้า
     loadHistory();
+  }, [loadHistory]);
 
-    // 2. ฟัง Event "history:changed" (สำหรับกรณีเปลี่ยนในหน้าเดียวกันหรือผ่านฟังก์ชัน)
-    const onHistoryChanged = () => {
-      loadHistory();
-    };
-
-    // 3. ฟัง Event "storage" (สำคัญ! ทำให้เรียลไทม์แม้จะเปิดหลาย Tab หรือเปลี่ยนจากหน้าอื่น)
-    const onStorageChanged = (e) => {
-      if (e.key === "auramatch:analysisHistory") {
-        loadHistory();
-      }
-    };
-
-    window.addEventListener("history:changed", onHistoryChanged);
-    window.addEventListener("storage", onStorageChanged);
-
+  useEffect(() => {
+    const handleHistoryChanged = () => loadHistory();
+    window.addEventListener("history:changed", handleHistoryChanged);
+    window.addEventListener("history:updated", handleHistoryChanged);
     return () => {
-      window.removeEventListener("history:changed", onHistoryChanged);
-      window.removeEventListener("storage", onStorageChanged);
+      window.removeEventListener("history:changed", handleHistoryChanged);
+      window.removeEventListener("history:updated", handleHistoryChanged);
     };
   }, [loadHistory]);
 
+  // 3. Filters
   const filtered = items.filter((it) => {
     if (filterSeason !== "ALL" && it.season !== filterSeason) return false;
-    if (filterFace !== "ALL" && it.faceShape !== filterFace) return false;
     return true;
   });
 
-  const deleteOne = (id) => {
-    if (!window.confirm("Remove this record from your history?")) return;
-    const currentHistory = readHistory();
-    const next = currentHistory.filter((it) => it.id !== id);
-    localStorage.setItem("auramatch:analysisHistory", JSON.stringify(next));
-    
-    // ส่งสัญญาณบอกตัวเองและ Component อื่นๆ (เช่น Navbar) ให้รู้ว่าข้อมูลเปลี่ยน
-    window.dispatchEvent(new Event("history:changed"));
+  // 4. Delete Logic
+  const deleteOne = async (analysisId) => {
+    if (!window.confirm("Remove this masterpiece from your archive?")) return;
+    try {
+      // เรียกใช้ฟังก์ชันที่ import มา
+      const success = await deleteAnalysis(analysisId);
+      if (success) {
+        loadHistory(); // Reload ข้อมูลใหม่
+      } else {
+        alert("Could not delete. Please try again.");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete analysis");
+    }
   };
 
   const clearAll = () => {
-    if (!window.confirm("Are you sure you want to clear all history?")) return;
-    localStorage.removeItem("auramatch:analysisHistory");
-    window.dispatchEvent(new Event("history:changed"));
+    alert("Full archive clearing is restricted for safety. Please delete items individually.");
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light pb-20 pt-28 px-6">
-      <div className="mx-auto max-w-6xl">
-        {/* ส่วน Header และตัวกรองคงเดิมตามที่คุณส่งมา */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 border-b border-gray-100 pb-10">
-          <div className="space-y-4">
-            <span className="text-[10px] tracking-[0.6em] font-bold uppercase text-[#C5A358]">The Archive</span>
-            <h1 className="text-5xl md:text-6xl font-serif italic leading-none tracking-tight">Analysis History.</h1>
+    <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-40 pt-32 px-10 selection:bg-[#D4AF37]/20">
+      <div className="mx-auto max-w-7xl">
+        
+        {/* HEADER SECTION */}
+        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full opacity-[0.02] pointer-events-none flex items-center justify-start">
+            <h2 className="text-[15vw] font-serif italic uppercase leading-none -ml-10">Archive</h2>
           </div>
-          <div className="flex gap-4">
-            <button onClick={clearAll} className="px-6 py-3 border border-gray-200 text-[9px] uppercase tracking-[0.3em] font-bold hover:bg-red-50 hover:text-red-500 transition-all">
+          
+          <div className="space-y-6 relative z-10">
+            <div className="flex items-center gap-4">
+               <span className="text-[10px] tracking-[0.8em] font-black uppercase text-[#D4AF37]">Personal Heritage</span>
+               <div className="h-px w-20 bg-[#D4AF37]/30" />
+            </div>
+            <h1 className="text-6xl md:text-8xl font-serif italic leading-none tracking-tighter">Analysis <br/>History.</h1>
+          </div>
+
+          <div className="flex gap-4 relative z-10">
+            <button onClick={clearAll} className="px-8 py-4 border border-gray-200 text-[10px] uppercase tracking-[0.4em] font-black hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all bg-white shadow-sm">
               Clear Archive
             </button>
-            <Link to="/analysis" className="px-8 py-3 bg-[#1A1A1A] text-white text-[9px] uppercase tracking-[0.3em] font-bold border border-[#1A1A1A] hover:bg-transparent hover:text-[#1A1A1A] transition-all">
-              New Analysis
+            <Link to="/analysis" className="px-10 py-4 bg-[#1A1A1A] text-white text-[10px] uppercase tracking-[0.4em] font-black hover:bg-[#D4AF37] transition-all shadow-xl flex items-center gap-3">
+              <Plus size={14} /> New Scan
             </Link>
           </div>
         </header>
 
-        {/* Filters Bar ... (เหมือนเดิม) */}
+        {/* FILTER BAR */}
+        <div className="flex flex-wrap items-center gap-10 mb-20 py-8 border-y border-gray-100">
+           <div className="flex items-center gap-4">
+              <Filter size={14} className="text-[#D4AF37]" />
+              <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Filters:</span>
+           </div>
+           
+           <select 
+              value={filterSeason} 
+              onChange={(e) => setFilterSeason(e.target.value)}
+              className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-b border-transparent focus:border-[#D4AF37] pb-1 cursor-pointer"
+           >
+              <option value="ALL">All Seasons</option>
+              {["Spring", "Summer", "Autumn", "Winter"].map(s => <option key={s} value={s}>{s}</option>)}
+           </select>
 
-        {/* Gallery Grid */}
-        {filtered.length === 0 ? (
-          <div className="py-40 text-center border border-dashed border-gray-200 bg-white/30">
-            <p className="text-[10px] text-gray-400 uppercase tracking-[0.4em] font-serif italic">Your personal archive is currently empty</p>
+           <select 
+              value={sort} 
+              onChange={(e) => setSort(e.target.value)}
+              className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-b border-transparent focus:border-[#D4AF37] pb-1 cursor-pointer"
+           >
+              <option value="newest">Sort: Newest First</option>
+              <option value="oldest">Sort: Chronological</option>
+           </select>
+        </div>
+
+        {/* GALLERY GRID */}
+        {loading ? (
+          <div className="py-48 text-center text-gray-400 uppercase tracking-widest animate-pulse">Loading Archive...</div>
+        ) : filtered.length === 0 ? (
+          <div className="py-48 text-center border border-dashed border-gray-200 bg-white/40 backdrop-blur-sm rounded-sm">
+            <Sparkles size={30} className="mx-auto mb-6 text-gray-200" />
+            <p className="text-[11px] text-gray-400 uppercase tracking-[0.6em] font-serif italic">The archive is waiting for your portrait</p>
+            <Link to="/analysis" className="mt-8 inline-block px-10 py-4 bg-black text-white text-[10px] font-black uppercase tracking-widest">Begin Analysis</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-32">
             {filtered.map((it) => (
-              <div key={it.id || it.createdAt} className="group relative">
+              <div key={it.id} className="group relative">
+                
                 {/* Delete Button */}
                 <button 
                   onClick={() => deleteOne(it.id)}
-                  className="absolute -top-3 -right-2 z-10 opacity-0 group-hover:opacity-100 transition-all p-2 text-gray-300 hover:text-red-400"
+                  className="absolute -top-4 -right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-white shadow-xl rounded-full p-4 text-gray-300 hover:text-red-500 hover:scale-110"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <Trash2 size={16} />
                 </button>
 
                 {/* Portrait Display */}
-                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 mb-8 border border-gray-100 shadow-sm">
+                <div className="relative aspect-[3/4] overflow-hidden bg-white mb-10 shadow-sm border border-white group-hover:shadow-2xl transition-all duration-1000">
                   <img 
-                    src={it.preview || it.image || "/assets/analysis.JPG"} 
+                    src={resolveImageSrc(it.image_path) || "https://via.placeholder.com/300x400"} 
                     alt="portrait" 
-                    className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                    className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-[2s] group-hover:scale-110"
+                    onError={(e) => { e.target.src = "https://via.placeholder.com/300x400?text=No+Image"; }}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div className="absolute bottom-6 left-6 z-10">
+                     <span className="bg-white/90 backdrop-blur-md px-4 py-2 text-[9px] font-black uppercase tracking-[0.3em] shadow-sm">
+                        {it.face_shape} Shape
+                     </span>
+                  </div>
                 </div>
 
-                {/* Info ... (เหมือนเดิม) */}
-                <div className="space-y-4 px-1">
-                  <div className="flex items-center justify-between border-b border-gray-50 pb-2">
-                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-[#C5A358]">{it.season} Selection</span>
-                    <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">{formatDate(it.createdAt)}</span>
+                {/* Info Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${it.season?.toLowerCase().includes('spring') ? 'bg-green-300' : it.season?.toLowerCase().includes('summer') ? 'bg-blue-300' : it.season?.toLowerCase().includes('autumn') ? 'bg-orange-300' : 'bg-indigo-300'}`} />
+                        <span className="text-[10px] font-black tracking-[0.4em] uppercase text-[#D4AF37]">{it.season} Selection</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                        <Calendar size={10} />
+                        <span className="text-[9px] font-bold uppercase tracking-widest">{formatDate(it.created_at)}</span>
+                    </div>
                   </div>
-                  <h3 className="text-3xl font-serif italic tracking-tight">{it.faceShape}</h3>
+                  
+                  <div className="flex justify-between items-start pt-2">
+                    <h3 className="text-3xl font-serif italic tracking-tight leading-none group-hover:text-[#D4AF37] transition-colors">Refinement Result</h3>
+                    <Link to={`/result/${it.id}`} className="p-3 border border-gray-100 rounded-full hover:bg-black hover:text-white transition-all">
+                        <Sparkles size={14} />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400;1,700&family=Plus+Jakarta+Sans:wght@200;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+      `}</style>
     </div>
   );
 }

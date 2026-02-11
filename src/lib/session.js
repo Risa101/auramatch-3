@@ -3,6 +3,8 @@ export function writeUserToLocalStorage(u) {
   if (!u) {
     localStorage.removeItem("auramatch:isLoggedIn");
     localStorage.removeItem("auramatch:user");
+    localStorage.removeItem("auramatch:token");
+    localStorage.removeItem("auramatch:isAdmin");
     return;
   }
   localStorage.setItem("auramatch:isLoggedIn", "true");
