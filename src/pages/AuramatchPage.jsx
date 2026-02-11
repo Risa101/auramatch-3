@@ -189,9 +189,20 @@ export default function AuramatchDailyDose() {
       {/* --- 1. HERO --- */}
       <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
-          <video autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover opacity-100">
-            <source src={`${BASE_PATH}dior1.mov`} type="video/mp4" />
-          </video>
+          <div
+            className="h-full w-full bg-center bg-cover"
+            style={{ backgroundImage: "url('/assets/home.PNG')" }}
+            aria-hidden="true"
+          />
+          <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
+          <div
+            className="absolute inset-0 opacity-30"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 20%, rgba(255,133,162,.35), transparent 45%), radial-gradient(circle at 80% 10%, rgba(210,54,105,.35), transparent 40%)",
+            }}
+          />
         </div>
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
           <div data-aos="fade-right" className="max-w-xl space-y-6">
