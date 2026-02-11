@@ -187,14 +187,10 @@ export default function AuramatchDailyDose() {
     <div className="bg-white text-[#4A4A4A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
 
       {/* --- 1. HERO --- */}
-      <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
+            <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
-          <div
-            className="h-full w-full bg-center bg-cover"
-            style={{ backgroundImage: "url('/assets/home.PNG')" }}
-            aria-hidden="true"
-          />
-          <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
+          <img src="/assets/home.PNG" alt="" className="h-full w-full object-cover opacity-75" />
+          <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
           <div
             className="absolute inset-0 opacity-30"
             aria-hidden="true"
@@ -210,7 +206,6 @@ export default function AuramatchDailyDose() {
               <Sparkles size={10} className="text-white" />
               <span className="text-[8px] tracking-[0.2em] uppercase text-white font-black">Innovation 2026</span>
             </div>
-            {/* Base Font Reference */}
             <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-white uppercase">
               The <span className="text-[#FF85A2]">Aura</span> <br /> Match <span className="font-light italic text-white">Dose</span>
             </h1>
