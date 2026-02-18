@@ -89,36 +89,17 @@ export default function App() {
           <Route path="/forgot-password"    element={<ForgotPassword />} />
           <Route path="/reset-password"     element={<ResetPassword />} />
           <Route path="/about"              element={<AboutUs />} />
-          <Route
-            path="/looks"
-            element={<RequireAuth><MakeupLooks /></RequireAuth>}
-          />
-          <Route
-            path="/advisor"
-            element={<RequireAuth><AdvisorPage /></RequireAuth>}
-          />
-          <Route
-            path="/cosmetics"
-            element={<RequireAuth><CosmeticsPage /></RequireAuth>}
-          />
-          <Route
-            path="/cosmetics/:category"
-            element={<RequireAuth><CosmeticsPage /></RequireAuth>}
-          />
+          <Route path="/looks"              element={<MakeupLooks />} />
+          <Route path="/advisor"            element={<AdvisorPage />} />
+          <Route path="/cosmetics"          element={<CosmeticsPage />} />
+          <Route path="/cosmetics/:category" element={<CosmeticsPage />} />
 
-          {/* Protected Routes (ต้อง Login เท่านั้น) */}
-          <Route 
-            path="/account" 
-            element={<RequireAuth><AccountProfile /></RequireAuth>} 
-          />
-          <Route 
-            path="/history" 
-            element={<RequireAuth><AnalysisHistory /></RequireAuth>} 
-          />
-          <Route 
-            path="/coupons" 
-            element={<RequireAuth><Coupons /></RequireAuth>} 
-          />
+          {/* User Routes (public) */}
+          <Route path="/account"            element={<AccountProfile />} />
+          <Route path="/history"            element={<AnalysisHistory />} />
+          <Route path="/coupons"            element={<Coupons />} />
+
+          {/* Protected Route (ต้อง Login เฉพาะ Analysis) */}
           <Route 
             path="/analysis" 
             element={<RequireAuth><Analysis /></RequireAuth>} 
