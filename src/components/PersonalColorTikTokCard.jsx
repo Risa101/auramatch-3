@@ -10,11 +10,11 @@ export default function PersonalColorTikTokCard({ video, onSelect, delay = 0 }) 
     >
       {/* 1. VIBRANT BACKGROUND (The Moving Canvas) */}
       <div className="absolute inset-0 w-full h-full group-hover:scale-110 transition-transform duration-[2s] ease-out">
-        <iframe
-          src={`${video.embedUrl}?autoplay=0&controls=0&mute=1&loop=1`}
-          className="absolute inset-0 w-full h-full border-none pointer-events-none scale-[1.5] brightness-110 contrast-[1.05]"
-          allow="encrypted-media; fullscreen"
-          title={video.title}
+        <img
+          src={video.thumbnail || "/assets/home.PNG"}
+          alt={video.title}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover brightness-110 contrast-[1.05]"
         />
         {/* Soft Pastel Overlay - เปลี่ยนจากสีดำเป็นสีชมพู/ม่วงโปร่งแสง */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#D23669]/60 via-transparent to-transparent opacity-40 group-hover:opacity-20 transition-opacity duration-700" />

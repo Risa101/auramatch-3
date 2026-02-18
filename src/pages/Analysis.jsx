@@ -973,17 +973,8 @@ export default function Analysis() {
         <div className="absolute inset-0 z-0">
           <div
             className="h-full w-full bg-center bg-cover"
-            style={{ backgroundImage: `url('${assetPath("assets/home.webp")}')` }}
+            style={{ backgroundImage: `url('${assetPath("assets/analysis1.jpeg")}')` }}
             aria-hidden="true"
-          />
-          <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
-          <div
-            className="absolute inset-0 opacity-30"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, rgba(255,133,162,.35), transparent 45%), radial-gradient(circle at 80% 10%, rgba(210,54,105,.35), transparent 40%)",
-            }}
           />
         </div>
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-10 py-16">
@@ -1039,7 +1030,7 @@ export default function Analysis() {
             <div className="relative mx-auto w-full max-w-sm reveal" style={{ transitionDelay: "120ms" }}>
               <div className="absolute -inset-6 -z-10 rounded-[2.5rem] blur-2xl" style={{ background: "linear-gradient(45deg, rgba(255,133,162,.6), rgba(255,255,255,.1))" }} />
               <div className="aspect-[4/5] w-full overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 shadow-2xl">
-                {preview ? <img src={preview} alt="preview" className="h-full w-full object-cover" /> : <img src={assetPath("assets/home.webp")} alt="placeholder" className="h-full w-full object-cover" />}
+                {preview ? <img src={preview} alt="preview" className="h-full w-full object-cover" /> : <img src={assetPath("assets/analysis1.jpeg")} alt="placeholder" className="h-full w-full object-cover" />}
               </div>
 
               {/* Progress / Status */}

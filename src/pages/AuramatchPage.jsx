@@ -11,7 +11,7 @@ import i18n from "../lib/i18n";
 
 // ✅ API Connections
 import {
-  getBestSellerProducts, getLooksBySeason, getFavoritesByUserApi, // 👈 เพิ่มตัวนี้
+  getBestSellerProducts, getLooksBySeason, getFavoritesByUserApi, 
   toggleFavoriteApi
 } from "../callapi/call_api_user";
 
@@ -26,10 +26,13 @@ export default function AuramatchDailyDose() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [makeupLooks, setMakeupLooks] = useState([]);
-  const [activeColor, setActiveColor] = useState("Spring"); // สำหรับ Filter
+  const [activeColor, setActiveColor] = useState("Spring"); 
   const [likedProducts, setLikedProducts] = useState({});
+  const [selectedLook, setSelectedLook] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
-  // ✅ Fixed Missing Nav Items
+
   const navItems = [
     { label: "Home", to: "/" },
     { label: "Academy", to: "/academy" },
@@ -37,13 +40,34 @@ export default function AuramatchDailyDose() {
     { label: "Shop", to: "/shop" }
   ];
   const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  const goAdvisor = () => navigate("/advisor");
+
   const buildApiImage = (path) => {
-    if (!path) return "/assets/home.PNG";
+    if (!path) return "/assets/home2.webp";
     if (String(path).startsWith("http")) return path;
     if (!apiBase) return path;
     return `${apiBase}/${String(path).replace(/^\//, "")}`;
   };
 
+  const openProductModal = (product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+
+  const horizontalPicks = [
+    { title: '', tag: '', tone: '', img: '/assets/ad11.JPG' },
+    { title: '', tag: '', tone: '', img: '/assets/ad7.JPG' },
+    { title: '', tag: '', tone: '', img: '/assets/ad2.jpeg' },
+    { title: '', tag: '', tone: '', img: '/assets/ad4.JPG' },
+    { title: '', tag: '', tone: '', img: '/assets/ad8.JPG' },
+    { title: '', tag: '', tone: '', img: '/assets/home2.webp' },
+  ];
 
   const personalColorData1 = [
   {
@@ -189,16 +213,17 @@ export default function AuramatchDailyDose() {
       {/* --- 1. HERO --- */}
             <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
-          <img src="/assets/home.PNG" alt="" className="h-full w-full object-cover opacity-75" />
-          <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
-          <div
-            className="absolute inset-0 opacity-30"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, rgba(255,133,162,.35), transparent 45%), radial-gradient(circle at 80% 10%, rgba(210,54,105,.35), transparent 40%)",
-            }}
-          />
+          <picture>
+            <source srcSet="/assets/home2.webp" type="image/webp" />
+            <img
+              src="/assets/home2.webp"
+              alt=""
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
         </div>
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
           <div data-aos="fade-right" className="max-w-xl space-y-6">
@@ -233,7 +258,18 @@ export default function AuramatchDailyDose() {
       </div>
 
       {/* --- 3. FACE SHAPE LIBRARY --- */}
-      <section className="py-32 bg-white overflow-hidden">
+      <section
+        className="py-32 bg-white overflow-hidden cursor-pointer"
+        role="link"
+        tabIndex={0}
+        onClick={goAdvisor}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            goAdvisor();
+          }
+        }}
+      >
         <div className="max-w-[1400px] mx-auto px-10">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div data-aos="fade-right" className="space-y-4">
@@ -269,7 +305,18 @@ export default function AuramatchDailyDose() {
       </section>
 
       {/* --- 4. PERSONAL COLOR (Balanced Palette Version) --- */}
-      <section className="py-20 bg-[#F9F9F9] overflow-hidden">
+      <section
+        className="py-20 bg-[#F9F9F9] overflow-hidden cursor-pointer"
+        role="link"
+        tabIndex={0}
+        onClick={goAdvisor}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            goAdvisor();
+          }
+        }}
+      >
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="mb-12 text-center">
             <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-2">Color Harmony</span>
@@ -371,7 +418,59 @@ export default function AuramatchDailyDose() {
         </div>
       </section>
 
-      {/* --- 5. THE EDIT --- */}
+                  {/* --- 4.5 HORIZONTAL SCROLLER --- */}
+      <section className="min-h-screen bg-[#FFF1F6] flex flex-col justify-center">
+        <div className="max-w-[1400px] mx-auto px-8 md:px-10 pb-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+            <div className="space-y-3">
+              <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Aura Promo</span>
+              <h2 className="text-3xl md:text-4xl font-[900] tracking-tighter text-[#4A4A4A] uppercase">
+                Sweet <span className="text-[#FF85A2]">Pick</span> Carousel
+              </h2>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#C27C90] max-w-sm">
+              Swipe the full-width banners for limited drops and aura gifts.
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full">
+          <div className="overflow-x-auto snap-x snap-mandatory scroll-smooth">
+            <div className="flex min-w-max gap-8 px-8 md:px-10 pb-10">
+              {horizontalPicks.map((item, idx) => (
+                <div
+                  key={`${item.title}-${idx}`}
+                  className="snap-center w-[88vw] md:w-[82vw] lg:w-[78vw] h-[70vh] rounded-[3rem] overflow-hidden border-4 border-[#F08AAA] bg-[#FFE9F0] shadow-[0_24px_70px_rgba(240,138,170,0.28)]"
+                >
+                  <div className="relative w-full h-full">
+                    <img
+                      src={item.img}
+                      alt={item.title}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+
+                    <div className="relative z-10 h-full flex flex-col justify-center px-10 md:px-16 max-w-2xl">
+                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D23669] mb-4"></p>
+                      <h3 className="text-3xl md:text-5xl font-[900] uppercase tracking-tight text-[#4A4A4A] mb-6">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm md:text-base text-[#7C5A6A] font-semibold leading-relaxed mb-6">
+                        {item.tag} • {item.tone}
+                      </p>
+                      {/* <button className="w-fit rounded-full bg-[#D23669] text-white px-8 py-3 text-[10px] font-black uppercase tracking-[0.35em] hover:brightness-110 transition-all">
+                        Shop Now
+                      </button> */}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+{/* --- 5. THE EDIT --- */}
       <section className="py-32 bg-white">
         <div className="max-w-[1400px] mx-auto px-10">
           <div className="flex justify-between items-center mb-20">
@@ -383,11 +482,18 @@ export default function AuramatchDailyDose() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {bestSellers.slice(0, 3).map((p, i) => (
-              <div key={p.product_id ?? i} data-aos="fade-up" className="group text-center">
+              <div
+                key={p.product_id ?? i}
+                data-aos="fade-up"
+                className="group text-center cursor-pointer"
+                onClick={() => openProductModal(p)}
+              >
                 {/* Container รูปภาพ */}
                 <div className="relative aspect-[3/4] rounded-[3.5rem] overflow-hidden bg-[#F9F9F9] mb-10 group-hover:shadow-2xl transition-all duration-700">
                   <img
                     src={buildApiImage(p.image_url)}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     alt={p.name}
                   />
@@ -415,6 +521,85 @@ export default function AuramatchDailyDose() {
           </div>
         </div>
       </section>
+
+      {/* --- BEST SELLER PURCHASE MODAL --- */}
+      {isProductModalOpen && selectedProduct && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-8">
+          <div className="absolute inset-0 bg-black/65 backdrop-blur-md" onClick={closeProductModal} />
+          <div className="relative z-10 w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[3rem] bg-white shadow-2xl">
+            <button
+              onClick={closeProductModal}
+              className="absolute top-6 right-6 z-20 rounded-full bg-white/90 p-2 shadow-md hover:bg-black hover:text-white transition-all"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-8 md:p-12">
+              <div>
+                <div className="aspect-[4/5] overflow-hidden rounded-[2rem] bg-[#F8F8F8] border border-gray-100">
+                  <img
+                    src={buildApiImage(selectedProduct.image_url)}
+                    alt={selectedProduct.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669]">
+                  Best Seller Pick
+                </span>
+                <h3 className="mt-3 text-3xl md:text-4xl font-[900] uppercase tracking-tighter text-[#4A4A4A] leading-tight">
+                  {selectedProduct.name}
+                </h3>
+                <div className="mt-5 flex items-center gap-3">
+                  <span className="text-3xl font-black text-[#111]">
+                    ฿{parseFloat(selectedProduct.price || 0).toLocaleString()}
+                  </span>
+                  {selectedProduct.rating && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#F6F6F6] px-3 py-1 text-xs font-bold text-gray-500">
+                      <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                      {selectedProduct.rating}
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-6 text-sm leading-relaxed text-gray-500">
+                  เลือกแพลตฟอร์มที่สะดวกเพื่อสั่งซื้อสินค้าได้ทันที
+                </p>
+
+                <div className="mt-8 space-y-3">
+                  <a
+                    href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name || "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex w-full items-center justify-center rounded-2xl bg-black py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all"
+                  >
+                    Buy on TikTok
+                  </a>
+                  <a
+                    href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name || "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex w-full items-center justify-center rounded-2xl bg-[#EE4D2D] py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all"
+                  >
+                    Buy on Shopee
+                  </a>
+                  <a
+                    href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name || "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex w-full items-center justify-center rounded-2xl bg-[#10078F] py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all"
+                  >
+                    Buy on Lazada
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- 5.5 THE LOOKS ARCHIVE (ดึงจากหลังบ้าน) --- */}
       <section className="py-32 bg-[#F9F9F9]">
@@ -449,12 +634,15 @@ export default function AuramatchDailyDose() {
                   key={look.look_id ?? i}
                   data-aos="fade-up"
                   data-aos-delay={i * 100}
-                  className="group relative bg-white rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500"
+                  className="group relative bg-white rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                  onClick={() => setSelectedLook(look)}
                 >
                   <div className="aspect-[4/5] overflow-hidden">
                     {/* ในส่วน THE LOOKS ARCHIVE */}
                     <img
-                      src={`${import.meta.env.VITE_API_URL}${look.image_url}`} // ✅ ใช้ตัวแปรแวดล้อมแทนการระบุ IP ตรงๆ
+                      src={buildApiImage(look.image_url)}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                       alt={look.look_name}
                     />
@@ -466,7 +654,13 @@ export default function AuramatchDailyDose() {
                     <h4 className="text-2xl font-[900] text-white uppercase tracking-tighter mb-4">
                       {look.look_name}
                     </h4>
-                    <button className="w-fit bg-white text-black px-6 py-3 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#D23669] hover:text-white transition-colors">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLook(look);
+                      }}
+                      className="w-fit bg-white text-black px-6 py-3 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#D23669] hover:text-white transition-colors"
+                    >
                       Explore Details
                     </button>
                   </div>
@@ -480,6 +674,53 @@ export default function AuramatchDailyDose() {
           </div>
         </div>
       </section>
+
+      {/* --- LOOK DETAIL MODAL --- */}
+      {selectedLook && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-8">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setSelectedLook(null)}
+          />
+          <div className="relative z-10 w-full max-w-4xl overflow-hidden rounded-[2.5rem] bg-white shadow-2xl">
+            <button
+              onClick={() => setSelectedLook(null)}
+              className="absolute right-6 top-6 z-10 rounded-full bg-white/90 p-2 shadow-md hover:bg-black hover:text-white transition-all"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              <div className="aspect-[4/5] md:aspect-auto">
+                <img
+                  src={buildApiImage(selectedLook.image_url)}
+                  alt={selectedLook.look_name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="p-8 md:p-10 flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669]">
+                  {selectedLook.personal_color || activeColor} Collection
+                </span>
+                <h3 className="mt-3 text-3xl font-[900] uppercase tracking-tighter text-[#4A4A4A]">
+                  {selectedLook.look_name}
+                </h3>
+                <p className="mt-6 text-sm leading-relaxed text-gray-500">
+                  {selectedLook.description || "ลุคนี้ถูกออกแบบให้สอดคล้องกับโทนสีประจำตัวของคุณ โดยเน้นบาลานซ์ผิว โทนตา และโทนปากให้เด่นแบบเป็นธรรมชาติ"}
+                </p>
+                <div className="mt-auto pt-8">
+                  <button
+                    onClick={() => navigate("/advisor")}
+                    className="w-full rounded-full bg-[#D23669] py-4 text-[10px] font-black uppercase tracking-[0.3em] text-white hover:brightness-110 transition-all"
+                  >
+                    Get Advisor Guide
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- 6. FILM ARCHIVE --- */}
       <section className="py-24 bg-[#E8D9F2]/10">

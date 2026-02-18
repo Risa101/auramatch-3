@@ -106,6 +106,7 @@ export default function SalesDashboard() {
           <div className="space-y-10">
             
             {/* Recent Users */}
+            
             <div className="bg-white p-10 rounded-[2rem] border border-gray-100" data-aos="fade-left">
               <h3 className="font-serif text-xl italic mb-6">Recent Users</h3>
               <div className="space-y-5">

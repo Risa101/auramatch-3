@@ -132,16 +132,17 @@ export default function UltimateAcademy() {
       {/* --- 2. HERO --- */}
             <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
-          <img src="/assets/home.PNG" alt="" className="h-full w-full object-cover opacity-75" />
-          <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
-          <div
-            className="absolute inset-0 opacity-30"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, rgba(255,133,162,.35), transparent 45%), radial-gradient(circle at 80% 10%, rgba(210,54,105,.35), transparent 40%)",
-            }}
-          />
+          <picture>
+            <source srcSet="/assets/dior.jpeg" type="image/webp" />
+            <img
+              src="/assets/dior.jpeg"
+              alt=""
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
         </div>
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
           <div data-aos="fade-right" className="max-w-4xl space-y-6">
