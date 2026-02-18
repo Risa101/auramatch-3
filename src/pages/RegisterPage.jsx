@@ -9,6 +9,18 @@ const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@example.com")
 
 const isAdminEmail = (e) => ADMIN_EMAILS.includes((e || "").toLowerCase());
 
+function resolveApiBaseUrl() {
+  const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  if (raw) return String(raw).replace(/\/+$/, "");
+
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocalhost) return "http://127.0.0.1:5010";
+
+  return "";
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,7 +32,7 @@ export default function RegisterPage() {
   const [info, setInfo] = useState("");
 
   const navigate = useNavigate();
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+  const apiBaseUrl = resolveApiBaseUrl();
 
   function validatePassword(p) {
     if (p.length < 8) return "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร";
@@ -40,19 +52,48 @@ export default function RegisterPage() {
     if (pwErr) return setErr(pwErr);
     if (pw !== pw2) return setErr("ยืนยันรหัสผ่านไม่ตรงกัน");
     if (!agree) return setErr("กรุณายอมรับเงื่อนไขการใช้บริการ");
+    if (!apiBaseUrl) return setErr("SERVER CONFIGURATION MISSING. CONTACT SUPPORT.");
 
     setLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: nm, email: emailNorm, password: pw }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setErr((data.error || "ขออภัย สมัครสมาชิกไม่สำเร็จ").toString());
+      const payload = { username: nm, email: emailNorm, password: pw };
+      const candidatePaths = ["/register", "/api/register"];
+      let matchedResult = null;
+      let lastErrorMessage = "";
+
+      for (const path of candidatePaths) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        try {
+          const res = await fetch(`${apiBaseUrl}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            matchedResult = data;
+            break;
+          }
+          lastErrorMessage = (data.error || data.message || "").toString();
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            lastErrorMessage = "REQUEST TIMEOUT. PLEASE TRY AGAIN.";
+            break;
+          }
+          lastErrorMessage = error?.message || "NETWORK ERROR";
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      if (!matchedResult) {
+        setErr(lastErrorMessage || "ขออภัย สมัครสมาชิกไม่สำเร็จ");
         return;
       }
+
+      const data = matchedResult;
       const userPayload = data.user || data;
       const userlike = {
         uid: String(userPayload.user_id || ""),

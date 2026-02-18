@@ -1,6 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
+function resolveApiBaseUrl() {
+  const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  if (raw) return String(raw).replace(/\/+$/, "");
+
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocalhost) return "http://127.0.0.1:5010";
+
+  return "";
+}
+
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -10,7 +22,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+  const apiBaseUrl = resolveApiBaseUrl();
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -27,13 +39,25 @@ export default function ResetPassword() {
       setErr("ยืนยันรหัสผ่านไม่ตรงกัน");
       return;
     }
+    if (!apiBaseUrl) {
+      setErr("SERVER CONFIGURATION MISSING. CONTACT SUPPORT.");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/password/reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password: pw }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      let res;
+      try {
+        res = await fetch(`${apiBaseUrl}/password/reset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password: pw }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setErr((data.error || "ขออภัย กรุณาลองใหม่อีกครั้ง").toString());
@@ -42,7 +66,11 @@ export default function ResetPassword() {
       setMsg("รีเซ็ตรหัสผ่านสำเร็จ กำลังพาไปหน้าเข้าสู่ระบบ...");
       setTimeout(() => navigate("/login"), 1200);
     } catch (e) {
-      setErr("ขออภัย กรุณาลองใหม่อีกครั้ง");
+      if (e?.name === "AbortError") {
+        setErr("REQUEST TIMEOUT. PLEASE TRY AGAIN.");
+      } else {
+        setErr("NETWORK ERROR. CANNOT REACH AUTH SERVER.");
+      }
     } finally {
       setLoading(false);
     }

@@ -69,6 +69,35 @@ export default function AuramatchDailyDose() {
     { title: '', tag: '', tone: '', img: '/assets/home2.webp' },
   ];
 
+  const fallbackBestSellers = [
+    { product_id: 9001, name: "Laneige Neo Cushion Glow", price: 1290, image_url: "/assets/ad4.JPG" },
+    { product_id: 9002, name: "Dior Forever Cushion", price: 2490, image_url: "/assets/dior.jpeg" },
+    { product_id: 9003, name: "Peripera Ink Velvet", price: 390, image_url: "/assets/ad7.JPG" },
+  ];
+
+  const fallbackLooksBySeason = {
+    Spring: [
+      { look_id: "sp-1", look_name: "Spring Peach Glow", personal_color: "Spring", image_url: "/assets/ad3.JPG" },
+      { look_id: "sp-2", look_name: "Coral Daily Chic", personal_color: "Spring", image_url: "/assets/ad5.JPG" },
+      { look_id: "sp-3", look_name: "Soft Bloom Look", personal_color: "Spring", image_url: "/assets/ad1.jpeg" },
+    ],
+    Summer: [
+      { look_id: "su-1", look_name: "Soft Blue Muse", personal_color: "Summer", image_url: "/assets/ad2.jpeg" },
+      { look_id: "su-2", look_name: "Lavender Haze", personal_color: "Summer", image_url: "/assets/ad6.JPG" },
+      { look_id: "su-3", look_name: "Muted Pink Air", personal_color: "Summer", image_url: "/assets/ad8.JPG" },
+    ],
+    Autumn: [
+      { look_id: "au-1", look_name: "Warm Brick Mood", personal_color: "Autumn", image_url: "/assets/ad9.JPG" },
+      { look_id: "au-2", look_name: "Maple Contour", personal_color: "Autumn", image_url: "/assets/ad10.JPG" },
+      { look_id: "au-3", look_name: "Earth Tone Chic", personal_color: "Autumn", image_url: "/assets/ad11.JPG" },
+    ],
+    Winter: [
+      { look_id: "wi-1", look_name: "Cool Contrast", personal_color: "Winter", image_url: "/assets/dior.jpeg" },
+      { look_id: "wi-2", look_name: "Berry Sharp", personal_color: "Winter", image_url: "/assets/ad7.JPG" },
+      { look_id: "wi-3", look_name: "Crystal Night", personal_color: "Winter", image_url: "/assets/ad4.JPG" },
+    ],
+  };
+
   const personalColorData1 = [
   {
     id: '01',
@@ -179,10 +208,17 @@ export default function AuramatchDailyDose() {
         getLooksBySeason(activeColor) // เรียกใช้ API looks โดยส่งค่า activeColor (Spring, Summer, etc.)
       ]);
 
-      setBestSellers(bsData || []);
-      setMakeupLooks(looksData || []); // อัปเดตข้อมูลที่ดึงมาจากหลังบ้านลงใน State
+      const safeBestSellers = Array.isArray(bsData) && bsData.length > 0 ? bsData : fallbackBestSellers;
+      const safeLooks = Array.isArray(looksData) && looksData.length > 0
+        ? looksData
+        : (fallbackLooksBySeason[activeColor] || []);
+
+      setBestSellers(safeBestSellers);
+      setMakeupLooks(safeLooks); // อัปเดตข้อมูลที่ดึงมาจากหลังบ้านลงใน State
     } catch (err) {
       console.error("Fetch Data Error:", err);
+      setBestSellers(fallbackBestSellers);
+      setMakeupLooks(fallbackLooksBySeason[activeColor] || []);
     } finally {
       setIsLoading(false);
       // ให้ AOS (Animation) ทำงานหลังจากโหลดข้อมูลเสร็จ

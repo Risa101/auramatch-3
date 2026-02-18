@@ -2,23 +2,48 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+function resolveApiBaseUrl() {
+  const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  if (raw) return String(raw).replace(/\/+$/, "");
+
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocalhost) return "http://127.0.0.1:5010";
+
+  return "";
+}
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [resetLink, setResetLink] = useState("");
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+  const apiBaseUrl = resolveApiBaseUrl();
 
   async function onSubmit(e) {
     e.preventDefault();
     setErr(""); setMsg(""); setResetLink(""); setLoading(true);
+    if (!apiBaseUrl) {
+      setErr("SERVER CONFIGURATION MISSING. CONTACT SUPPORT.");
+      setLoading(false);
+      return;
+    }
     try {
-      const res = await fetch(`${apiBaseUrl}/password/forgot`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      let res;
+      try {
+        res = await fetch(`${apiBaseUrl}/password/forgot`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim().toLowerCase() }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setErr((data.error || "ขออภัย กรุณาลองใหม่อีกครั้ง").toString());
@@ -29,7 +54,11 @@ export default function ForgotPassword() {
         setResetLink(data.reset_link);
       }
     } catch (e) {
-      setErr("ขออภัย กรุณาลองใหม่อีกครั้ง");
+      if (e?.name === "AbortError") {
+        setErr("REQUEST TIMEOUT. PLEASE TRY AGAIN.");
+      } else {
+        setErr("NETWORK ERROR. CANNOT REACH AUTH SERVER.");
+      }
     } finally {
       setLoading(false);
     }
