@@ -69,6 +69,41 @@ export default function AuramatchDailyDose() {
     { title: '', tag: '', tone: '', img: '/assets/home2.webp' },
   ];
 
+  const fashionBySeason = [
+    {
+      season: "Spring",
+      mood: "Warm, Bright, Fresh",
+      bg: "bg-[#FFF5F0]",
+      text: "text-[#D97706]",
+      items: ["Ivory Blazer", "Peach Knit Top", "Light Camel Trousers", "Coral Slip Dress"],
+      accents: ["#FFD4B8", "#FFC39E", "#F5B66D", "#FF8A7A"],
+    },
+    {
+      season: "Summer",
+      mood: "Cool, Soft, Elegant",
+      bg: "bg-[#EEF5FF]",
+      text: "text-[#6473B7]",
+      items: ["Powder Blue Shirt", "Dusty Rose Cardigan", "Cool Gray Skirt", "Lavender Satin Blouse"],
+      accents: ["#D4DFEF", "#BFCBE3", "#CDBFDB", "#9FB4D1"],
+    },
+    {
+      season: "Autumn",
+      mood: "Warm, Rich, Earthy",
+      bg: "bg-[#F9F1E5]",
+      text: "text-[#8B5A2B]",
+      items: ["Terracotta Jacket", "Olive Utility Pants", "Rust Midi Dress", "Chocolate Brown Coat"],
+      accents: ["#C5895A", "#A96E3A", "#8A5A3C", "#6C4C2D"],
+    },
+    {
+      season: "Winter",
+      mood: "Cool, Deep, Sharp",
+      bg: "bg-[#F2F4F8]",
+      text: "text-[#2E3F5E]",
+      items: ["Crisp White Shirt", "Jet Black Blazer", "Cobalt Knit", "Berry Statement Dress"],
+      accents: ["#111827", "#1E3A8A", "#9D174D", "#CBD5E1"],
+    },
+  ];
+
   const fallbackBestSellers = [
     { product_id: 9001, name: "Laneige Neo Cushion Glow", price: 1290, image_url: "/assets/ad4.JPG" },
     { product_id: 9002, name: "Dior Forever Cushion", price: 2490, image_url: "/assets/dior.jpeg" },
@@ -454,6 +489,61 @@ export default function AuramatchDailyDose() {
         </div>
       </section>
 
+      {/* --- 4.4 FASHION RECOMMENDATION --- */}
+      <section className="py-24 bg-white">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+            <div className="space-y-3">
+              <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Style Direction</span>
+              <h2 className="text-3xl md:text-4xl font-[900] tracking-tighter text-[#4A4A4A] uppercase">
+                Personal Color <span className="text-[#FF85A2]">Closet Edit</span>
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate("/advisor")}
+              className="w-fit rounded-full border border-[#D23669]/20 px-6 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-[#D23669] hover:bg-[#D23669] hover:text-white transition-all"
+            >
+              Get Full Outfit Advice
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {fashionBySeason.map((look, idx) => (
+              <article
+                key={look.season}
+                data-aos="fade-up"
+                data-aos-delay={idx * 80}
+                className={`rounded-[2rem] p-7 border border-black/5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all ${look.bg}`}
+              >
+                <div className="mb-6">
+                  <h3 className={`text-2xl font-[900] uppercase tracking-tight ${look.text}`}>{look.season}</h3>
+                  <p className={`text-[10px] mt-1 font-black uppercase tracking-[0.2em] opacity-80 ${look.text}`}>{look.mood}</p>
+                </div>
+
+                <div className="flex items-center gap-2 mb-5">
+                  {look.accents.map((color) => (
+                    <span
+                      key={`${look.season}-${color}`}
+                      className="h-7 w-7 rounded-full border border-white/80 shadow-sm"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+
+                <ul className="space-y-2">
+                  {look.items.map((item) => (
+                    <li key={`${look.season}-${item}`} className="text-[12px] font-semibold text-[#4A4A4A] flex items-start gap-2">
+                      <span className="text-[#D23669] leading-5">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
                   {/* --- 4.5 HORIZONTAL SCROLLER --- */}
       <section className="min-h-screen bg-[#FFF1F6] flex flex-col justify-center">
         <div className="max-w-[1400px] mx-auto px-8 md:px-10 pb-8">
@@ -461,7 +551,7 @@ export default function AuramatchDailyDose() {
             <div className="space-y-3">
               <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Aura Promo</span>
               <h2 className="text-3xl md:text-4xl font-[900] tracking-tighter text-[#4A4A4A] uppercase">
-                Sweet <span className="text-[#FF85A2]">Pick</span> Carousel
+                TOP <span className="text-[#FF85A2]">BEAUTY</span> BRANDS
               </h2>
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-[#C27C90] max-w-sm">

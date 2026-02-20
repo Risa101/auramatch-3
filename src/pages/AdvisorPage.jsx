@@ -85,13 +85,67 @@ export default function UltimateAcademy() {
     Winter: { title: "Winter", sub: "Cool & Brilliant", best: "น้ำเงินรอยัล, แดงทับทิม, ขาว/ดำ", vibe: "ความโดดเด่นขั้นสุดด้วยสีสดชัดในโทนเย็น", theory: "Blue Base / High Contrast" }
   };
 
+  const undertoneData = [
+    {
+      key: "Cool",
+      title: "Cool Undertone",
+      sub: "Blue / Pink Base",
+      desc: "ผิวมีอันเดอร์โทนอมชมพูหรืออมฟ้า เหมาะกับเครื่องประดับเงินและสีโทนเย็น เช่น Rose, Berry, Ash.",
+      chips: ["Silver", "Rose Pink", "Berry", "Navy"],
+      bg: "bg-[#EEF4FF]",
+      accent: "text-[#5D78C8]",
+    },
+    {
+      key: "Warm",
+      title: "Warm Undertone",
+      sub: "Yellow / Golden Base",
+      desc: "ผิวมีอันเดอร์โทนอมเหลืองหรือทอง เหมาะกับเครื่องประดับทอง และสีอบอุ่น เช่น Peach, Coral, Camel.",
+      chips: ["Gold", "Peach", "Coral", "Camel"],
+      bg: "bg-[#FFF5EA]",
+      accent: "text-[#CC7B2C]",
+    },
+    {
+      key: "Neutral",
+      title: "Neutral Undertone",
+      sub: "Balanced Base",
+      desc: "ผิวมีสมดุลระหว่างโทนเย็นและโทนอุ่น เลือกใช้ได้ทั้งสองฝั่ง โดยเน้นสีที่ไม่สดหรือเข้มเกินไป.",
+      chips: ["Taupe", "Dusty Rose", "Soft Beige", "Mauve"],
+      bg: "bg-[#F4F4F4]",
+      accent: "text-[#596273]",
+    },
+  ];
+
   const faceShapes = [
-    { shape: "Oval", trait: "The Benchmark", desc: "สัดส่วนที่สมดุลที่สุด หน้าผากกว้างกว่าคางเล็กน้อย ช่วงแก้มโค้งมนสวยงาม" },
-    { shape: "Round", trait: "Circular Symmetry", desc: "ความกว้างโหนกแก้มเท่ากับความยาวใบหน้า เส้นกรามโค้งมน ไร้เหลี่ยมมุม" },
-    { shape: "Square", trait: "Angular Precision", desc: "แนวกรามกว้างขนานกับหน้าผาก สร้างลุคที่ดูแข็งแรงและมีพลัง" },
-    { shape: "Heart", trait: "Upper Dominance", desc: "หน้าผากกว้าง มีขวัญผมตรงกลาง และคางเรียวแหลมเหมือนสัญลักษณ์หัวใจ" },
-    { shape: "Diamond", trait: "Cheekbone Focus", desc: "โหนกแก้มเป็นส่วนที่กว้างที่สุด ขณะที่หน้าผากและกรามมีความเรียวแคบ" },
-    { shape: "Oblong", trait: "Vertical Depth", desc: "ใบหน้ามีความยาวมากกว่าความกว้างอย่างชัดเจน โครงสร้างดูเพรียวบางหรูหรา" }
+    { shape: "Oval", trait: "The Benchmark", desc: "สัดส่วนที่สมดุลที่สุด หน้าผากกว้างกว่าคางเล็กน้อย ช่วงแก้มโค้งมนสวยงาม", image: "/assets/oval.jpg" },
+    { shape: "Round", trait: "Circular Symmetry", desc: "ความกว้างโหนกแก้มเท่ากับความยาวใบหน้า เส้นกรามโค้งมน ไร้เหลี่ยมมุม", image: "/assets/round.jpg" },
+    { shape: "Square", trait: "Angular Precision", desc: "แนวกรามกว้างขนานกับหน้าผาก สร้างลุคที่ดูแข็งแรงและมีพลัง", image: "/assets/sqare.jpg" },
+    { shape: "Heart", trait: "Upper Dominance", desc: "หน้าผากกว้าง มีขวัญผมตรงกลาง และคางเรียวแหลมเหมือนสัญลักษณ์หัวใจ", image: "/assets/heart.jpg" },
+    { shape: "Diamond", trait: "Cheekbone Focus", desc: "โหนกแก้มเป็นส่วนที่กว้างที่สุด ขณะที่หน้าผากและกรามมีความเรียวแคบ", image: "/assets/diamond.jpg" },
+    { shape: "Oblong", trait: "Vertical Depth", desc: "ใบหน้ามีความยาวมากกว่าความกว้างอย่างชัดเจน โครงสร้างดูเพรียวบางหรูหรา", image: "/assets/rectangular.jpg" }
+  ];
+
+  const closetCards = [
+    {
+      percent: "60%",
+      title: "Neutral Base",
+      desc: "สีพื้นฐานสำหรับชิ้นหลัก เช่น สูท กางเกง เพื่อความคลาสสิก",
+      image: "/assets/ad7.JPG",
+      highlight: false,
+    },
+    {
+      percent: "30%",
+      title: "Personal Hero",
+      desc: "จุดที่สีประจำฤดูกาลทำงานหนักที่สุดเพื่อขับออร่าให้ผิว",
+      image: "/assets/ad8.JPG",
+      highlight: true,
+    },
+    {
+      percent: "10%",
+      title: "Statement",
+      desc: "สีตัดกัน (Pop Color) เพื่อสร้างความโดดเด่นและสไตล์เฉพาะตัว",
+      image: "/assets/ad9.JPG",
+      highlight: false,
+    },
   ];
 
   return (
@@ -237,7 +291,90 @@ export default function UltimateAcademy() {
         </div>
       </section>
 
-      {/* --- 5. LESSON 03: FACE GEOMETRY (BALANCED - PASTEL VERSION) --- */}
+      {/* --- 5. LESSON: SKIN UNDERTONE --- */}
+      <section className="py-28 bg-white">
+        <div className="max-w-[1400px] mx-auto px-10">
+          <div className="mb-14 text-center">
+            <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-4">Skin Undertone</span>
+            <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter text-[#4A4A4A] uppercase">
+              Cool <span className="text-[#FF85A2]">Warm</span> Neutral
+            </h2>
+            <p className="mt-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+              ใช้ Undertone เป็นฐานก่อนเลือกสีผม สีเสื้อผ้า และเมคอัพ
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {undertoneData.map((item, idx) => (
+              <div
+                key={item.key}
+                data-aos="fade-up"
+                data-aos-delay={idx * 80}
+                className={`${item.bg} rounded-[3rem] p-10 border border-black/5 shadow-sm hover:shadow-xl transition-all`}
+              >
+                <p className={`text-[10px] font-black uppercase tracking-[0.25em] ${item.accent} mb-3`}>{item.sub}</p>
+                <h3 className="text-3xl font-[900] tracking-tighter uppercase text-[#4A4A4A] mb-4">{item.title}</h3>
+                <p className="text-[11px] font-bold text-gray-500 leading-relaxed mb-7">{item.desc}</p>
+                <div className="flex flex-wrap gap-2">
+                  {item.chips.map((chip) => (
+                    <span key={chip} className="px-4 py-2 rounded-full bg-white text-[10px] font-black uppercase tracking-wider text-gray-500 border border-black/5">
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-14 bg-[#F9F9F9] rounded-[3rem] p-8 md:p-12 border border-black/5">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#D23669] mb-2">
+                  How To Check Your Undertone
+                </p>
+                <h3 className="text-2xl md:text-4xl font-[900] uppercase tracking-tighter text-[#4A4A4A]">
+                  Check From Vein Color
+                </h3>
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                Natural daylight • inner wrist
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-white rounded-[2rem] p-6 border border-black/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 1</p>
+                <p className="text-[12px] font-bold text-gray-600">ยกข้อมือขึ้นในแสงธรรมชาติ หลีกเลี่ยงไฟเหลืองในห้อง</p>
+              </div>
+              <div className="bg-white rounded-[2rem] p-6 border border-black/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 2</p>
+                <p className="text-[12px] font-bold text-gray-600">ดูเส้นเลือดบริเวณด้านในข้อมือ ว่าออกฟ้า/ม่วง หรือเขียว</p>
+              </div>
+              <div className="bg-white rounded-[2rem] p-6 border border-black/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 3</p>
+                <p className="text-[12px] font-bold text-gray-600">เทียบผลกับตารางด้านล่าง แล้วเลือกโทนสีตามคำแนะนำ</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-[2rem] p-6 bg-[#EEF4FF] border border-[#D7E4FF]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5D78C8] mb-2">Veins: Blue / Purple</p>
+                <p className="text-[14px] font-[900] uppercase text-[#4A4A4A]">Cool Undertone</p>
+              </div>
+              <div className="rounded-[2rem] p-6 bg-[#FFF5EA] border border-[#FFE5C9]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#CC7B2C] mb-2">Veins: Green / Olive</p>
+                <p className="text-[14px] font-[900] uppercase text-[#4A4A4A]">Warm Undertone</p>
+              </div>
+              <div className="rounded-[2rem] p-6 bg-[#F4F4F4] border border-[#E8E8E8]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#596273] mb-2">Veins: Mix / Hard to Tell</p>
+                <p className="text-[14px] font-[900] uppercase text-[#4A4A4A]">Neutral Undertone</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 6. LESSON 03: FACE GEOMETRY (BALANCED - PASTEL VERSION) --- */}
       <section className="py-32 bg-white">
         <div className="max-w-[1400px] mx-auto px-10">
           <div className="flex flex-col lg:flex-row gap-20">
@@ -256,12 +393,12 @@ export default function UltimateAcademy() {
             
             <div className="w-full lg:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { shape: "Oval", trait: "Ideal Balance", desc: "สัดส่วนที่สมดุลที่สุด หน้าผากและกรามมีความโค้งมนสวยงาม", bg: "#F1F5F9" }, // Blue-Gray Pastel
-                { shape: "Square", trait: "Strong Presence", desc: "แนวกรามชัดเจน หน้าผากและโหนกแก้มกว้างไล่เลี่ยกัน", bg: "#FDF2F2" }, // Red Pastel
-                { shape: "Round", trait: "Soft Contour", desc: "ความกว้างและยาวของใบหน้าเกือบเท่ากัน เน้นความละมุน", bg: "#FFFBEB" }, // Amber Pastel
-                { shape: "Heart", trait: "Delicate Point", desc: "หน้าผากกว้างและค่อยๆ เรียวเล็กลงจนถึงปลายคางที่แหลม", bg: "#F5F3FF" }, // Purple Pastel
-                { shape: "Diamond", trait: "Sharp Definition", desc: "โหนกแก้มเป็นจุดที่กว้างที่สุด พร้อมหน้าผากและคางที่เรียว", bg: "#ECFDF5" }, // Emerald Pastel
-                { shape: "Long", trait: "Vertical Focus", desc: "ใบหน้ามีความยาวมากกว่าความกว้าง เน้นการปรับสมดุลแนวนอน", bg: "#EFF6FF" }  // Blue Pastel
+                { shape: "Oval", trait: "Ideal Balance", desc: "สัดส่วนที่สมดุลที่สุด หน้าผากและกรามมีความโค้งมนสวยงาม", bg: "#F1F5F9", image: faceShapes[0].image }, // Blue-Gray Pastel
+                { shape: "Square", trait: "Strong Presence", desc: "แนวกรามชัดเจน หน้าผากและโหนกแก้มกว้างไล่เลี่ยกัน", bg: "#FDF2F2", image: faceShapes[2].image }, // Red Pastel
+                { shape: "Round", trait: "Soft Contour", desc: "ความกว้างและยาวของใบหน้าเกือบเท่ากัน เน้นความละมุน", bg: "#FFFBEB", image: faceShapes[1].image }, // Amber Pastel
+                { shape: "Heart", trait: "Delicate Point", desc: "หน้าผากกว้างและค่อยๆ เรียวเล็กลงจนถึงปลายคางที่แหลม", bg: "#F5F3FF", image: faceShapes[3].image }, // Purple Pastel
+                { shape: "Diamond", trait: "Sharp Definition", desc: "โหนกแก้มเป็นจุดที่กว้างที่สุด พร้อมหน้าผากและคางที่เรียว", bg: "#ECFDF5", image: faceShapes[4].image }, // Emerald Pastel
+                { shape: "Long", trait: "Vertical Focus", desc: "ใบหน้ามีความยาวมากกว่าความกว้าง เน้นการปรับสมดุลแนวนอน", bg: "#EFF6FF", image: faceShapes[5].image }  // Blue Pastel
               ].map((item, i) => (
                 <div 
                   key={item.shape} 
@@ -276,6 +413,14 @@ export default function UltimateAcademy() {
                     <h5 className="text-[20px] font-[900] uppercase text-[#4A4A4A] group-hover:text-white transition-colors">{item.shape}</h5>
                     <p className="text-[9px] font-black text-[#D23669] group-hover:text-[#FF85A2] uppercase mt-2 tracking-widest">{item.trait}</p>
                   </div>
+                  <div className="h-44 rounded-[1.5rem] overflow-hidden mb-5 border border-white/70 shadow-sm bg-white">
+                    <img
+                      src={item.image}
+                      alt={item.shape}
+                      className="w-full h-full object-contain p-2"
+                      loading="lazy"
+                    />
+                  </div>
                   <p className="text-[11px] font-medium text-gray-400 group-hover:text-white/80 uppercase leading-loose tracking-tight transition-colors">{item.desc}</p>
                 </div>
               ))}
@@ -284,32 +429,36 @@ export default function UltimateAcademy() {
         </div>
       </section>
 
-      {/* --- 6. LESSON 04: CLOSET LOGIC --- */}
+      {/* --- 7. LESSON 04: CLOSET LOGIC --- */}
       <section className="py-32 bg-[#F9F9F9]">
         <div className="max-w-[1400px] mx-auto px-10 text-center">
           <span className="text-[11px] tracking-[0.5em] font-black uppercase text-[#D23669] block mb-4">Lesson 04</span>
           <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter uppercase mb-20 text-[#4A4A4A]">Closet <span className="text-[#FF85A2]">Logic</span></h2>
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="bg-white p-16 rounded-[4rem] shadow-sm hover:shadow-xl transition-all group" data-aos="fade-up">
-              <span className="text-6xl font-[900] text-[#D23669]/10 group-hover:text-[#D23669]/20 transition-colors block mb-8">60%</span>
-              <h4 className="text-2xl font-[900] uppercase text-[#4A4A4A] mb-4">Neutral Base</h4>
-              <p className="text-[11px] font-bold text-gray-400 uppercase leading-loose tracking-wider">สีพื้นฐานสำหรับชิ้นหลัก เช่น สูท กางเกง เพื่อความคลาสสิก</p>
-            </div>
-            <div className="bg-[#D23669] p-16 rounded-[4rem] shadow-xl text-white transform lg:-translate-y-8 group" data-aos="fade-up" data-aos-delay="100">
-              <span className="text-6xl font-[900] text-white/20 block mb-8">30%</span>
-              <h4 className="text-2xl font-[900] uppercase mb-4">Personal Hero</h4>
-              <p className="text-[11px] font-bold text-white/70 uppercase leading-loose tracking-wider">จุดที่สีประจำฤดูกาลทำงานหนักที่สุดเพื่อขับออร่าให้ผิว</p>
-            </div>
-            <div className="bg-white p-16 rounded-[4rem] shadow-sm hover:shadow-xl transition-all group" data-aos="fade-up" data-aos-delay="200">
-              <span className="text-6xl font-[900] text-[#D23669]/10 group-hover:text-[#D23669]/20 transition-colors block mb-8">10%</span>
-              <h4 className="text-2xl font-[900] uppercase text-[#4A4A4A] mb-4">Statement</h4>
-              <p className="text-[11px] font-bold text-gray-400 uppercase leading-loose tracking-wider">สีตัดกัน (Pop Color) เพื่อสร้างความโดดเด่นและสไตล์เฉพาะตัว</p>
-            </div>
+            {closetCards.map((card, idx) => (
+              <div
+                key={card.title}
+                className={`${card.highlight ? "bg-[#D23669] text-white transform lg:-translate-y-8 shadow-xl" : "bg-white shadow-sm hover:shadow-xl"} p-10 rounded-[4rem] transition-all group`}
+                data-aos="fade-up"
+                data-aos-delay={idx * 100}
+              >
+                <div className="h-44 rounded-[2rem] overflow-hidden mb-8 border border-white/20">
+                  <img src={card.image} alt={card.title} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <span className={`text-6xl font-[900] ${card.highlight ? "text-white/20" : "text-[#D23669]/10 group-hover:text-[#D23669]/20"} transition-colors block mb-6`}>
+                  {card.percent}
+                </span>
+                <h4 className="text-2xl font-[900] uppercase mb-4">{card.title}</h4>
+                <p className={`text-[11px] font-bold uppercase leading-loose tracking-wider ${card.highlight ? "text-white/70" : "text-gray-400"}`}>
+                  {card.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* --- 7. PRESTIGE CTA --- */}
+      {/* --- 8. PRESTIGE CTA --- */}
       <section className="py-24 bg-black text-white text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[#D23669]/10 animate-pulse"></div>
         <div className="relative z-10 max-w-[1400px] mx-auto px-10" data-aos="zoom-in">
@@ -320,7 +469,7 @@ export default function UltimateAcademy() {
         </div>
       </section>
 
-      {/* --- 8. LUXURY FOOTER --- */}
+      {/* --- 9. LUXURY FOOTER --- */}
       <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
         <div className="max-w-[1400px] mx-auto px-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">

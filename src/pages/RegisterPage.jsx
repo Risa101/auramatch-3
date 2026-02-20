@@ -11,12 +11,14 @@ const isAdminEmail = (e) => ADMIN_EMAILS.includes((e || "").toLowerCase());
 
 function resolveApiBaseUrl() {
   const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
-  if (raw) return String(raw).replace(/\/+$/, "");
+  if (raw) {
+    return String(raw).replace(/\/+$/, "");
+  }
 
-  const isLocalhost =
+  const isLocalhostHost =
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  if (isLocalhost) return "http://127.0.0.1:5010";
+  if (isLocalhostHost) return "http://127.0.0.1:5010";
 
   return "";
 }
@@ -109,7 +111,7 @@ export default function RegisterPage() {
 
       localStorage.setItem("auramatch:isLoggedIn", "true");
       localStorage.setItem("auramatch:user", JSON.stringify(userlike));
-      const adminFlag = userlike.role === "admin" || isAdminEmail(userlike.email);
+      const adminFlag = userlike.role === "admin";
       localStorage.setItem("auramatch:isAdmin", adminFlag ? "true" : "false");
 
       await getOrCreateWelcomeCoupon({ uid: userlike.uid });

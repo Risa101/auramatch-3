@@ -1,6 +1,16 @@
 import axios from "axios";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+function resolveApiBaseUrl() {
+  const isLocalhostHost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocalhostHost) return "";
+
+  const raw = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "http://127.0.0.1:5010";
+  return String(raw).replace(/\/+$/, "");
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -73,6 +83,22 @@ export const saveAnalysisHistory = async (payload) => {
     return null;
   }
 };
+
+export const generateGeminiImage = async ({ file, prompt }) => {
+  try {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("prompt", prompt || "");
+    const response = await apiClient.post("/api/gemini/generate-image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error generating image:", error);
+    throw error;
+  }
+};
+
 
 // ลบประวัติการวิเคราะห์ (ฟังก์ชันที่หายไป)
 export const deleteAnalysis = async (id) => {
@@ -205,6 +231,6 @@ export const getAdminOverview = async () => {
     return response.data || null;
   } catch (error) {
     console.error("Error fetching admin overview:", error);
-    return null;
+    throw error;
   }
 };

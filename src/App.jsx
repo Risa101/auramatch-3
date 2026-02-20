@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 
@@ -19,12 +18,12 @@ const AboutUs         = lazy(() => import("./pages/AboutUs.jsx"));
 const MakeupLooks     = lazy(() => import("./pages/MakeupLooks.jsx"));
 const AdvisorPage     = lazy(() => import("./pages/AdvisorPage.jsx"));
 const CosmeticsPage   = lazy(() => import("./pages/cosmeticPage.jsx"));
-const AccountProfile  = lazy(() => import("./pages/AccountProfile.jsx")); // เพิ่มหน้านี้
-const AnalysisHistory = lazy(() => import("./pages/AnalysisHistory.jsx")); // เพิ่มหน้านี้
-const Coupons         = lazy(() => import("./pages/Coupons.jsx")); // เพิ่มหน้านี้
+const AccountProfile  = lazy(() => import("./pages/AccountProfile.jsx"));
+const AnalysisHistory = lazy(() => import("./pages/AnalysisHistory.jsx"));
+const Coupons         = lazy(() => import("./pages/Coupons.jsx"));
 
 // ── Lazy pages (Admin Side) ───────────────────────────────────────────────────
-const AdminDashboard  = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
+const SalesDashboard  = lazy(() => import("./pages/admin/SalesDashboard.jsx"));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const isLoggedIn = () => localStorage.getItem("auramatch:isLoggedIn") === "true";
@@ -32,17 +31,15 @@ const hasToken = () => Boolean(localStorage.getItem("auramatch:token"));
 const isAdmin    = () => localStorage.getItem("auramatch:isAdmin") === "true";
 const hasSession = () => isLoggedIn() && hasToken();
 
-// ── Route guards (ตัวป้องกันหน้า) ──────────────────────────────────────────────
+// ── Route guards ──────────────────────────────────────────────────────────────
 function RequireAuth({ children }) {
   const { pathname } = useLocation();
-  // ถ้ายังไม่ล็อกอิน ให้ดีดไปหน้า login
   return hasSession() ? children : <Navigate to="/login" state={{ from: pathname }} replace />;
 }
 
 function RequireAdmin({ children }) {
   const { pathname } = useLocation();
   if (!hasSession()) return <Navigate to="/login" state={{ from: pathname }} replace />;
-  // ถ้าไม่ใช่ admin ให้ดีดไปหน้าแรก
   return isAdmin() ? children : <Navigate to="/" replace />;
 }
 
@@ -54,24 +51,23 @@ function ChromeWrapper({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFCFB]">
       {!hideChrome && <Navbar />}
-      
       <main className="flex-grow flex flex-col">
         {!hideChrome && <DiscountBanner />}
-        
-        <Suspense 
-          fallback={
-            <div className="flex-grow flex items-center justify-center bg-[#FDFCFB]">
-              <div className="text-[10px] tracking-[0.5em] font-bold uppercase text-[#C5A358] animate-pulse">
-                AuraMatch Atelier...
-              </div>
-            </div>
-          }
-        >
+        <Suspense fallback={<LoadingUI />}>
           {children}
         </Suspense>
       </main>
-
       {!hideChrome && <Footer />}
+    </div>
+  );
+}
+
+function LoadingUI() {
+  return (
+    <div className="flex-grow flex items-center justify-center bg-[#FDFCFB]">
+      <div className="text-[10px] tracking-[0.5em] font-bold uppercase text-[#C5A358] animate-pulse">
+        AuraMatch Atelier...
+      </div>
     </div>
   );
 }
@@ -82,7 +78,6 @@ export default function App() {
     <Router basename="/"> 
       <ChromeWrapper>
         <Routes>
-          {/* Public Routes (เข้าได้ทุกคน) */}
           <Route path="/"                   element={<AuraMatchPage />} />
           <Route path="/login"              element={<LoginPage />} />
           <Route path="/register"           element={<RegisterPage />} />
@@ -93,34 +88,26 @@ export default function App() {
           <Route path="/advisor"            element={<AdvisorPage />} />
           <Route path="/cosmetics"          element={<CosmeticsPage />} />
           <Route path="/cosmetics/:category" element={<CosmeticsPage />} />
-
-          {/* User Routes (public) */}
           <Route path="/account"            element={<AccountProfile />} />
           <Route path="/history"            element={<AnalysisHistory />} />
           <Route path="/coupons"            element={<Coupons />} />
+          <Route path="/analysis"           element={<Analysis />} />
 
-          {/* Protected Route (ต้อง Login เฉพาะ Analysis) */}
-          <Route 
-            path="/analysis" 
-            element={<RequireAuth><Analysis /></RequireAuth>} 
-          />
+          {/* Admin Routes - จัดการผ่าน SalesDashboard ไฟล์เดียว */}
+          <Route path="/admin/*" element={<RequireAdmin><SalesDashboard /></RequireAdmin>} />
 
-          {/* Admin Routes (ต้องเป็น Admin เท่านั้น) */}
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route
-            path="/admin/dashboard"
-            element={<RequireAdmin><AdminDashboard /></RequireAdmin>}
-          />
-
-          {/* 404 - ไม่พบหน้า */}
-          <Route path="*" element={
-            <div className="pt-40 text-center font-serif italic">
-              <h2 className="text-4xl text-[#1A1A1A]">Page Not Found</h2>
-              <p className="text-[#C5A358] mt-4 uppercase tracking-widest text-xs">Error 404</p>
-            </div>
-          } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </ChromeWrapper>
     </Router>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="pt-40 text-center font-serif italic">
+      <h2 className="text-4xl text-[#1A1A1A]">Page Not Found</h2>
+      <p className="text-[#C5A358] mt-4 uppercase tracking-widest text-xs">Error 404</p>
+    </div>
   );
 }

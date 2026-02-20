@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, Star, Sparkles, Heart, Loader2, Search, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -79,6 +79,7 @@ const CosmeticStore = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState('Best Seller');
   const [error, setError] = useState('');
+  const productsSectionRef = useRef(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,6 +123,21 @@ const CosmeticStore = () => {
     setSelectedSeason('All');
     setSortBy('Best Seller');
     setCurrentPage(1);
+  };
+
+  const scrollToProducts = () => {
+    requestAnimationFrame(() => {
+      productsSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  };
+
+  const handleSelectSeason = (season) => {
+    setSelectedSeason(season);
+    setCurrentPage(1);
+    scrollToProducts();
   };
 
   const getBadge = (item) => {
@@ -201,7 +217,7 @@ const CosmeticStore = () => {
             {personalColorData.map((item, idx) => (
               <div
                 key={item.name}
-                onClick={() => { setSelectedSeason(item.name); setCurrentPage(1); }}
+                onClick={() => handleSelectSeason(item.name)}
                 className={`group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25, 1, 0.35, 1)] cursor-pointer overflow-hidden rounded-[2.5rem] ${item.color} shadow-sm border border-black/5`}
               >
                 <div className="absolute inset-0 p-8 flex flex-col z-20">
@@ -305,7 +321,7 @@ const CosmeticStore = () => {
               {['All', 'Spring', 'Summer', 'Autumn', 'Winter'].map((season) => (
                 <button
                   key={season}
-                  onClick={() => { setSelectedSeason(season); setCurrentPage(1); }}
+                  onClick={() => handleSelectSeason(season)}
                   className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${selectedSeason === season ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-white hover:text-gray-700'}`}
                 >
                   {season}
@@ -341,7 +357,7 @@ const CosmeticStore = () => {
       </div>
 
       {/* --- SECTION 3: PRODUCTS & PAGINATION --- */}
-      <div className="max-w-7xl mx-auto px-6 -mt-10">
+      <div ref={productsSectionRef} className="max-w-7xl mx-auto px-6 -mt-10">
         <div className="flex bg-white/90 backdrop-blur-xl p-2 rounded-full shadow-xl border border-white mb-16 overflow-x-auto no-scrollbar">
           {['All', 'Blush', 'Eye', 'Lip', 'Cushion'].map((cat) => (
             <button key={cat} onClick={() => { setActiveCategory(cat); setCurrentPage(1); }} className={`px-10 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${activeCategory === cat ? 'bg-[#FFB7B2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>{cat}</button>
