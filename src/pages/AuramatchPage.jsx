@@ -11,7 +11,7 @@ import i18n from "../lib/i18n";
 
 // ✅ API Connections
 import {
-  getBestSellerProducts, getLooksBySeason, getFavoritesByUserApi, 
+  getBestSellerProducts, getLooksBySeason, getFavoritesByUserApi,
   toggleFavoriteApi
 } from "../callapi/call_api_user";
 
@@ -26,7 +26,7 @@ export default function AuramatchDailyDose() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [makeupLooks, setMakeupLooks] = useState([]);
-  const [activeColor, setActiveColor] = useState("Spring"); 
+  const [activeColor, setActiveColor] = useState("Spring");
   const [likedProducts, setLikedProducts] = useState({});
   const [selectedLook, setSelectedLook] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -39,14 +39,18 @@ export default function AuramatchDailyDose() {
     { label: "Analysis", to: "/analysis" },
     { label: "Shop", to: "/shop" }
   ];
-  const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  const apiBase = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const isLocalhostHost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const goAdvisor = () => navigate("/advisor");
 
   const buildApiImage = (path) => {
     if (!path) return "/assets/home2.webp";
     if (String(path).startsWith("http")) return path;
-    if (!apiBase) return path;
-    return `${apiBase}/${String(path).replace(/^\//, "")}`;
+    const normalized = String(path).startsWith("/") ? String(path) : `/${String(path)}`;
+    if (!apiBase) return normalized;
+    return `${apiBase}${normalized}`;
   };
 
   const openProductModal = (product) => {
@@ -134,63 +138,63 @@ export default function AuramatchDailyDose() {
   };
 
   const personalColorData1 = [
-  {
-    id: '01',
-    name: 'Spring',
-    tag: 'Warm, Bright & Vitality',
-    desc: 'กลุ่มสีโทนอุ่นที่สดใส สว่าง และมีความใส (Clarity) สูง ช่วยขับให้ผิวดูเปล่งปลั่งมีเลือดฝาด',
-    color: 'bg-[#FFF5F0]',
-    textColor: 'text-[#E67E22]',
-    palette: [
-      '#FFDAB9', '#FF8C69', '#FFD700', '#FFA07A', '#98FB98', '#FF69B4', // 1-6
-      '#00FA9A', '#F0E68C', '#FF7F50', '#87CEEB', '#DEB887', '#FFEFD5', // 7-12
-      '#F4A460', '#FFFFE0', '#9ACD32', '#FF4500', '#FFCC00', '#FA8072', // 13-18
-      '#7CFC00', '#EEDC82', '#FFB6C1', '#00CED1', '#FFDAB9', '#F08080'  // 19-24
-    ],
-  },
-  {
-    id: '02',
-    name: 'Summer',
-    tag: 'Cool, Soft & Elegant',
-    desc: 'กลุ่มสีโทนเย็นที่มีความละมุน (Muted) และเจือเทา ให้ลุคที่ดูสุภาพ เรียบหรู และอ่อนโยน',
-    color: 'bg-[#F0F5FF]',
-    textColor: 'text-[#7D8CC4]',
-    palette: [
-      '#E6CFCD', '#A7B9D4', '#FBB1BD', '#C8B2D1', '#B0C4DE', '#D8BFD8', // 1-6
-      '#E0FFFF', '#BDB76B', '#95A5A6', '#7FB3D5', '#D2B4DE', '#FADBD8', // 7-12
-      '#708090', '#B0E0E6', '#AFEEEE', '#DB7093', '#BC8F8F', '#4682B4', // 13-18
-      '#DCDCDC', '#B4CFEC', '#C3949E', '#91A3B0', '#997A8D', '#82A1B1'  // 19-24
-    ],
-  },
-  {
-    id: '03',
-    name: 'Autumn',
-    tag: 'Warm, Rich & Earthy',
-    desc: 'กลุ่มสีโทนอุ่นที่เข้มและลึก (Deep) มีความหม่นและคลาสสิก เหมือนสีสันของธรรมชาติฤดูใบไม้ร่วง',
-    color: 'bg-[#F9F4E8]',
-    textColor: 'text-[#8B4513]',
-    palette: [
-      '#A0522D', '#B8860B', '#5D4037', '#CD5C5C', '#556B2F', '#D2691E', // 1-6
-      '#BC8F8F', '#DAA520', '#808000', '#6B8E23', '#A52A2A', '#E9967A', // 7-12
-      '#3D2B1F', '#4B3621', '#6E4B1F', '#832A0D', '#556B2F', '#434B2A', // 13-18
-      '#B87333', '#915F6D', '#7B3F00', '#8A3324', '#C19A6B', '#4E5754'  // 19-24
-    ],
-  },
-  {
-    id: '04',
-    name: 'Winter',
-    tag: 'Cool, Vivid & Sharp',
-    desc: 'กลุ่มสีโทนเย็นที่เข้มข้น ชัดเจน และมี Contrast สูง ช่วยขับเน้นเครื่องหน้าให้ดูคมชัดและโดดเด่น',
-    color: 'bg-[#F4F4F4]',
-    textColor: 'text-[#2C3E50]',
-    palette: [
-      '#1C1C1C', '#003366', '#800020', '#C0C0C0', '#4B0082', '#008080', // 1-6
-      '#FF00FF', '#FFFFFF', '#00008B', '#FF1493', '#00CED1', '#333333', // 7-12
-      '#4169E1', '#8B008B', '#000000', '#0047AB', '#E0115F', '#50C878', // 13-18
-      '#0F0F0F', '#66023C', '#240A40', '#082567', '#002147', '#36454F'  // 19-24
-    ],
-  }
-];
+    {
+      id: '01',
+      name: 'Spring',
+      tag: 'Warm, Bright & Vitality',
+      desc: 'กลุ่มสีโทนอุ่นที่สดใส สว่าง และมีความใส (Clarity) สูง ช่วยขับให้ผิวดูเปล่งปลั่งมีเลือดฝาด',
+      color: 'bg-[#FFF5F0]',
+      textColor: 'text-[#E67E22]',
+      palette: [
+        '#FFDAB9', '#FF8C69', '#FFD700', '#FFA07A', '#98FB98', '#FF69B4', // 1-6
+        '#00FA9A', '#F0E68C', '#FF7F50', '#87CEEB', '#DEB887', '#FFEFD5', // 7-12
+        '#F4A460', '#FFFFE0', '#9ACD32', '#FF4500', '#FFCC00', '#FA8072', // 13-18
+        '#7CFC00', '#EEDC82', '#FFB6C1', '#00CED1', '#FFDAB9', '#F08080'  // 19-24
+      ],
+    },
+    {
+      id: '02',
+      name: 'Summer',
+      tag: 'Cool, Soft & Elegant',
+      desc: 'กลุ่มสีโทนเย็นที่มีความละมุน (Muted) และเจือเทา ให้ลุคที่ดูสุภาพ เรียบหรู และอ่อนโยน',
+      color: 'bg-[#F0F5FF]',
+      textColor: 'text-[#7D8CC4]',
+      palette: [
+        '#E6CFCD', '#A7B9D4', '#FBB1BD', '#C8B2D1', '#B0C4DE', '#D8BFD8', // 1-6
+        '#E0FFFF', '#BDB76B', '#95A5A6', '#7FB3D5', '#D2B4DE', '#FADBD8', // 7-12
+        '#708090', '#B0E0E6', '#AFEEEE', '#DB7093', '#BC8F8F', '#4682B4', // 13-18
+        '#DCDCDC', '#B4CFEC', '#C3949E', '#91A3B0', '#997A8D', '#82A1B1'  // 19-24
+      ],
+    },
+    {
+      id: '03',
+      name: 'Autumn',
+      tag: 'Warm, Rich & Earthy',
+      desc: 'กลุ่มสีโทนอุ่นที่เข้มและลึก (Deep) มีความหม่นและคลาสสิก เหมือนสีสันของธรรมชาติฤดูใบไม้ร่วง',
+      color: 'bg-[#F9F4E8]',
+      textColor: 'text-[#8B4513]',
+      palette: [
+        '#A0522D', '#B8860B', '#5D4037', '#CD5C5C', '#556B2F', '#D2691E', // 1-6
+        '#BC8F8F', '#DAA520', '#808000', '#6B8E23', '#A52A2A', '#E9967A', // 7-12
+        '#3D2B1F', '#4B3621', '#6E4B1F', '#832A0D', '#556B2F', '#434B2A', // 13-18
+        '#B87333', '#915F6D', '#7B3F00', '#8A3324', '#C19A6B', '#4E5754'  // 19-24
+      ],
+    },
+    {
+      id: '04',
+      name: 'Winter',
+      tag: 'Cool, Vivid & Sharp',
+      desc: 'กลุ่มสีโทนเย็นที่เข้มข้น ชัดเจน และมี Contrast สูง ช่วยขับเน้นเครื่องหน้าให้ดูคมชัดและโดดเด่น',
+      color: 'bg-[#F4F4F4]',
+      textColor: 'text-[#2C3E50]',
+      palette: [
+        '#1C1C1C', '#003366', '#800020', '#C0C0C0', '#4B0082', '#008080', // 1-6
+        '#FF00FF', '#FFFFFF', '#00008B', '#FF1493', '#00CED1', '#333333', // 7-12
+        '#4169E1', '#8B008B', '#000000', '#0047AB', '#E0115F', '#50C878', // 13-18
+        '#0F0F0F', '#66023C', '#240A40', '#082567', '#002147', '#36454F'  // 19-24
+      ],
+    }
+  ];
 
 
   useEffect(() => {
@@ -243,17 +247,21 @@ export default function AuramatchDailyDose() {
         getLooksBySeason(activeColor) // เรียกใช้ API looks โดยส่งค่า activeColor (Spring, Summer, etc.)
       ]);
 
-      const safeBestSellers = Array.isArray(bsData) && bsData.length > 0 ? bsData : fallbackBestSellers;
-      const safeLooks = Array.isArray(looksData) && looksData.length > 0
-        ? looksData
-        : (fallbackLooksBySeason[activeColor] || []);
+      const safeBestSellers =
+        Array.isArray(bsData) && bsData.length > 0
+          ? bsData
+          : (isLocalhostHost ? fallbackBestSellers : []);
+      const safeLooks =
+        Array.isArray(looksData) && looksData.length > 0
+          ? looksData
+          : (isLocalhostHost ? (fallbackLooksBySeason[activeColor] || []) : []);
 
       setBestSellers(safeBestSellers);
       setMakeupLooks(safeLooks); // อัปเดตข้อมูลที่ดึงมาจากหลังบ้านลงใน State
     } catch (err) {
       console.error("Fetch Data Error:", err);
-      setBestSellers(fallbackBestSellers);
-      setMakeupLooks(fallbackLooksBySeason[activeColor] || []);
+      setBestSellers(isLocalhostHost ? fallbackBestSellers : []);
+      setMakeupLooks(isLocalhostHost ? (fallbackLooksBySeason[activeColor] || []) : []);
     } finally {
       setIsLoading(false);
       // ให้ AOS (Animation) ทำงานหลังจากโหลดข้อมูลเสร็จ
@@ -270,46 +278,44 @@ export default function AuramatchDailyDose() {
   }, [fetchData]);
 
   if (isLoading) return (
-    <div className="h-screen bg-[#E8D9F2] flex items-center justify-center">
+    <div className="h-screen bg-[#F7F7F8] flex items-center justify-center">
       <div className="relative flex flex-col items-center gap-4">
         <div className="w-16 h-16 border-4 border-[#D23669]/20 border-t-[#D23669] rounded-full animate-spin"></div>
-        <span className="text-[10px] tracking-[0.3em] uppercase text-[#D23669] font-black italic">Preparing Your Dose...</span>
+        <span className="text-[10px] tracking-[0.28em] uppercase text-[#D23669] font-black">Preparing Your Dose...</span>
       </div>
     </div>
   );
 
   return (
-    <div className="bg-white text-[#4A4A4A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
+    <div className="bg-[#FCF8F8] text-[#3A3437] font-sans selection:bg-[#FFDCE6] selection:text-[#C85A7D] antialiased">
 
       {/* --- 1. HERO --- */}
-            <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
+      <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#F6E9EE]">
         <div className="absolute inset-0 z-0">
-          <picture>
-            <source srcSet="/assets/home2.webp" type="image/webp" />
-            <img
-              src="/assets/home2.webp"
-              alt=""
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          </picture>
+          <img src="/assets/home2.webp" alt="" className="h-full w-full object-cover opacity-100" />
+          <div
+            className="absolute inset-0 opacity-100"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.18) 28%, rgba(255,255,255,0.0) 58%)",
+            }}
+          />
         </div>
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
           <div data-aos="fade-right" className="max-w-xl space-y-6">
-            <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1 rounded-full border border-white/20 backdrop-blur-sm">
-              <Sparkles size={10} className="text-white" />
-              <span className="text-[8px] tracking-[0.2em] uppercase text-white font-black">Innovation 2026</span>
+            <div className="inline-flex items-center gap-2 bg-white/25 px-3 py-1 rounded-full border border-white/40 backdrop-blur-sm">
+              <Sparkles size={10} className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,.2)]" />
+              <span className="text-[8px] tracking-[0.2em] uppercase text-white font-black drop-shadow-[0_1px_2px_rgba(0,0,0,.2)]">Innovation 2026</span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-white uppercase">
+            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-white uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,.24)]">
               The <span className="text-[#FF85A2]">Aura</span> <br /> Match <span className="font-light italic text-white">Dose</span>
             </h1>
-            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.15em] text-white/90 max-w-sm leading-relaxed">
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.15em] text-white max-w-sm leading-relaxed drop-shadow-[0_1px_6px_rgba(0,0,0,.22)]">
               The highly-absorbable, biometric-based, and enjoyable solution to your perfect beauty match.
             </p>
             <div className="pt-4">
-              <button onClick={() => navigate("/analysis")} className="bg-[#D23669] text-white px-8 py-4 rounded-full text-[9px] font-[900] uppercase tracking-widest hover:scale-105 transition-all">
+              <button onClick={() => navigate("/analysis")} className="bg-[#D23669] text-white px-8 py-4 rounded-full text-[9px] font-[900] uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_24px_rgba(210,54,105,.35)]">
                 Begin Analysis
               </button>
             </div>
@@ -318,10 +324,10 @@ export default function AuramatchDailyDose() {
       </header>
 
       {/* --- 2. MARQUEE --- */}
-      <div className="bg-[#D23669] py-5 overflow-hidden border-y border-white/10 relative z-20">
+      <div className="bg-[#E88DA6] py-3 overflow-hidden border-y border-[#EAC4D0] relative z-20">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...Array(10)].map((_, i) => (
-            <span key={i} className="text-white text-[10px] font-[900] tracking-[0.5em] uppercase mx-12">
+            <span key={i} className="text-white/95 text-[9px] font-[800] tracking-[0.32em] uppercase mx-10">
               • DISCOVER YOUR SHAPE • ANALYSE YOUR COLOR • BOOST YOUR AURA •
             </span>
           ))}
@@ -330,7 +336,7 @@ export default function AuramatchDailyDose() {
 
       {/* --- 3. FACE SHAPE LIBRARY --- */}
       <section
-        className="py-32 bg-white overflow-hidden cursor-pointer"
+        className="py-28 bg-[#FFFDFD] overflow-hidden cursor-pointer"
         role="link"
         tabIndex={0}
         onClick={goAdvisor}
@@ -341,7 +347,7 @@ export default function AuramatchDailyDose() {
           }
         }}
       >
-        <div className="max-w-[1400px] mx-auto px-10">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div data-aos="fade-right" className="space-y-4">
               <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669]">Face Geometry</span>
@@ -350,7 +356,7 @@ export default function AuramatchDailyDose() {
                 Which <span className="text-[#FF85A2]">Shape</span> <br /> Are You?
               </h2>
             </div>
-            <p data-aos="fade-left" className="text-[10px] font-black text-gray-400 uppercase tracking-widest max-w-xs leading-loose text-left md:text-right pb-2">
+            <p data-aos="fade-left" className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em] max-w-xs leading-loose text-left md:text-right pb-2">
               Every face shape has its own unique charm. Discover yours through AI analysis.
             </p>
           </div>
@@ -363,7 +369,7 @@ export default function AuramatchDailyDose() {
               { label: "Diamond", desc: "รูปเพชร", color: "bg-[#E8D9F2]" },
               { label: "Long", desc: "หน้ายาว", color: "bg-[#E2F3E7]" }
             ].map((shape, i) => (
-              <div key={shape.label} data-aos="zoom-in" data-aos-delay={i * 100} className={`group ${shape.color} p-8 rounded-[2.5rem] flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-3 hover:shadow-xl cursor-pointer`}>
+              <div key={shape.label} data-aos="zoom-in" data-aos-delay={i * 100} className={`group ${shape.color} p-8 rounded-3xl border border-[#ECDDE2] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(226,110,147,0.12)] cursor-pointer`}>
                 <div className="w-12 h-16 mb-4 border border-[#D23669]/20 rounded-full flex items-center justify-center group-hover:border-[#D23669] transition-colors">
                   <span className="text-[10px] font-black text-[#D23669] opacity-40 group-hover:opacity-100 uppercase">{shape.label[0]}</span>
                 </div>
@@ -377,7 +383,7 @@ export default function AuramatchDailyDose() {
 
       {/* --- 4. PERSONAL COLOR (Balanced Palette Version) --- */}
       <section
-        className="py-20 bg-[#F9F9F9] overflow-hidden cursor-pointer"
+        className="py-20 bg-[#FFF7FA] overflow-hidden cursor-pointer"
         role="link"
         tabIndex={0}
         onClick={goAdvisor}
@@ -388,11 +394,11 @@ export default function AuramatchDailyDose() {
           }
         }}
       >
-        <div className="max-w-[1200px] mx-auto px-6">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-8">
           <div className="mb-12 text-center">
             <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-2">Color Harmony</span>
             <h2 className="text-3xl md:text-4xl font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
-              Discover Your <span className="text-[#D23669]">Season</span>
+              Discover Your <span className="text-[#FF85A2]">Season</span>
             </h2>
           </div>
 
@@ -400,7 +406,7 @@ export default function AuramatchDailyDose() {
             {personalColorData1.map((item, idx) => (
               <div
                 key={item.name}
-                className={`group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25, 1, 0.35, 1)] cursor-pointer overflow-hidden rounded-[2.5rem] ${item.color} shadow-sm border border-black/5`}
+                className={`group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.35,1)] cursor-pointer overflow-hidden rounded-3xl ${item.color} shadow-sm border border-black/5`}
               >
                 <div className="absolute inset-0 p-8 flex flex-col z-20">
 
@@ -420,51 +426,51 @@ export default function AuramatchDailyDose() {
                     </div>
                   </div>
 
-                 
-                {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
-<div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* ล็อคความสูง Container */}
-  <div className="relative w-full">
-    {/* ใช้ Grid เพื่อให้ทุกอันวางในตำแหน่งที่เท่ากันเป๊ะ */}
-    <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
-      {item.palette.map((color, pIdx) => (
-        <div
-          key={pIdx}
-          className={`
+
+                  {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
+                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* ล็อคความสูง Container */}
+                    <div className="relative w-full">
+                      {/* ใช้ Grid เพื่อให้ทุกอันวางในตำแหน่งที่เท่ากันเป๊ะ */}
+                      <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
+                        {item.palette.map((color, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className={`
             relative rounded-full border border-white/40 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23, 1, 0.32, 1)]
             
             /* กำหนดรูปทรงวงรีให้คงที่ */
             h-10 w-full max-w-[30px] mx-auto
             
             /* สถานะปกติ: โชว์ 4 สีแรกในแถวแรก */
-            ${pIdx < 4 
-              ? 'opacity-100' 
-              : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
-            }
+            ${pIdx < 4
+                                ? 'opacity-100'
+                                : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
+                              }
             
             /* Interaction: เมื่อ Hover ที่วงรีแต่ละอัน */
             hover:scale-125 hover:z-50 hover:shadow-lg hover:border-white
           `}
-          style={{ 
-            backgroundColor: color,
-            /* สั่งให้ทยอยโผล่มาทีละเม็ดอย่างเป็นระเบียบ */
-            transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
-          }}
-        >
-          {/* Glass Reflection เอฟเฟกต์แก้วสะท้อน */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
-        </div>
-      ))}
-    </div>
+                            style={{
+                              backgroundColor: color,
+                              /* สั่งให้ทยอยโผล่มาทีละเม็ดอย่างเป็นระเบียบ */
+                              transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
+                            }}
+                          >
+                            {/* Glass Reflection เอฟเฟกต์แก้วสะท้อน */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
+                          </div>
+                        ))}
+                      </div>
 
-    {/* Footer Hint: ปรับตำแหน่งให้คงที่ */}
-    <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
-      <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
-      <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
-        24 Shades Palette
-      </p>
-    </div>
-  </div>
-</div>
+                      {/* Footer Hint: ปรับตำแหน่งให้คงที่ */}
+                      <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
+                        <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
+                        <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
+                          24 Shades Palette
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Bottom Section */}
                   <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-300 transform translate-y-6 group-hover:translate-y-0">
@@ -491,7 +497,7 @@ export default function AuramatchDailyDose() {
 
       {/* --- 4.4 FASHION RECOMMENDATION --- */}
       <section className="py-24 bg-white">
-        <div className="max-w-[1400px] mx-auto px-10">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
             <div className="space-y-3">
               <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Style Direction</span>
@@ -501,7 +507,7 @@ export default function AuramatchDailyDose() {
             </div>
             <button
               onClick={() => navigate("/advisor")}
-              className="w-fit rounded-full border border-[#D23669]/20 px-6 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-[#D23669] hover:bg-[#D23669] hover:text-white transition-all"
+              className="w-fit rounded-full border border-[#D23669]/25 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#D23669] hover:bg-[#D23669] hover:text-white transition-all"
             >
               Get Full Outfit Advice
             </button>
@@ -513,7 +519,7 @@ export default function AuramatchDailyDose() {
                 key={look.season}
                 data-aos="fade-up"
                 data-aos-delay={idx * 80}
-                className={`rounded-[2rem] p-7 border border-black/5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all ${look.bg}`}
+                className={`rounded-3xl p-7 border border-[#EEDBE2] shadow-sm hover:shadow-[0_12px_30px_rgba(226,110,147,0.12)] hover:-translate-y-1 transition-all ${look.bg}`}
               >
                 <div className="mb-6">
                   <h3 className={`text-2xl font-[900] uppercase tracking-tight ${look.text}`}>{look.season}</h3>
@@ -544,13 +550,13 @@ export default function AuramatchDailyDose() {
         </div>
       </section>
 
-                  {/* --- 4.5 HORIZONTAL SCROLLER --- */}
-      <section className="min-h-screen bg-[#FFF1F6] flex flex-col justify-center">
-        <div className="max-w-[1400px] mx-auto px-8 md:px-10 pb-8">
+      {/* --- 4.5 HORIZONTAL SCROLLER --- */}
+      <section className="min-h-screen bg-[#FFF2F6] flex flex-col justify-center">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-8">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
             <div className="space-y-3">
               <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Aura Promo</span>
-              <h2 className="text-3xl md:text-4xl font-[900] tracking-tighter text-[#4A4A4A] uppercase">
+              <h2 className="text-3xl md:text-4xl font-[900] tracking-tight text-[#4A4A4A] uppercase">
                 TOP <span className="text-[#FF85A2]">BEAUTY</span> BRANDS
               </h2>
             </div>
@@ -566,7 +572,7 @@ export default function AuramatchDailyDose() {
               {horizontalPicks.map((item, idx) => (
                 <div
                   key={`${item.title}-${idx}`}
-                  className="snap-center w-[88vw] md:w-[82vw] lg:w-[78vw] h-[70vh] rounded-[3rem] overflow-hidden border-4 border-[#F08AAA] bg-[#FFE9F0] shadow-[0_24px_70px_rgba(240,138,170,0.28)]"
+                  className="snap-center w-[88vw] md:w-[82vw] lg:w-[78vw] h-[70vh] rounded-[2.5rem] overflow-hidden border-2 border-[#F0B2C6] bg-[#FFE9F0] shadow-[0_16px_40px_rgba(232,141,166,0.2)]"
                 >
                   <div className="relative w-full h-full">
                     <img
@@ -596,13 +602,16 @@ export default function AuramatchDailyDose() {
         </div>
       </section>
 
-{/* --- 5. THE EDIT --- */}
-      <section className="py-32 bg-white">
-        <div className="max-w-[1400px] mx-auto px-10">
+      {/* --- 5. THE EDIT --- */}
+      <section className="py-28 bg-[#FFFCFD]">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="flex justify-between items-center mb-20">
-            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter uppercase text-[#4A4A4A]">
-              The Best Sellers.
-            </h2>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#C27C90] mb-3">Featured Product</p>
+              <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter uppercase text-[#4A4A4A]">
+                The Best Sellers.
+              </h2>
+            </div>
             <button className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669] border-b-2 border-[#D23669]/10 pb-1">View All</button>
           </div>
 
@@ -615,22 +624,22 @@ export default function AuramatchDailyDose() {
                 onClick={() => openProductModal(p)}
               >
                 {/* Container รูปภาพ */}
-                <div className="relative aspect-[3/4] rounded-[3.5rem] overflow-hidden bg-[#F9F9F9] mb-10 group-hover:shadow-2xl transition-all duration-700">
+                <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-[#fefdfd] mb-8 group-hover:shadow-[0_14px_34px_rgba(226,110,147,0.18)] transition-all duration-500 border border-[#EEDDE4]">
                   <img
                     src={buildApiImage(p.image_url)}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                    className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-700"
                     alt={p.name}
                   />
 
                   {/* --- ปุ่มหัวใจที่เพิ่มเข้ามา --- */}
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // กันไม่ให้ไปเปิด Modal สินค้า
+                      e.stopPropagation();
                       toggleLike(p.product_id);
                     }}
-                    className="absolute top-8 right-8 z-20 p-4 rounded-full bg-white/90 backdrop-blur-md shadow-lg transition-all active:scale-90 hover:bg-white"
+                    className="absolute top-6 right-6 z-20 p-3 rounded-full bg-white/95 backdrop-blur-md shadow transition-all active:scale-90 hover:bg-white"
                   >
                     <Heart
                       size={20}
@@ -639,7 +648,6 @@ export default function AuramatchDailyDose() {
                   </button>
                   {/* ------------------------- */}
                 </div>
-
                 <h5 className="text-[13px] font-[900] uppercase tracking-wider text-[#4A4A4A] mb-2">{p.name}</h5>
                 <p className="text-sm font-black text-[#D23669]">฿{parseFloat(p.price || 0).toLocaleString()}</p>
               </div>
@@ -728,8 +736,8 @@ export default function AuramatchDailyDose() {
       )}
 
       {/* --- 5.5 THE LOOKS ARCHIVE (ดึงจากหลังบ้าน) --- */}
-      <section className="py-32 bg-[#F9F9F9]">
-        <div className="max-w-[1400px] mx-auto px-10">
+      <section className="py-28 bg-[#FFF7FA]">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
             <div data-aos="fade-right" className="space-y-4">
               <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669]">Curated Style</span>
@@ -760,7 +768,7 @@ export default function AuramatchDailyDose() {
                   key={look.look_id ?? i}
                   data-aos="fade-up"
                   data-aos-delay={i * 100}
-                  className="group relative bg-white rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                  className="group relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_16px_36px_rgba(226,110,147,0.16)] transition-all duration-300 cursor-pointer border border-[#EEDDE4]"
                   onClick={() => setSelectedLook(look)}
                 >
                   <div className="aspect-[4/5] overflow-hidden">
@@ -849,8 +857,8 @@ export default function AuramatchDailyDose() {
       )}
 
       {/* --- 6. FILM ARCHIVE --- */}
-      <section className="py-24 bg-[#E8D9F2]/10">
-        <div className="max-w-[1400px] mx-auto px-10">
+      <section className="py-24 bg-[#FFF1F6]">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="flex items-center gap-6 mb-16">
             {/* Scaled to Match Hero */}
             <h3 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none text-[#D23669] uppercase tracking-tighter">
@@ -870,8 +878,8 @@ export default function AuramatchDailyDose() {
       </section>
 
       {/* --- 7. FAQ --- */}
-      <section className="py-32 bg-white">
-        <div className="max-w-[1400px] mx-auto px-10">
+      <section className="py-28 bg-[#FFFCFD]">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="max-w-4xl mx-auto">
             {/* Scaled to Match Hero */}
             <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none text-[#D23669] uppercase tracking-tighter text-center mb-20">
@@ -882,7 +890,7 @@ export default function AuramatchDailyDose() {
                 { q: "ศิลปะแห่งการประมวลผล?", a: "AI ของเราวิเคราะห์โครงสร้างความงามในระดับ Biometric Mapping เพื่อหาจุดที่สมบูรณ์แบบที่สุดของคุณ" },
                 { q: "เอกสิทธิ์เฉพาะบุคคล?", a: "ทุกผลลัพธ์คือลิขสิทธิ์ความงามเฉพาะตัวคุณ ข้อมูลจะถูกจัดเก็บแบบส่วนตัวเพื่อความปลอดภัย" }
               ].map((item, i) => (
-                <details key={i} className="group bg-[#F9F9F9] rounded-[2rem] px-10 py-8 cursor-pointer hover:bg-white hover:shadow-xl transition-all">
+                <details key={i} className="group bg-white rounded-3xl px-8 md:px-10 py-7 cursor-pointer hover:bg-[#FFF7FA] hover:shadow-[0_10px_24px_rgba(226,110,147,0.12)] transition-all border border-[#EEDDE4]">
                   <summary className="flex justify-between items-center list-none font-[900] text-xs uppercase tracking-[0.2em] text-[#4A4A4A]">
                     {item.q}
                     <ArrowRight size={16} className="group-open:rotate-90 transition-all text-[#D23669]" />
@@ -896,8 +904,8 @@ export default function AuramatchDailyDose() {
       </section>
 
       {/* --- 8. PRESTIGE CALL TO ACTION --- */}
-      <section className="py-20 bg-black text-white">
-        <div className="max-w-[1400px] mx-auto px-10 text-center space-y-8">
+      <section className="py-20 bg-[#2B2629] text-white">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 text-center space-y-8">
           <div data-aos="fade-up">
             <h2 className="text-4xl md:text-6xl font-[900] tracking-tighter uppercase leading-none">
               Ready to <span className="text-[#FF85A2]">Reveal</span> <br /> Your Inner Aura?
@@ -919,8 +927,8 @@ export default function AuramatchDailyDose() {
       </section>
 
       {/* --- 9. LUXURY FOOTER --- */}
-      <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
-        <div className="max-w-[1400px] mx-auto px-10">
+      <footer className="bg-white border-t border-gray-100 pt-16 pb-10">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
             <div className="col-span-1 md:col-span-2 space-y-6">
               <h3 className="text-2xl font-[900] tracking-tighter uppercase">Aura<span className="text-[#D23669]">Match</span></h3>

@@ -7,6 +7,7 @@ import { getLooksBySeason } from "../callapi/call_api_user";
 
 export default function UltimateAcademy() {
   const navigate = useNavigate();
+  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
   const navItems = [
     { label: "Home", to: "/" },
@@ -26,6 +27,20 @@ export default function UltimateAcademy() {
     Spring: null, Summer: null, Autumn: null, Winter: null
   });
 
+  const fallbackLooksBySeason = {
+    Spring: { name: "Spring Aura", image_url: "/assets/ad1.jpeg" },
+    Summer: { name: "Summer Aura", image_url: "/assets/ad2.jpeg" },
+    Autumn: { name: "Autumn Aura", image_url: "/assets/ad4.JPG" },
+    Winter: { name: "Winter Aura", image_url: "/assets/ad7.JPG" },
+  };
+
+  const resolveImageUrl = (path, fallback = "/assets/home2.webp") => {
+    if (!path) return fallback;
+    if (String(path).startsWith("http")) return path;
+    const normalizedPath = String(path).startsWith("/") ? String(path) : `/${String(path)}`;
+    return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
+  };
+
   // --- 1. API Fetching ---
   const initAcademyData = useCallback(async () => {
     setIsLoading(true);
@@ -36,11 +51,12 @@ export default function UltimateAcademy() {
       );
       const updatedLooks = {};
       seasons.forEach((season, index) => {
-        updatedLooks[season] = results[index]?.[0] || null;
+        updatedLooks[season] = results[index]?.[0] || fallbackLooksBySeason[season];
       });
       setSeasonalLooks(updatedLooks);
     } catch (err) {
       console.error("Archive Load Error:", err);
+      setSeasonalLooks(fallbackLooksBySeason);
     } finally {
       setIsLoading(false);
       setTimeout(() => AOS.refresh(), 500);
@@ -129,21 +145,21 @@ export default function UltimateAcademy() {
       percent: "60%",
       title: "Neutral Base",
       desc: "สีพื้นฐานสำหรับชิ้นหลัก เช่น สูท กางเกง เพื่อความคลาสสิก",
-      image: "/assets/ad7.JPG",
+      // image: "/assets/ad7.JPG",
       highlight: false,
     },
     {
       percent: "30%",
       title: "Personal Hero",
       desc: "จุดที่สีประจำฤดูกาลทำงานหนักที่สุดเพื่อขับออร่าให้ผิว",
-      image: "/assets/ad8.JPG",
+      // image: "/assets/ad8.JPG",
       highlight: true,
     },
     {
       percent: "10%",
       title: "Statement",
       desc: "สีตัดกัน (Pop Color) เพื่อสร้างความโดดเด่นและสไตล์เฉพาะตัว",
-      image: "/assets/ad9.JPG",
+      // image: "/assets/ad9.JPG",
       highlight: false,
     },
   ];
@@ -158,7 +174,7 @@ export default function UltimateAcademy() {
           <div className="relative bg-white w-full max-w-5xl rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-500">
             <div className="w-full md:w-1/2 h-72 md:h-auto overflow-hidden bg-gray-100">
               <img 
-                src={selectedTopic ? knowledgeBase[selectedTopic].image : (seasonalLooks[selectedSeason] ? `${import.meta.env.VITE_API_URL}${seasonalLooks[selectedSeason].image_url}` : 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853')} 
+                src={selectedTopic ? knowledgeBase[selectedTopic].image : resolveImageUrl(seasonalLooks[selectedSeason]?.image_url, "https://images.unsplash.com/photo-1550684848-fac1c5b4e853")} 
                 className="w-full h-full object-cover" 
                 alt="Detail" 
               />
@@ -271,7 +287,7 @@ export default function UltimateAcademy() {
                 <div key={seasonKey} className="flex flex-col gap-6" data-aos="fade-up" data-aos-delay={i*100}>
                   <div onClick={() => setSelectedSeason(seasonKey)} className="group relative aspect-[3/4] rounded-[3rem] overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-all cursor-pointer border border-gray-100">
                     {look ? (
-                      <img src={`${import.meta.env.VITE_API_URL}${look.image_url}`} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" alt={seasonKey} />
+                      <img src={resolveImageUrl(look.image_url)} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" alt={seasonKey} />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-300 font-black text-[10px] uppercase">Loading AI Data...</div>
                     )}
@@ -442,9 +458,9 @@ export default function UltimateAcademy() {
                 data-aos="fade-up"
                 data-aos-delay={idx * 100}
               >
-                <div className="h-44 rounded-[2rem] overflow-hidden mb-8 border border-white/20">
+                {/* <div className="h-44 rounded-[2rem] overflow-hidden mb-8 border border-white/20">
                   <img src={card.image} alt={card.title} className="w-full h-full object-cover" loading="lazy" />
-                </div>
+                </div> */}
                 <span className={`text-6xl font-[900] ${card.highlight ? "text-white/20" : "text-[#D23669]/10 group-hover:text-[#D23669]/20"} transition-colors block mb-6`}>
                   {card.percent}
                 </span>

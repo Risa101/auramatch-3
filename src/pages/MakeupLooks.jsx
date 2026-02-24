@@ -5,7 +5,7 @@ import 'aos/dist/aos.css';
 import { getLooksBySeason } from "../callapi/call_api_user";
 
 const SeasonalGallery = () => {
-  const BACKEND_URL = "http://127.0.0.1:5010";
+  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
   // --- States ---
   const [activeSeason, setActiveSeason] = useState('Spring');
@@ -22,6 +22,25 @@ const SeasonalGallery = () => {
     Winter: { bg: "#F5F3FF", accent: "#8B5CF6", text: "Cool & Vivid", details: "โทนสีน้ำเงินเข้ม ชมพูบานเย็น และขาวดำ เน้นความชัดเจน" }
   };
 
+  const fallbackSeasonalData = {
+    Spring: [
+      { name: "Peach Glow Daily", image_url: "/assets/ad1.jpeg", description: "Fresh peach tone for bright warm skin." },
+      { name: "Soft Coral Blush", image_url: "/assets/ad3.JPG", description: "Coral + warm brown for easy daily look." },
+    ],
+    Summer: [
+      { name: "Rose Milk Look", image_url: "/assets/ad2.jpeg", description: "Muted pink tone for cool soft mood." },
+      { name: "Lavender Soft Glam", image_url: "/assets/ad6.JPG", description: "Soft cool lavender for elegant finish." },
+    ],
+    Autumn: [
+      { name: "Terracotta Chic", image_url: "/assets/ad4.JPG", description: "Warm earthy orange-brown statement." },
+      { name: "Mocha Sunset", image_url: "/assets/ad5.JPG", description: "Deep warm contour and rich lips." },
+    ],
+    Winter: [
+      { name: "Ruby Contrast", image_url: "/assets/ad7.JPG", description: "High-contrast cool look with ruby lip." },
+      { name: "Berry Night", image_url: "/assets/ad8.JPG", description: "Vivid cool berry tones for sharp features." },
+    ],
+  };
+
   // --- Fetch Logic ---
   const initGalleryData = useCallback(async () => {
     setLoading(true);
@@ -29,12 +48,14 @@ const SeasonalGallery = () => {
       const seasons = ["Spring", "Summer", "Autumn", "Winter"];
       const results = await Promise.all(seasons.map(s => getLooksBySeason(s)));
       const updatedData = {};
-      seasons.forEach((s, i) => { 
-        updatedData[s] = Array.isArray(results[i]) ? results[i] : []; 
+      seasons.forEach((s, i) => {
+        const apiItems = Array.isArray(results[i]) ? results[i] : [];
+        updatedData[s] = apiItems.length > 0 ? apiItems : fallbackSeasonalData[s];
       });
       setSeasonalData(updatedData);
     } catch (err) {
       console.error("Fetch Error:", err);
+      setSeasonalData(fallbackSeasonalData);
     } finally {
       setLoading(false);
       setTimeout(() => AOS.refresh(), 500);
@@ -59,8 +80,10 @@ const SeasonalGallery = () => {
   const currentLooks = seasonalData[activeSeason] || [];
 
   const getFullImageUrl = (path) => {
-    if (!path) return null;
-    return path.startsWith('http') ? path : `${BACKEND_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+    if (!path) return "/assets/home2.webp";
+    if (String(path).startsWith('http')) return path;
+    const normalizedPath = String(path).startsWith('/') ? String(path) : `/${String(path)}`;
+    return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
   };
 
   return (

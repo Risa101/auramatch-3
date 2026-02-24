@@ -66,7 +66,45 @@ const personalColorData = [
 ];
 
 const CosmeticStore = () => {
-  const BACKEND_URL = "http://127.0.0.1:5010";
+  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const fallbackProducts = [
+    {
+      product_id: 9001,
+      name: "Laneige Neo Cushion Glow",
+      category: "Cushion",
+      price: 1290,
+      rating: 4.9,
+      personal_color_tags: "Spring,Summer",
+      image_url: "/assets/ad4.JPG",
+    },
+    {
+      product_id: 9002,
+      name: "Dior Forever Cushion",
+      category: "Cushion",
+      price: 2490,
+      rating: 4.8,
+      personal_color_tags: "Winter,Autumn",
+      image_url: "/assets/dior.jpeg",
+    },
+    {
+      product_id: 9003,
+      name: "Peripera Ink Velvet",
+      category: "Lip",
+      price: 390,
+      rating: 4.7,
+      personal_color_tags: "Summer,Winter",
+      image_url: "/assets/ad7.JPG",
+    },
+    {
+      product_id: 9004,
+      name: "Peach Blush Touch",
+      category: "Blush",
+      price: 490,
+      rating: 4.6,
+      personal_color_tags: "Spring,Autumn",
+      image_url: "/assets/ad3.JPG",
+    },
+  ];
 
   // States
   const [products, setProducts] = useState([]);
@@ -90,10 +128,17 @@ const CosmeticStore = () => {
       setLoading(true);
       try {
         const data = await getdataProducts();
-        setProducts(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+          setError('');
+        } else {
+          setProducts(fallbackProducts);
+          setError('');
+        }
       } catch (err) {
         console.error("Fetch Error:", err);
-        setError("โหลดข้อมูลสินค้าไม่สำเร็จ ลองใหม่อีกครั้ง");
+        setProducts(fallbackProducts);
+        setError('');
       } finally {
         setLoading(false);
       }
@@ -149,16 +194,11 @@ const CosmeticStore = () => {
   };
 
   const getFullImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/300?text=No+Image";
-
-    // ตรวจสอบว่ามี http นำหน้าอยู่แล้วหรือไม่ (ป้องกันการต่อซ้ำ)
-    if (imagePath.startsWith('http')) return imagePath;
-
-    const cleanPath = imagePath.trim();
-    // ตรวจสอบเครื่องหมาย / เพื่อให้แน่ใจว่า URL ไม่เป็น http://...//static...
-    const finalPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-
-    return `${BACKEND_URL}${finalPath}`;
+    if (!imagePath) return "/assets/home2.webp";
+    if (String(imagePath).startsWith("http")) return imagePath;
+    const cleanPath = String(imagePath).trim();
+    const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+    return API_BASE_URL ? `${API_BASE_URL}${finalPath}` : finalPath;
   };
 
   // --- FILTER & PAGINATION LOGIC ---
@@ -184,8 +224,16 @@ const CosmeticStore = () => {
     return scoreB - scoreA;
   });
 
-  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
-  const currentItems = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const noActiveFilters =
+    activeCategory === "All" &&
+    selectedSeason === "All" &&
+    !searchQuery?.trim();
+
+  const effectiveProducts =
+    sortedProducts.length === 0 && noActiveFilters ? fallbackProducts : sortedProducts;
+
+  const totalPages = Math.ceil(effectiveProducts.length / itemsPerPage);
+  const currentItems = effectiveProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // สินค้าที่เกี่ยวข้อง (Related Products)
   const relatedProducts = products

@@ -18,7 +18,13 @@ const COLORS = {
   hover: "#D23669",
 };
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5010").replace(/\/+$/, "");
+function resolveApiBaseUrl() {
+  const raw = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "";
+  if (raw) return String(raw).replace(/\/+$/, "");
+  return "";
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const GEMINI_PROMPT = import.meta.env.VITE_GEMINI_PROMPT || "Create a studio-quality beauty portrait based on the uploaded face photo. Keep the subject identity consistent, soft glam makeup, natural skin texture, clean background.";
 const BASE_PATH = import.meta.env.BASE_URL || "/";
 const assetPath = (p) => `${BASE_PATH}${String(p).replace(/^\/+/, "")}`;
