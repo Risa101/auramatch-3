@@ -20,11 +20,14 @@ function formatDate(dateStr) {
   }
 }
 
+const PAGE_SIZE = 9;
+
 export default function AnalysisHistory() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterSeason, setFilterSeason] = useState("ALL");
   const [sort, setSort] = useState("newest");
+  const [page, setPage] = useState(1);
   
   // ดึงข้อมูล User (ใช้ค่า Default เผื่อกรณี localStorage ว่าง)
   const me = lsGet("auramatch:user", null);
@@ -91,11 +94,13 @@ export default function AnalysisHistory() {
     };
   }, [loadHistory]);
 
-  // 3. Filters
+  // 3. Filters + Pagination
   const filtered = items.filter((it) => {
     if (filterSeason !== "ALL" && it.season !== filterSeason) return false;
     return true;
   });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // 4. Delete Logic
   const deleteOne = async (analysisId) => {
@@ -153,18 +158,18 @@ export default function AnalysisHistory() {
               <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Filters:</span>
            </div>
            
-           <select 
-              value={filterSeason} 
-              onChange={(e) => setFilterSeason(e.target.value)}
+           <select
+              value={filterSeason}
+              onChange={(e) => { setFilterSeason(e.target.value); setPage(1); }}
               className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-b border-transparent focus:border-[#D4AF37] pb-1 cursor-pointer"
            >
               <option value="ALL">All Seasons</option>
               {["Spring", "Summer", "Autumn", "Winter"].map(s => <option key={s} value={s}>{s}</option>)}
            </select>
 
-           <select 
-              value={sort} 
-              onChange={(e) => setSort(e.target.value)}
+           <select
+              value={sort}
+              onChange={(e) => { setSort(e.target.value); setPage(1); }}
               className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-b border-transparent focus:border-[#D4AF37] pb-1 cursor-pointer"
            >
               <option value="newest">Sort: Newest First</option>
@@ -183,7 +188,7 @@ export default function AnalysisHistory() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-32">
-            {filtered.map((it) => (
+            {paginated.map((it) => (
               <div key={it.id} className="group relative">
                 
                 {/* Delete Button */}
@@ -233,6 +238,39 @@ export default function AnalysisHistory() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="mt-20 flex items-center justify-center gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-5 py-2.5 border border-gray-200 text-[10px] uppercase tracking-[0.3em] font-black hover:bg-[#1A1A1A] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              ← Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`w-10 h-10 text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  p === page
+                    ? "bg-[#D4AF37] text-white border-[#D4AF37]"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-5 py-2.5 border border-gray-200 text-[10px] uppercase tracking-[0.3em] font-black hover:bg-[#1A1A1A] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>

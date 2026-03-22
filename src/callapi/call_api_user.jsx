@@ -71,11 +71,9 @@ export const generateGeminiImage = async ({ file, prompt }) => {
 };
 
 
-// ลบประวัติการวิเคราะห์ (ฟังก์ชันที่หายไป)
 export const deleteAnalysis = async (id) => {
   try {
-    // ไม่มี endpoint ลบใน backend ชุดนี้
-    const response = await apiClient.delete(`/delete_analysis/${id}`);
+    const response = await apiClient.delete(`/api/analysis-history/${id}`);
     return response.status === 200;
   } catch (error) {
     console.error("Error deleting analysis:", error);
@@ -86,10 +84,17 @@ export const deleteAnalysis = async (id) => {
 /* ===============================
    PRODUCTS
 ================================ */
+function extractList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+}
+
 export async function getBestSellerProducts() {
   try {
     const res = await apiClient.get(`/products/stats/best-seller`);
-    return res.data.data || [];
+    return extractList(res.data);
   } catch (error) {
     console.error("Error fetching best sellers:", error);
     return [];
@@ -99,10 +104,7 @@ export async function getBestSellerProducts() {
 export const getdataProducts = async () => {
   try {
     const response = await apiClient.get(`/products`);
-    if (response.data && response.data.status === "success") {
-        return response.data.data || [];
-    }
-    return response.data || [];
+    return extractList(response.data);
   } catch (error) {
     console.error("Error fetching all products:", error);
     return [];
@@ -111,10 +113,8 @@ export const getdataProducts = async () => {
 
 export const getProductsBySeason = async (season) => {
   try {
-    const response = await apiClient.get(`/products`, {
-      params: { season: season } 
-    });
-    return response.data.data || [];
+    const response = await apiClient.get(`/products`, { params: { season } });
+    return extractList(response.data);
   } catch (error) {
     console.error(`Error fetching products for ${season}:`, error);
     return [];
@@ -127,8 +127,7 @@ export const getProductsBySeason = async (season) => {
 export async function getPromotions() {
   try {
     const res = await apiClient.get(`/promotions`);
-    const data = res.data.status === "success" ? res.data.data : res.data;
-    return Array.isArray(data) ? data : [];
+    return extractList(res.data);
   } catch (error) {
     console.error("Error fetching promotions:", error);
     return [];
@@ -141,8 +140,7 @@ export async function getPromotions() {
 export async function getdataBrands() {
   try {
     const res = await apiClient.get(`/brands`);
-    const data = res.data.status === "success" ? res.data.data : res.data;
-    return Array.isArray(data) ? data : [];
+    return extractList(res.data);
   } catch (error) {
     console.error("Error fetching brands:", error);
     return [];
@@ -154,13 +152,8 @@ export async function getdataBrands() {
 ================================ */
 export async function getLooksBySeason(season) {
   try {
-    const res = await apiClient.get(`/looks`, {
-      params: { personal_color: season },
-    });
-    if (res.data && res.data.status === "success") {
-      return res.data.data || [];
-    }
-    return [];
+    const res = await apiClient.get(`/looks`, { params: { personal_color: season } });
+    return extractList(res.data);
   } catch (error) {
     console.error(`Error fetching looks for ${season}:`, error);
     return [];
@@ -186,7 +179,7 @@ export const toggleFavoriteApi = async (userId, productId) => {
 export const getFavoritesByUserApi = async (userId) => {
   try {
     const response = await apiClient.get(`/favorites/${userId}`);
-    return response.data.data || [];
+    return extractList(response.data);
   } catch (error) {
     console.error("Error fetching favorites:", error);
     return [];

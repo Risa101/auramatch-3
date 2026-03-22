@@ -1315,10 +1315,32 @@ export default function Analysis() {
                 </div>
               </div>
             ) : (
-              <div className="mt-6 rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5 space-y-3">
-                {status === "uploading" && <ProgressBar label="กำลังอัปโหลดภาพ..." />}
-                {status === "analyzing" && <ProgressBar label="กำลังวิเคราะห์โครงหน้าและ personal color..." />}
-                <p className="text-sm text-[#4A4A4A]/60">อัปโหลดรูปใน Step 1 แล้วผลจะมาแสดงอัตโนมัติที่หน้านี้</p>
+              <div className="mt-6 space-y-4">
+                {(status === "uploading" || status === "analyzing") ? (
+                  <div className="rounded-3xl border border-[#EEDBE6] bg-[#FFFDFE] p-6 space-y-5">
+                    <ProgressBar label={status === "uploading" ? "กำลังอัปโหลดภาพ..." : "AI กำลังวิเคราะห์โครงหน้าและ personal color..."} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="rounded-2xl border border-[#FFD1DC] bg-gradient-to-br from-[#FFF8FB] to-[#FFEAF2] p-6 space-y-3">
+                        <div className="h-3 w-24 animate-pulse rounded bg-[#F3D5E0]" />
+                        <div className="h-10 w-32 animate-pulse rounded-lg bg-[#F3D5E0]" />
+                        <div className="h-3 w-40 animate-pulse rounded bg-[#F3D5E0]/60" />
+                      </div>
+                      <div className="rounded-2xl border border-[#FFD1DC] bg-gradient-to-br from-[#FFF8FB] to-[#FFEAF2] p-6 space-y-3">
+                        <div className="h-3 w-20 animate-pulse rounded bg-[#F3D5E0]" />
+                        <div className="h-10 w-28 animate-pulse rounded-lg bg-[#F3D5E0]" />
+                        <div className="h-3 w-36 animate-pulse rounded bg-[#F3D5E0]/60" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {[1,2,3,4].map(i => <div key={i} className="h-7 w-7 animate-pulse rounded-md bg-[#F3D5E0]" />)}
+                    </div>
+                    <p className="text-xs text-center text-[#4A4A4A]/50 animate-pulse">Gemini AI กำลังอ่านใบหน้าของคุณ...</p>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                    <p className="text-sm text-[#4A4A4A]/60">อัปโหลดรูปใน Step 1 แล้วผลจะมาแสดงอัตโนมัติที่หน้านี้</p>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -1374,12 +1396,21 @@ export default function Analysis() {
                 <p className="mt-3 text-sm text-red-500">{geminiError}</p>
               )}
               {geminiStatus === "loading" && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-[#4A4A4A]/60">
-                  <svg className="animate-spin h-4 w-4 text-[#D23669]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                  </svg>
-                  Gemini กำลังประมวลผลภาพ...
+                <div className="mt-4 rounded-2xl border border-[#F3D5E0] bg-[#FFF7FA] p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <svg className="animate-spin h-5 w-5 text-[#D23669] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    <span className="text-sm font-semibold text-[#D23669]">Gemini AI กำลังสร้างภาพแต่งหน้า</span>
+                  </div>
+                  <div className="space-y-2 text-xs text-[#4A4A4A]/60">
+                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669] animate-pulse" />วิเคราะห์ใบหน้า...</div>
+                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669]/50 animate-pulse" style={{animationDelay:"0.3s"}} />เลือก palette ตามโทนสี...</div>
+                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669]/30 animate-pulse" style={{animationDelay:"0.6s"}} />สร้างภาพ editorial สไตล์...</div>
+                  </div>
+                  <div className="aspect-[4/3] w-full max-w-sm rounded-xl bg-gradient-to-br from-[#F3D5E0] to-[#E6DCEB] animate-pulse" />
+                  <p className="text-[11px] text-[#4A4A4A]/50 text-center">ใช้เวลาประมาณ 10–20 วินาที กรุณารอสักครู่</p>
                 </div>
               )}
               {geminiImage && geminiStatus === "done" && (
