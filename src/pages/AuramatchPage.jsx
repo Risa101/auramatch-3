@@ -35,9 +35,9 @@ export default function AuramatchDailyDose() {
 
   const navItems = [
     { label: "Home", to: "/" },
-    { label: "Academy", to: "/academy" },
+    { label: "Advisor", to: "/advisor" },
     { label: "Analysis", to: "/analysis" },
-    { label: "Shop", to: "/shop" }
+    { label: "Shop", to: "/cosmetics" }
   ];
   const apiBase = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
   const isLocalhostHost =
@@ -904,7 +904,7 @@ export default function AuramatchDailyDose() {
       </section>
 
       {/* --- 8. PRESTIGE CALL TO ACTION --- */}
-      <section className="py-20 bg-[#2B2629] text-white">
+      {/* <section className="py-20 bg-[#2B2629] text-white">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 text-center space-y-8">
           <div data-aos="fade-up">
             <h2 className="text-4xl md:text-6xl font-[900] tracking-tighter uppercase leading-none">
@@ -924,7 +924,7 @@ export default function AuramatchDailyDose() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* --- 9. LUXURY FOOTER --- */}
       <footer className="bg-white border-t border-gray-100 pt-16 pb-10">

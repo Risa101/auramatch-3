@@ -91,6 +91,15 @@ export const saveAnalysisHistory = async (payload) => {
   }
 };
 
+export const analyzeFaceApi = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await apiClient.post("/api/gemini/analyze-face", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
 export const generateGeminiImage = async ({ file, prompt }) => {
   try {
     const formData = new FormData();

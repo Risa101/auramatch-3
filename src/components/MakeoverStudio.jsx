@@ -89,13 +89,37 @@ function Option({ label, img, active, onClick }) {
 }
 
 /* ---------- MAIN ---------- */
-export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG") }) {
+export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG"), onProductSelect, onSave }) {
     const [tab, setTab] = useState("Brows");
     const [brow, setBrow] = useState(BROWS[0]);
     const [eye, setEye] = useState(EYES[0]);
     const [hair, setHair] = useState(HAIRSTYLES[0]);
     const [lips, setLips] = useState(LIPS[0]);
     const [hairColor, setHairColor] = useState(HAIR_COLORS[0]);
+    const [savedMsg, setSavedMsg] = useState(false);
+
+    const emitSelectedProduct = (product) => {
+        if (!product || !onProductSelect) return;
+        onProductSelect(product);
+    };
+
+    const BROW_PRODUCTS = {
+        soft: { name: "Soft Arch Brow Pencil", price: "259", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=soft%20arch%20brow%20pencil" },
+        straight: { name: "Straight Brow Definer", price: "239", img: assetPath("product/brush2.jpg"), shopUrl: "https://shopee.co.th/search?keyword=straight%20brow%20definer" },
+        arch: { name: "High Arch Brow Kit", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=high%20arch%20brow%20kit" },
+        thin: { name: "Slim Brow Liner", price: "199", img: assetPath("product/brush2.jpg"), shopUrl: "https://shopee.co.th/search?keyword=slim%20brow%20liner" },
+        curve: { name: "Curve Brow Sculpt", price: "279", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=curve%20brow%20sculpt" },
+    };
+    const EYE_PRODUCTS = {
+        natural: { name: "Natural Eye Palette", price: "399", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=natural%20eye%20palette" },
+        cat: { name: "Cat Eye Liner", price: "229", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=cat%20eye%20liner" },
+        dolly: { name: "Dolly Lash Mascara", price: "259", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=dolly%20lash%20mascara" },
+    };
+    const LIP_PRODUCTS = {
+        red: { name: "Red Lip Tint", price: "249", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=red%20lip%20tint" },
+        pink: { name: "Pink Gloss", price: "229", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=pink%20lip%20gloss" },
+        nude: { name: "Nude Matte Lip", price: "239", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=nude%20matte%20lip" },
+    };
 
     const resetAll = () => {
         setBrow(BROWS[0]);
@@ -142,7 +166,16 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                     {tab === "Brows" && (
                         <div className="grid grid-cols-3 gap-2">
                             {BROWS.map((b) => (
-                                <Option key={b.key} label={b.name} img={b.img} active={brow?.key === b.key} onClick={() => setBrow(b)} />
+                                <Option
+                                    key={b.key}
+                                    label={b.name}
+                                    img={b.img}
+                                    active={brow?.key === b.key}
+                                    onClick={() => {
+                                        setBrow(b);
+                                        emitSelectedProduct(BROW_PRODUCTS[b.key]);
+                                    }}
+                                />
                             ))}
                         </div>
                     )}
@@ -150,7 +183,16 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                     {tab === "Eyes" && (
                         <div className="grid grid-cols-3 gap-2">
                             {EYES.map((e) => (
-                                <Option key={e.key} label={e.name} img={e.img} active={eye?.key === e.key} onClick={() => setEye(e)} />
+                                <Option
+                                    key={e.key}
+                                    label={e.name}
+                                    img={e.img}
+                                    active={eye?.key === e.key}
+                                    onClick={() => {
+                                        setEye(e);
+                                        emitSelectedProduct(EYE_PRODUCTS[e.key]);
+                                    }}
+                                />
                             ))}
                         </div>
                     )}
@@ -158,7 +200,16 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                     {tab === "Lips" && (
                         <div className="grid grid-cols-3 gap-2">
                             {LIPS.map((l) => (
-                                <Option key={l.key} label={l.name} img={l.img} active={lips?.key === l.key} onClick={() => setLips(l)} />
+                                <Option
+                                    key={l.key}
+                                    label={l.name}
+                                    img={l.img}
+                                    active={lips?.key === l.key}
+                                    onClick={() => {
+                                        setLips(l);
+                                        emitSelectedProduct(LIP_PRODUCTS[l.key]);
+                                    }}
+                                />
                             ))}
                         </div>
                     )}
@@ -191,9 +242,15 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                         <MagneticButton onClick={resetAll}>รีเซ็ต</MagneticButton>
                         <MagneticButton
                             style={{ background: "#fff", color: "#75464A", border: "1px solid #E6DCEB", boxShadow: "0 4px 12px rgba(0,0,0,.06)" }}
-                            onClick={() => alert("บันทึกการแต่งหน้าเรียบร้อย!")}
+                            onClick={() => {
+                                const state = { brow, eye, lips, hair, hairColor };
+                                if (onSave) onSave(state);
+                                window.dispatchEvent(new CustomEvent("makeover:saved", { detail: state }));
+                                setSavedMsg(true);
+                                setTimeout(() => setSavedMsg(false), 2000);
+                            }}
                         >
-                            บันทึกผลลัพธ์
+                            {savedMsg ? "บันทึกแล้ว ✓" : "บันทึกผลลัพธ์"}
                         </MagneticButton>
                     </div>
                 </div>

@@ -20,6 +20,10 @@ import {
   createAdminPromotion,
   updateAdminPromotion,
   deleteAdminPromotion,
+  getAdminReviews,
+  createAdminReview,
+  updateAdminReview,
+  deleteAdminReview,
 } from "../../callapi/call_api_admin";
 
 // --- Utility Functions ---
@@ -781,7 +785,210 @@ function PromoView() {
     </div>
   );
 }
-function ReviewView() { return <div className="py-20 text-center font-serif italic text-3xl">Customer Reviews</div>; }
+function ReviewView() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [modal, setModal] = useState({ open: false, data: null });
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const loadReviews = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const rows = await getAdminReviews();
+      setItems(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      console.error(e);
+      setError("โหลดข้อมูลรีวิวไม่สำเร็จ กรุณาตรวจสอบ endpoint /reviews ฝั่ง backend");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews();
+  }, []);
+
+  const saveReview = async (e) => {
+    e.preventDefault();
+    if (saving) return;
+
+    const f = new FormData(e.target);
+    const review_id = String(f.get("review_id") || "").trim();
+    const payload = {
+      review_id: review_id || modal.data?.id,
+      user_id: Number(f.get("user_id") || 0),
+      product_id: Number(f.get("product_id") || 0),
+      rating: Number(f.get("rating") || 0),
+      comment: String(f.get("comment") || "").trim(),
+      status: String(f.get("status") || "active"),
+    };
+
+    if (payload.user_id <= 0 || payload.product_id <= 0 || payload.rating <= 0) {
+      setError("กรุณากรอก user_id, product_id และ rating ให้ถูกต้อง");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const id = modal.data?.id || review_id;
+      if (id) {
+        await updateAdminReview(id, payload);
+      } else {
+        await createAdminReview(payload);
+      }
+      setModal({ open: false, data: null });
+      await loadReviews();
+    } catch (e) {
+      console.error(e);
+      setError("บันทึกรีวิวไม่สำเร็จ กรุณาตรวจสอบ endpoint /reviews ฝั่ง backend");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeReview = async (id) => {
+    if (!id) return;
+    const ok = window.confirm("ยืนยันการลบรีวิวนี้?");
+    if (!ok) return;
+    setError("");
+    try {
+      await deleteAdminReview(id);
+      await loadReviews();
+    } catch (e) {
+      console.error(e);
+      setError("ลบรีวิวไม่สำเร็จ กรุณาตรวจสอบ endpoint /reviews ฝั่ง backend");
+    }
+  };
+
+  const filtered = items.filter((r) => {
+    const q = searchTerm.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      String(r.comment || "").toLowerCase().includes(q) ||
+      String(r.id || "").toLowerCase().includes(q) ||
+      String(r.user_id || "").toLowerCase().includes(q) ||
+      String(r.product_id || "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div data-aos="fade-in">
+      <ManagementHeader title="Customer Reviews" onAdd={() => setModal({ open: true, data: null })} />
+
+      <div className="mb-6 max-w-md relative">
+        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#B8A8AF]" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search review, user_id, product_id..."
+          className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#F0E4E8] bg-white text-sm outline-none focus:ring-2 focus:ring-[#FFD5E3]"
+        />
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 font-medium">
+          {error}
+        </div>
+      )}
+
+      <div className="bg-white rounded-[2rem] border border-[#F0E4E8] overflow-hidden shadow-sm">
+        <table className="w-full text-left">
+          <thead className="bg-[#FFF4F7] text-[8px] uppercase font-black text-[#A38E97] tracking-[0.18em]">
+            <tr>
+              <th className="px-8 py-5">Review ID</th>
+              <th className="px-8 py-5">User ID</th>
+              <th className="px-8 py-5">Product ID</th>
+              <th className="px-8 py-5">Rating</th>
+              <th className="px-8 py-5">Comment</th>
+              <th className="px-8 py-5">Created</th>
+              <th className="px-8 py-5 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F5ECEF]">
+            {loading ? (
+              <tr>
+                <td className="px-8 py-8 text-center text-[#A7939B] text-sm" colSpan={7}>
+                  Loading reviews...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td className="px-8 py-8 text-center text-[#A7939B] text-sm" colSpan={7}>
+                  No reviews found
+                </td>
+              </tr>
+            ) : (
+              filtered.map((r) => (
+                <tr key={r.id || `${r.user_id}-${r.product_id}-${r.created_at}`} className="hover:bg-[#FFF9FB] transition-colors">
+                  <td className="px-8 py-5 text-sm font-semibold text-[#342C30]">{r.id || "-"}</td>
+                  <td className="px-8 py-5 text-sm text-[#6F6167]">{r.user_id || "-"}</td>
+                  <td className="px-8 py-5 text-sm text-[#6F6167]">{r.product_id || "-"}</td>
+                  <td className="px-8 py-5 text-sm font-semibold">{r.rating || 0}/5</td>
+                  <td className="px-8 py-5 text-sm text-[#6F6167] max-w-md truncate">{r.comment || "-"}</td>
+                  <td className="px-8 py-5 text-xs text-[#8F7D84]">{r.created_at || "-"}</td>
+                  <td className="px-8 py-5">
+                    <div className="flex justify-center gap-2">
+                      <button onClick={() => setModal({ open: true, data: r })} className="p-2 text-gray-300 hover:text-[#D23669]">
+                        <Edit3 size={14} />
+                      </button>
+                      <button onClick={() => removeReview(r.id)} className="p-2 text-gray-300 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {modal.open && (
+        <AdminModal title={modal.data ? "Edit Review" : "Add Review"} onClose={() => setModal({ open: false, data: null })}>
+          <form onSubmit={saveReview} className="space-y-4">
+            {!modal.data && <InputField label="Review ID" name="review_id" placeholder="ถ้ามีใน backend" />}
+            {modal.data && <InputField label="Review ID" name="review_id" defaultValue={modal.data?.id || ""} disabled />}
+            <InputField label="User ID" name="user_id" type="number" defaultValue={modal.data?.user_id ?? ""} required />
+            <InputField label="Product ID" name="product_id" type="number" defaultValue={modal.data?.product_id ?? ""} required />
+            <InputField label="Rating (1-5)" name="rating" type="number" min={1} max={5} defaultValue={modal.data?.rating ?? 5} required />
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#A7939B] px-2">Comment</label>
+              <textarea
+                name="comment"
+                defaultValue={modal.data?.comment || ""}
+                rows={3}
+                className="w-full bg-[#FFF7FA] rounded-2xl px-5 py-3.5 text-sm outline-none border border-[#F1DDE5] focus:ring-2 focus:ring-[#FFD5E3] focus:border-[#E9B9CA]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#A7939B] px-2">Status</label>
+              <select
+                name="status"
+                defaultValue={modal.data?.status || "active"}
+                className="w-full bg-[#FFF7FA] rounded-2xl px-5 py-3.5 text-sm outline-none border border-[#F1DDE5] focus:ring-2 focus:ring-[#FFD5E3] focus:border-[#E9B9CA]"
+              >
+                <option value="active">active</option>
+                <option value="hidden">hidden</option>
+                <option value="deleted">deleted</option>
+              </select>
+            </div>
+            <button
+              disabled={saving}
+              className="w-full bg-[#D23669] text-white py-4 rounded-full text-[10px] uppercase font-black tracking-widest mt-4 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Review"}
+            </button>
+          </form>
+        </AdminModal>
+      )}
+    </div>
+  );
+}
 
 // ── Shared UI Components ──
 function NavItem({ icon, label, to }) {

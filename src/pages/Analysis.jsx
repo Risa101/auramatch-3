@@ -3,7 +3,7 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Analysis.css";
 import MakeoverStudio from "../components/MakeoverStudio.jsx";
-import { saveAnalysisHistory, generateGeminiImage } from "../callapi/call_api_user";
+import { saveAnalysisHistory, generateGeminiImage, analyzeFaceApi } from "../callapi/call_api_user";
 
 /* ✅ persist realtime */
 import { auth } from "../lib/firebase";
@@ -89,24 +89,24 @@ const SHAPE_RECS = {
 /* ---------------- Products (sample) ---------------- */
 const PRODUCTS = {
   Spring: [
-    { name: "Peach Blush", price: "289", img: assetPath("product/brush1.jpg") },
-    { name: "Coral Tint Balm", price: "219", img: assetPath("product/brush2.jpg") },
-    { name: "Glow Cushion", price: "299", img: assetPath("product/contour.png") },
+    { name: "Peach Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=peach%20blush" },
+    { name: "Coral Tint Balm", price: "219", img: assetPath("product/brush2.jpg"), shopUrl: "https://shopee.co.th/search?keyword=coral%20tint%20balm" },
+    { name: "Glow Cushion", price: "299", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=glow%20cushion" },
   ],
   Summer: [
-    { name: "Mauve Cream Blush", price: "289", img: assetPath("product/brush1.jpg") },
-    { name: "Cool Pink Lip Oil", price: "199", img: assetPath("product/lipoil.png") },
-    { name: "Sheer Highlighter", price: "259", img: assetPath("product/brush1.jpg") },
+    { name: "Mauve Cream Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=mauve%20cream%20blush" },
+    { name: "Cool Pink Lip Oil", price: "199", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=lip%20oil%20cool%20pink" },
+    { name: "Sheer Highlighter", price: "259", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=sheer%20highlighter" },
   ],
   Autumn: [
-    { name: "Terracotta Blush", price: "289", img: assetPath("product/brush1.jpg") },
-    { name: "Honey Bronze", price: "349", img: assetPath("product/contour.png") },
-    { name: "Matte Caramel Lip", price: "229", img: assetPath("product/lip.png") },
+    { name: "Terracotta Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=terracotta%20blush" },
+    { name: "Honey Bronze", price: "349", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=honey%20bronzer" },
+    { name: "Matte Caramel Lip", price: "229", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=matte%20caramel%20lip" },
   ],
   Winter: [
-    { name: "Berry Lip", price: "249", img: assetPath("product/lip.png") },
-    { name: "Plum Glow Blush", price: "289", img: assetPath("product/brush1.jpg") },
-    { name: "Cool Contour Stick", price: "299", img: assetPath("product/contour.png") },
+    { name: "Berry Lip", price: "249", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=berry%20lipstick" },
+    { name: "Plum Glow Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=plum%20blush" },
+    { name: "Cool Contour Stick", price: "299", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=cool%20contour%20stick" },
   ],
 };
 
@@ -477,6 +477,11 @@ function RecBadge({ text }) {
 }
 
 function ProductCard({ p }) {
+  const openShop = () => {
+    if (!p?.shopUrl) return;
+    window.open(p.shopUrl, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <article
       className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg reveal"
@@ -495,7 +500,45 @@ function ProductCard({ p }) {
           <h4 className="font-semibold text-[#4A4A4A]">{p.name}</h4>
           <span className="text-sm text-[#4A4A4A]">THB {p.price}</span>
         </div>
-        <MagneticButton className="mt-3 w-full">BUY NOW</MagneticButton>
+        <MagneticButton onClick={openShop} className="mt-3 w-full">BUY NOW</MagneticButton>
+      </div>
+    </article>
+  );
+}
+
+function SelectedProductCard({ product, season }) {
+  if (!product) return null;
+  const openShop = () => {
+    if (!product?.shopUrl) return;
+    window.open(product.shopUrl, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <article className="overflow-hidden rounded-3xl border border-[#F3D5E0] bg-white shadow-[0_20px_50px_rgba(210,54,105,0.14)]">
+      <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-[#FFF4F8] to-[#FFEAF2]">
+        <img
+          src={product.img}
+          alt={product.name}
+          className="h-full w-full object-cover transition duration-500 hover:scale-[1.04]"
+        />
+        <span className="absolute left-3 top-3 rounded-full border border-[#FFD1DC] bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#D23669]">
+          Selected
+        </span>
+      </div>
+
+      <div className="space-y-3 p-5">
+        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-[#D23669]">
+          Match For {season || "Your Tone"}
+        </div>
+        <h4 className="text-xl font-[900] tracking-tight text-[#2F2A31]">{product.name}</h4>
+        <div className="text-sm text-[#6A6570]">ราคาโดยประมาณ</div>
+        <div className="text-2xl font-[900] text-[#D23669]">THB {product.price}</div>
+        <p className="text-sm text-[#5B5560]">
+          ไอเท็มนี้ถูกเลือกจากเครื่องมือแต่งรูปของคุณ กดซื้อได้ทันทีจากร้านค้าออนไลน์
+        </p>
+        <MagneticButton onClick={openShop} className="w-full">
+          BUY THIS LOOK
+        </MagneticButton>
       </div>
     </article>
   );
@@ -734,7 +777,7 @@ async function fetchAnalysisHistory(userId) {
 
 function normalizeHistoryRow(row) {
   return {
-    id: row?.analysis_id || row?.id || row?.analysis_date || Math.random().toString(36),
+    id: row?.analysis_id || row?.history_id || row?.id || row?.analysis_date || Math.random().toString(36),
     season: row?.season || null,
     faceShape: row?.face_shape || null,
     brows: row?.eyebrows || null,
@@ -881,6 +924,7 @@ export default function Analysis() {
   const [saving, setSaving] = useState(false);
   const [step3Done, setStep3Done] = useState(false);
   const [step4Done, setStep4Done] = useState(false);
+  const [selectedStudioProduct, setSelectedStudioProduct] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const inputRef = useRef(null);
   const saveRequestedRef = useRef(false);
@@ -953,7 +997,24 @@ export default function Analysis() {
       setStep4Done(false);
       await wait(400);
       setStatus("analyzing");
-      const data = await analyzeImageMock(pickedFile || {});
+      let data;
+      if (pickedFile && pickedFile.size > 0) {
+        try {
+          const res = await analyzeFaceApi(pickedFile);
+          data = {
+            season: res.season,
+            faceShape: res.faceShape,
+            face: res.face,
+            hairLength: pick(["Short", "Medium", "Long"]),
+            hairTexture: pick(["Straight", "Wavy", "Curly"]),
+          };
+        } catch (apiErr) {
+          console.warn("Gemini analyze-face failed, falling back to mock:", apiErr);
+          data = await analyzeImageMock(pickedFile);
+        }
+      } else {
+        data = await analyzeImageMock(pickedFile || {});
+      }
       setResult(data);
       setStatus("done");
       setCurrentStep(2);
@@ -991,15 +1052,24 @@ export default function Analysis() {
   }
 
   async function runGeminiGeneration() {
-    if (!file) {
+    if (!file && !preview) {
       setGeminiError("กรุณาอัปโหลดภาพก่อน");
       return;
     }
     try {
       setGeminiError("");
       setGeminiStatus("loading");
-      const res = await generateGeminiImage({ file, prompt: GEMINI_PROMPT });
-      setGeminiImage(res?.image || "");
+
+      // ถ้าไฟล์ว่าง (demo mode) ให้ fetch รูปจาก preview URL แทน
+      let imageFile = file;
+      if (!imageFile || imageFile.size === 0) {
+        const resp = await fetch(preview);
+        const blob = await resp.blob();
+        imageFile = new File([blob], "image.jpg", { type: blob.type || "image/jpeg" });
+      }
+
+      const res = await generateGeminiImage({ file: imageFile, prompt: GEMINI_PROMPT });
+      setGeminiImage(res?.image || res?.data_url || "");
       setGeminiStatus("done");
     } catch (err) {
       console.error(err);
@@ -1052,40 +1122,6 @@ export default function Analysis() {
 
   return (
     <div className="bg-white text-[#4A4A4A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
-      <header className="relative min-h-[62vh] overflow-hidden bg-[#090909]">
-        <div className="absolute inset-0 z-0" aria-hidden="true">
-          <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(210,54,105,0.26),transparent_34%),radial-gradient(circle_at_80%_30%,rgba(255,133,162,0.18),transparent_30%),linear-gradient(180deg,#0B0B0C_0%,#121216_100%)]" />
-        </div>
-
-        <div className="relative z-10 mx-auto flex min-h-[62vh] w-full max-w-[1400px] items-center justify-center px-6 py-20 md:px-10">
-          <div className="max-w-5xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/90 backdrop-blur-sm">
-              Aura Mindset
-            </span>
-
-            <h1 className="mt-7 text-4xl font-[900] leading-[0.95] tracking-tight text-white uppercase md:text-6xl lg:text-7xl">
-              Shine Bright <br className="hidden sm:block" />
-              Like A <span className="text-[#FF85A2] drop-shadow-[0_0_22px_rgba(255,133,162,0.55)]">Diamond</span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">
-              Upload your photo and unlock a personalized beauty blueprint in 4 smart steps
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {/* MARQUEE */}
-      <div className="bg-[#D23669] py-5 overflow-hidden border-y border-white/10 relative z-20">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...Array(10)].map((_, i) => (
-            <span key={i} className="text-white text-[10px] font-[900] tracking-[0.5em] uppercase mx-12">
-              • DISCOVER YOUR SHAPE • ANALYSE YOUR COLOR • BOOST YOUR AURA •
-            </span>
-          ))}
-        </div>
-      </div>
-
       <main className="mx-auto max-w-[1400px] px-6 md:px-10 py-20">
         <section className={`${CARD} borderGlow`}>
           <SectionHeader title="Analysis Process" meta={<span className="text-xs text-[#4A4A4A]/70">วงกลมสีชมพู = ขั้นตอนที่ทำแล้ว</span>} />
@@ -1115,7 +1151,7 @@ export default function Analysis() {
           <div className="mt-4 text-xs uppercase tracking-[0.2em] text-[#4A4A4A]/60">
             {currentStep === 1 && "Step 1: Upload"}
             {currentStep === 2 && "Step 2: Analyze"}
-            {currentStep === 3 && "Step 3: Edit Photo"}
+            {currentStep === 3 && "Step 3: Edit + Shop Makeup"}
             {currentStep === 4 && "Step 4: Recommendations"}
           </div>
         </section>
@@ -1123,23 +1159,43 @@ export default function Analysis() {
         {currentStep === 1 && (
           <section className={`${CARD} mt-8 borderGlow`}>
             <SectionHeader title="Step 1: Upload Your Photo" />
-            <p className="text-sm text-[#4A4A4A]/75">อัปโหลดรูปใบหน้าของคุณ แล้วระบบจะวิเคราะห์อัตโนมัติทันที ไม่ต้องกดวิเคราะห์เอง</p>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <MagneticButton onClick={() => inputRef.current?.click()} className="text-[9px]">เลือกรูปจากโทรศัพท์</MagneticButton>
-              <MagneticButton
-                onClick={fillDemo}
-                className="text-[9px]"
-                style={{ background: "white", color: "#4A4A4A", border: "1px solid #E6DCEB", boxShadow: "0 4px 12px rgba(0,0,0,.06)" }}
-              >
-                Demo Fill
-              </MagneticButton>
-              <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPick} />
-            </div>
-            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-              <div className="overflow-hidden rounded-2xl border border-[#E6DCEB] bg-[#FAF7FB] aspect-[4/5] max-w-sm">
-                {preview ? <img src={preview} alt="preview" className="h-full w-full object-cover" /> : <img src={assetPath("assets/analysis1.jpeg")} alt="placeholder" className="h-full w-full object-cover" />}
+            <div className="rounded-3xl border border-[#FFDCE6] bg-gradient-to-br from-[#FFF8FB] via-[#FFF1F6] to-[#FFEAF2] p-5 md:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.25em] text-[#D23669]">Quick Start</div>
+                  <p className="mt-2 text-sm text-[#4A4A4A]/80">
+                    อัปโหลดรูปใบหน้าของคุณ แล้วระบบจะวิเคราะห์อัตโนมัติทันที ไม่ต้องกดวิเคราะห์เอง
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-[#4A4A4A]/70">
+                  รองรับภาพจากกล้องมือถือและรูปในเครื่อง
+                </div>
               </div>
-              <div className="space-y-3">
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <MagneticButton onClick={() => inputRef.current?.click()} className="text-[9px]">เลือกรูปจากโทรศัพท์</MagneticButton>
+                <MagneticButton
+                  onClick={fillDemo}
+                  className="text-[9px]"
+                  style={{ background: "white", color: "#4A4A4A", border: "1px solid #E6DCEB", boxShadow: "0 4px 12px rgba(0,0,0,.06)" }}
+                >
+                  Demo Fill
+                </MagneticButton>
+                <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPick} />
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <div className="overflow-hidden rounded-3xl border border-[#EAD9E3] bg-[#FAF7FB] shadow-[0_18px_35px_rgba(210,54,105,0.08)]">
+                <div className="aspect-[4/5] w-full">
+                  {preview ? <img src={preview} alt="preview" className="h-full w-full object-cover" /> : <img src={assetPath("assets/analysis1.jpeg")} alt="placeholder" className="h-full w-full object-cover" />}
+                </div>
+                <div className="border-t border-[#F0E4EA] bg-white/90 px-4 py-3 text-xs text-[#4A4A4A]/65">
+                  รูปตัวอย่างควรถ่ายตรง เห็นกรอบหน้า และไม่มีฟิลเตอร์
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-3xl border border-[#EAD9E3] bg-[#FFFCFE] p-5">
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#D23669]">Upload Status</div>
                 {status === "uploading" && <ProgressBar label="กำลังอัปโหลดภาพ…" />}
                 {status === "analyzing" && <ProgressBar label="กำลังวิเคราะห์ด้วย AI…" />}
                 {stepDone[1] ? (
@@ -1150,13 +1206,14 @@ export default function Analysis() {
                 {error && <div className="rounded-lg border border-rose-200 px-3 py-2 text-[12px] text-rose-600 bg-rose-50">{error}</div>}
               </div>
             </div>
-            <div className="mt-6 rounded-2xl border border-[#F3D5E0] bg-[#FFF7FA] p-5">
+
+            <div className="mt-6 rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFCFE] p-5 md:p-6">
               <h4 className="text-sm font-black uppercase tracking-[0.2em] text-[#D23669]">How To วิเคราะห์รูปให้แม่น</h4>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
-                <div className="rounded-xl bg-white border border-[#F0E4EA] p-4"><b>1)</b> หันหน้าตรงเข้ากล้อง</div>
-                <div className="rounded-xl bg-white border border-[#F0E4EA] p-4"><b>2)</b> ใช้แสงธรรมชาติหรือแสงขาว</div>
-                <div className="rounded-xl bg-white border border-[#F0E4EA] p-4"><b>3)</b> เก็บผมให้เห็นกรอบหน้า</div>
-                <div className="rounded-xl bg-white border border-[#F0E4EA] p-4"><b>4)</b> หลีกเลี่ยงฟิลเตอร์และมุมเอียง</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>1)</b> หันหน้าตรงเข้ากล้อง</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>2)</b> ใช้แสงธรรมชาติหรือแสงขาว</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>3)</b> เก็บผมให้เห็นกรอบหน้า</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>4)</b> หลีกเลี่ยงฟิลเตอร์และมุมเอียง</div>
               </div>
             </div>
           </section>
@@ -1165,17 +1222,26 @@ export default function Analysis() {
         {currentStep === 2 && (
           <section className={`${CARD} mt-8 borderGlow`}>
             <SectionHeader title="Step 2: Analyze Face & Personal Color" />
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={analyzeImage}
-                className="rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#4A4A4A] border-[#E6DCEB] bg-white hover:bg-[#FFF5F8]"
-              >
-                วิเคราะห์ใหม่
-              </button>
+            <div className="rounded-3xl border border-[#FFDCE6] bg-gradient-to-br from-[#FFF8FB] via-[#FFF1F6] to-[#FFEAF2] p-5 md:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.25em] text-[#D23669]">AI Face Scan</div>
+                  <p className="mt-2 text-sm text-[#4A4A4A]/80">
+                    ระบบอ่านโทนสีผิว โครงหน้า และองค์ประกอบบนใบหน้า เพื่อสร้างคำแนะนำที่แม่นขึ้นสำหรับคุณ
+                  </p>
+                </div>
+                <button
+                  onClick={analyzeImage}
+                  className="rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#4A4A4A] border-[#E6DCEB] bg-white hover:bg-[#FFF5F8]"
+                >
+                  วิเคราะห์ใหม่
+                </button>
+              </div>
             </div>
             {result ? (
-              <div className="mt-5 space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mt-6 space-y-6">
+                <div className="rounded-3xl border border-[#EEDBE6] bg-[#FFFDFE] p-5 md:p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`rounded-2xl border border-[#FFD1DC] bg-gradient-to-br ${SEASON_META[result.season]?.glow || "from-[#FFF0F5] to-[#FFE3EC]"} p-6`}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -1202,19 +1268,39 @@ export default function Analysis() {
                     </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold mb-2">Season Palette</div>
-                  <PaletteRow colors={PALETTES[result.season] || []} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Stat label="Eyebrows" value={SHAPE_RECS.brows[result.face.brows]} />
-                  <Stat label="Eyes" value={SHAPE_RECS.eyes[result.face.eyes]} />
-                  <Stat label="Nose" value={SHAPE_RECS.nose[result.face.nose]} />
-                  <Stat label="Lips" value={SHAPE_RECS.lips[result.face.lips]} />
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+                  <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                    <div className="text-sm font-semibold mb-3 text-[#3B333A]">Season Palette</div>
+                    <PaletteRow colors={PALETTES[result.season] || []} />
+                    <div className="mt-3 text-xs text-[#4A4A4A]/65">
+                      โทนสีนี้ช่วยให้ผิวดูสว่างขึ้นและภาพรวมดูสมดุลมากขึ้น
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                    <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#D23669]">Analysis Notes</div>
+                    <div className="mt-3 space-y-2 text-sm text-[#4A4A4A]/75">
+                      <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">Season: {result.season || "-"}</div>
+                      <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">Face Shape: {result.faceShape || "-"}</div>
+                      <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">พร้อมใช้งานใน Step 3 และ Step 4</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                  <div className="mb-3 text-sm font-semibold text-[#3B333A]">Feature Suggestions</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Stat label="Eyebrows" value={SHAPE_RECS.brows[result.face.brows]} />
+                    <Stat label="Eyes" value={SHAPE_RECS.eyes[result.face.eyes]} />
+                    <Stat label="Nose" value={SHAPE_RECS.nose[result.face.nose]} />
+                    <Stat label="Lips" value={SHAPE_RECS.lips[result.face.lips]} />
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 space-y-3">
+              <div className="mt-6 rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5 space-y-3">
                 {status === "uploading" && <ProgressBar label="กำลังอัปโหลดภาพ..." />}
                 {status === "analyzing" && <ProgressBar label="กำลังวิเคราะห์โครงหน้าและ personal color..." />}
                 <p className="text-sm text-[#4A4A4A]/60">อัปโหลดรูปใน Step 1 แล้วผลจะมาแสดงอัตโนมัติที่หน้านี้</p>
@@ -1225,34 +1311,81 @@ export default function Analysis() {
 
         {currentStep === 3 && (
           <section className={`${CARD} mt-8 borderGlow`}>
-            <SectionHeader title="Step 3: Edit Your Photo" />
-            <p className="text-sm text-[#4A4A4A]/75">ลองแต่งภาพเพื่อดูสีเมคอัพที่เข้ากับโทนของคุณ</p>
-            <div className="mt-4">
-              <MakeoverStudio base={preview || assetPath("assets/analysis.JPG")} />
-            </div>
-            <div className="mt-6 rounded-2xl border border-[#F3D5E0] bg-[#FFF7FA] p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.25em] font-black text-[#D23669]">Gemini AI Portrait</div>
-                  <p className="text-sm text-[#4A4A4A]/75">ส่งรูปไปยัง Gemini เพื่อสร้างภาพใหม่ตาม prompt ที่ตั้งไว้</p>
-                </div>
-                <button
-                  onClick={runGeminiGeneration}
-                  disabled={geminiStatus === "loading"}
-                  className="rounded-full bg-[#111] text-white px-5 py-2 text-xs font-black tracking-[0.15em] uppercase disabled:opacity-60"
-                >
-                  {geminiStatus === "loading" ? "กำลังสร้าง..." : "สร้างภาพด้วย Gemini"}
-                </button>
+            <SectionHeader title="Step 3: Edit + Shop Makeup" />
+            <p className="text-sm text-[#4A4A4A]/75">
+              แต่งหน้าบนรูปของคุณได้ทันที และเลือกซื้อเครื่องสำอางที่เหมาะกับโทนสีของคุณ
+            </p>
+            <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFDFE] p-4">
+                <MakeoverStudio
+                  base={preview || assetPath("assets/analysis.JPG")}
+                  onProductSelect={(p) => setSelectedStudioProduct(p || null)}
+                />
               </div>
+
+              <aside className="h-fit rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF9FC] to-white p-4 xl:sticky xl:top-24">
+                <div className="mb-3 text-[11px] font-black uppercase tracking-[0.24em] text-[#D23669]">
+                  Instant Shop
+                </div>
+                <h4 className="text-xl font-[900] tracking-tight text-[#2F2A31]">Selected Product</h4>
+                {selectedStudioProduct ? (
+                  <div className="mt-3">
+                    <SelectedProductCard product={selectedStudioProduct} season={result?.season} />
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-2xl border border-dashed border-[#E6DCEB] bg-white p-5 text-sm text-[#4A4A4A]/70">
+                    เลือกคิ้ว ตา หรือปากใน Makeover Studio แล้วการ์ดสินค้าจะขึ้นอัตโนมัติที่นี่
+                  </div>
+                )}
+              </aside>
+            </div>
+            <div className="mt-5 rounded-xl border border-[#E6DCEB] bg-[#FFF7FA] px-4 py-3 text-sm text-[#4A4A4A]/75">
+              เลือกเมคอัพจากสตูดิโอ &gt; ดูรายละเอียด &gt; กด BUY THIS LOOK เพื่อไปหน้าสั่งซื้อได้ทันที
+            </div>
+
+            {/* ===== Gemini AI Image Generation ===== */}
+            <div className="mt-6 rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFDFE] p-5">
+              <div className="text-[11px] font-black uppercase tracking-[0.24em] text-[#D23669] mb-1">AI Makeover</div>
+              <h4 className="text-lg font-[900] tracking-tight text-[#2F2A31] mb-2">สร้างภาพแต่งหน้าด้วย Gemini AI</h4>
+              <p className="text-sm text-[#4A4A4A]/70 mb-4">AI จะสร้างภาพแต่งหน้าจากรูปของคุณ ใช้เวลาประมาณ 10-20 วินาที</p>
+              <button
+                onClick={runGeminiGeneration}
+                disabled={geminiStatus === "loading"}
+                className="rounded-full px-6 py-2.5 text-sm font-black tracking-[0.12em] uppercase bg-[#D23669] text-white border border-[#D23669] hover:bg-[#B52E58] transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {geminiStatus === "loading" ? "กำลังสร้างภาพ..." : "✨ สร้างภาพด้วย AI"}
+              </button>
               {geminiError && (
-                <div className="mt-3 rounded-lg border border-rose-200 px-3 py-2 text-[12px] text-rose-600 bg-rose-50">{geminiError}</div>
+                <p className="mt-3 text-sm text-red-500">{geminiError}</p>
               )}
-              {geminiImage && (
-                <div className="mt-4 overflow-hidden rounded-2xl border border-[#E6DCEB] bg-white">
-                  <img src={geminiImage} alt="gemini-result" className="h-full w-full object-cover" />
+              {geminiStatus === "loading" && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-[#4A4A4A]/60">
+                  <svg className="animate-spin h-4 w-4 text-[#D23669]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                  Gemini กำลังประมวลผลภาพ...
+                </div>
+              )}
+              {geminiImage && geminiStatus === "done" && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-[#D23669] mb-2 uppercase tracking-widest">ผลลัพธ์จาก AI</p>
+                  <img
+                    src={geminiImage}
+                    alt="Gemini AI Makeover"
+                    className="w-full max-w-sm rounded-2xl border border-[#F3D5E0] shadow-md"
+                  />
+                  <a
+                    href={geminiImage}
+                    download="ai-makeover.png"
+                    className="mt-3 inline-block rounded-full px-5 py-2 text-xs font-black tracking-[0.15em] uppercase bg-white text-[#D23669] border border-[#D23669] hover:bg-[#FFF0F5] transition"
+                  >
+                    ดาวน์โหลดภาพ
+                  </a>
                 </div>
               )}
             </div>
+
             <div className="mt-4 flex items-center gap-3">
               <button
                 onClick={() => setStep3Done((v) => !v)}
@@ -1272,26 +1405,45 @@ export default function Analysis() {
             <SectionHeader title="Step 4: Recommendations" meta={<span className="text-xs text-[#4A4A4A]/70">เครื่องสำอาง • สีผม • ทรงผม • คลิปสอน • สีเสื้อผ้า</span>} />
             {result ? (
               <div className="space-y-8">
-                <div>
-                  <h4 className="text-lg font-bold uppercase">Suggested Styles</h4>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span onMouseDown={press}><RecBadge text={`Brows: ${SHAPE_RECS.brows[result.face.brows]}`} /></span>
-                    <span onMouseDown={press}><RecBadge text={`Eyes: ${SHAPE_RECS.eyes[result.face.eyes]}`} /></span>
-                    <span onMouseDown={press}><RecBadge text={`Nose: ${SHAPE_RECS.nose[result.face.nose]}`} /></span>
-                    <span onMouseDown={press}><RecBadge text={`Lips: ${SHAPE_RECS.lips[result.face.lips]}`} /></span>
+                <div className="rounded-3xl border border-[#FFD1DC] bg-gradient-to-br from-[#FFF8FB] via-[#FFF1F6] to-[#FFE9F2] p-5 md:p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <div className="text-[11px] font-black uppercase tracking-[0.25em] text-[#D23669]">Your Signature Look</div>
+                      <h4 className="mt-2 text-2xl md:text-3xl font-[900] tracking-tight text-[#3A3138]">
+                        {result.season} Tone • {result.faceShape} Shape
+                      </h4>
+                      <p className="mt-2 text-sm text-[#4A4A4A]/75">
+                        ลุคที่เหมาะกับคุณในตอนนี้ พร้อมคำแนะนำเครื่องสำอาง สีผม และทรงผมที่คุมโทนเดียวกัน
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-[#4A4A4A]/70">
+                      วิเคราะห์จาก Personal Color และโครงหน้า
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-lg font-bold uppercase">Hair Colors</h4>
-                  <div className="mt-2 flex flex-wrap items-center gap-4">
-                    <PaletteRow colors={HAIR_COLORS[result.season] || []} />
-                    <div className="text-xs text-[#4A4A4A]/60">{(HAIR_COLORS[result.season] || []).map((c) => c.name).join(" • ")}</div>
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                    <h4 className="text-lg font-bold uppercase text-[#3B333A]">Suggested Styles</h4>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span onMouseDown={press}><RecBadge text={`Brows: ${SHAPE_RECS.brows[result.face.brows]}`} /></span>
+                      <span onMouseDown={press}><RecBadge text={`Eyes: ${SHAPE_RECS.eyes[result.face.eyes]}`} /></span>
+                      <span onMouseDown={press}><RecBadge text={`Nose: ${SHAPE_RECS.nose[result.face.nose]}`} /></span>
+                      <span onMouseDown={press}><RecBadge text={`Lips: ${SHAPE_RECS.lips[result.face.lips]}`} /></span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                    <h4 className="text-lg font-bold uppercase text-[#3B333A]">Hair Colors</h4>
+                    <div className="mt-3 flex flex-wrap items-center gap-4">
+                      <PaletteRow colors={HAIR_COLORS[result.season] || []} />
+                      <div className="text-xs text-[#4A4A4A]/60">{(HAIR_COLORS[result.season] || []).map((c) => c.name).join(" • ")}</div>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-lg font-bold uppercase">Hairstyles For {result.faceShape}</h4>
+                <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                  <h4 className="text-lg font-bold uppercase text-[#3B333A]">Hairstyles For {result.faceShape}</h4>
                   {(HAIR_STYLE_MAP[result.faceShape] || []).length > 0 ? (
                     <div className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                       {(HAIR_STYLE_MAP[result.faceShape] || []).map((s) => <HairCard key={s.key} styleItem={s} />)}
@@ -1301,16 +1453,16 @@ export default function Analysis() {
                   )}
                 </div>
 
-                <div>
-                  <h4 className="text-lg font-bold uppercase">Recommended Products</h4>
+                <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                  <h4 className="text-lg font-bold uppercase text-[#3B333A]">Recommended Products</h4>
                   <div className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                     {(PRODUCTS[result.season] || []).map((p, idx) => <ProductCard key={idx} p={p} />)}
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-lg font-bold uppercase">Outfit Colors ({result.season})</h4>
-                  <div className="mt-2">
+                <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                  <h4 className="text-lg font-bold uppercase text-[#3B333A]">Outfit Colors ({result.season})</h4>
+                  <div className="mt-3">
                     <PaletteRow colors={PALETTES[result.season] || []} />
                   </div>
                 </div>
@@ -1391,8 +1543,6 @@ export default function Analysis() {
       </div>
 
       <style>{`
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .animate-marquee { animation: marquee 30s linear infinite; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #D23669; border-radius: 10px; }
       `}</style>

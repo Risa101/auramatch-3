@@ -11,9 +11,9 @@ export default function UltimateAcademy() {
 
   const navItems = [
     { label: "Home", to: "/" },
-    { label: "Academy", to: "/academy" },
+    { label: "Advisor", to: "/advisor" },
     { label: "Analysis", to: "/analysis" },
-    { label: "Shop", to: "/shop" },
+    { label: "Shop", to: "/cosmetics" },
   ];
 
   const BASE_PATH = "/";
@@ -475,7 +475,7 @@ export default function UltimateAcademy() {
       </section>
 
       {/* --- 8. PRESTIGE CTA --- */}
-      <section className="py-24 bg-black text-white text-center relative overflow-hidden">
+      {/* <section className="py-24 bg-black text-white text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[#D23669]/10 animate-pulse"></div>
         <div className="relative z-10 max-w-[1400px] mx-auto px-10" data-aos="zoom-in">
           <h2 className="text-[3.5rem] md:text-[5.5rem] font-[900] tracking-tighter uppercase leading-[1] mb-12">Decode Your <br /> <span className="text-[#FF85A2]">Genetic Aura</span> Today.</h2>
@@ -483,10 +483,10 @@ export default function UltimateAcademy() {
             Start Your Free Scan <ArrowRight size={18} />
           </button>
         </div>
-      </section>
+      </section> */}
 
       {/* --- 9. LUXURY FOOTER --- */}
-      <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
+      {/* <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
         <div className="max-w-[1400px] mx-auto px-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
             <div className="col-span-1 md:col-span-2 space-y-6">
@@ -522,7 +522,7 @@ export default function UltimateAcademy() {
             </p>
           </div>
         </div>
-      </footer>
+      </footer> */}
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }

@@ -91,7 +91,7 @@ export default function App() {
           <Route path="/account"            element={<AccountProfile />} />
           <Route path="/history"            element={<AnalysisHistory />} />
           <Route path="/coupons"            element={<Coupons />} />
-          <Route path="/analysis"           element={<Analysis />} />
+          <Route path="/analysis"           element={<RequireAuth><Analysis /></RequireAuth>} />
 
           {/* Admin Routes - จัดการผ่าน SalesDashboard ไฟล์เดียว */}
           <Route path="/admin/*" element={<RequireAdmin><SalesDashboard /></RequireAdmin>} />

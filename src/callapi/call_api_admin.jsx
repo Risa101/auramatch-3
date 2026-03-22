@@ -97,6 +97,16 @@ const normalizePromotion = (item) => ({
   superadmin_id: item?.superadmin_id ?? null,
 });
 
+const normalizeReview = (item) => ({
+  id: item?.review_id ?? item?.id,
+  user_id: item?.user_id ?? item?.uid ?? null,
+  product_id: item?.product_id ?? item?.pid ?? null,
+  rating: Number(item?.rating ?? item?.score ?? 0),
+  comment: item?.comment ?? item?.review_text ?? item?.content ?? "",
+  created_at: item?.created_at ?? item?.createdAt ?? "",
+  status: item?.status ?? (item?.deleted_at ? "deleted" : "active"),
+});
+
 async function requestWithFallback(configs) {
   let lastError;
   for (const cfg of configs) {
@@ -268,6 +278,60 @@ export async function deleteAdminPromotion(promotion_id) {
     { method: "delete", url: `/admin/promotions/${encoded}` },
     { method: "delete", url: `/promotions/${encoded}` },
     { method: "delete", url: `/promotion/${encoded}` },
+  ]);
+  return true;
+}
+
+export async function getAdminReviews() {
+  const res = await requestWithFallback([
+    { method: "get", url: "/admin/reviews" },
+    { method: "get", url: "/reviews" },
+    { method: "get", url: "/review" },
+  ]);
+  return normalizeList(res).map(normalizeReview);
+}
+
+export async function createAdminReview(payload) {
+  const data = {
+    ...payload,
+    user_id: Number(payload?.user_id || 0),
+    product_id: Number(payload?.product_id || 0),
+    rating: Number(payload?.rating || 0),
+    comment: payload?.comment || "",
+  };
+  const res = await requestWithFallback([
+    { method: "post", url: "/admin/reviews", data },
+    { method: "post", url: "/reviews", data },
+    { method: "post", url: "/review", data },
+  ]);
+  return normalizeReview(normalizeItem(res) || res?.data || {});
+}
+
+export async function updateAdminReview(review_id, payload) {
+  const encoded = encodeURIComponent(review_id);
+  const data = {
+    ...payload,
+    user_id: payload?.user_id != null ? Number(payload.user_id) : undefined,
+    product_id: payload?.product_id != null ? Number(payload.product_id) : undefined,
+    rating: payload?.rating != null ? Number(payload.rating) : undefined,
+  };
+  const res = await requestWithFallback([
+    { method: "put", url: `/admin/reviews/${encoded}`, data },
+    { method: "patch", url: `/admin/reviews/${encoded}`, data },
+    { method: "put", url: `/reviews/${encoded}`, data },
+    { method: "patch", url: `/reviews/${encoded}`, data },
+    { method: "put", url: `/review/${encoded}`, data },
+    { method: "patch", url: `/review/${encoded}`, data },
+  ]);
+  return normalizeReview(normalizeItem(res) || res?.data || {});
+}
+
+export async function deleteAdminReview(review_id) {
+  const encoded = encodeURIComponent(review_id);
+  await requestWithFallback([
+    { method: "delete", url: `/admin/reviews/${encoded}` },
+    { method: "delete", url: `/reviews/${encoded}` },
+    { method: "delete", url: `/review/${encoded}` },
   ]);
   return true;
 }
