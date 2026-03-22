@@ -251,9 +251,14 @@ export default function AuramatchDailyDose() {
         Array.isArray(bsData) && bsData.length > 0
           ? bsData
           : (isLocalhostHost ? fallbackBestSellers : []);
+      const normalizeLook = (l) => ({
+        ...l,
+        look_id: l.look_id ?? l.id,
+        look_name: l.look_name ?? l.name,
+      });
       const safeLooks =
         Array.isArray(looksData) && looksData.length > 0
-          ? looksData
+          ? looksData.map(normalizeLook)
           : (isLocalhostHost ? (fallbackLooksBySeason[activeColor] || []) : []);
 
       setBestSellers(safeBestSellers);

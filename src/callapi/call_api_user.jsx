@@ -7,7 +7,7 @@ import apiClient, { API_BASE_URL } from "../api/client";
 export async function GetLogin(email, password) {
   try {
     const res = await axios.post(
-      `${API_BASE_URL}/api/login-admin`,
+      `${API_BASE_URL}/api/login`,
       { email, password },
       { headers: { "Content-Type": "application/json" } }
     );
