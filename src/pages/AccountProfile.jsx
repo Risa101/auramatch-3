@@ -40,9 +40,10 @@ export default function AccountProfile() {
 
   // 1. ดึงข้อมูลจาก MySQL ผ่าน API
   const loadDatabaseData = useCallback(async () => {
-    if (me?.id) {
+    const userId = me?.uid || me?.user_id || me?.id;
+    if (userId) {
       try {
-        const data = await getAnalysisHistory(me.id);
+        const data = await getAnalysisHistory(userId);
         setHistory(data);
         if (data && data.length > 0) {
           setLast(data[0]); // รายการล่าสุดจาก Database (SQL)
@@ -97,8 +98,8 @@ export default function AccountProfile() {
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 relative z-10">
           <div className="relative group" onClick={() => setOpenEdit(true)}>
             <div className="h-56 w-56 overflow-hidden rounded-[40px] border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_#FF8E9E] relative z-10 transition-transform duration-500 group-hover:scale-105 cursor-pointer">
-              {me?.avatar ? (
-                <img src={me.avatar} alt="avatar" className="h-full w-full object-cover" />
+              {(me?.photoURL || me?.avatar) ? (
+                <img src={me.photoURL || me.avatar} alt="avatar" className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full bg-[#FF8E9E] flex items-center justify-center text-black text-7xl font-black italic">
                   {(me?.name?.[0] || "U").toUpperCase()}
@@ -272,13 +273,13 @@ export default function AccountProfile() {
 }
 
 function EditAvatarModal({ open, onClose, me, onSaved }) {
-  const [preview, setPreview] = useState(me?.avatar || "");
+  const [preview, setPreview] = useState(me?.photoURL || me?.avatar || "");
   const fileInputRef = useRef(null);
 
-  useEffect(() => { if (open) setPreview(me?.avatar || ""); }, [me?.avatar, open]);
+  useEffect(() => { if (open) setPreview(me?.photoURL || me?.avatar || ""); }, [me?.photoURL, me?.avatar, open]);
 
   const onSave = () => {
-    const next = { ...me, avatar: preview };
+    const next = { ...me, photoURL: preview };
     localStorage.setItem("auramatch:user", JSON.stringify(next));
     window.dispatchEvent(new Event("storage"));
     onSaved?.(next);
