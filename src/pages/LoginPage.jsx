@@ -146,12 +146,15 @@ export default function LoginPage() {
     try {
       const res = await signInWithPopup(auth, provider);
       const u = res.user;
+      const token = await u.getIdToken();
+      localStorage.setItem("auramatch:token", token);
       await afterLoginGo({
         uid: u.uid,
         email: u.email,
         name: u.displayName,
         photoURL: u.photoURL || "",
         provider: name,
+        role: "user",
       });
     } catch (e) {
       setErr(`CONNECTION FAILED WITH ${name.toUpperCase()}`);

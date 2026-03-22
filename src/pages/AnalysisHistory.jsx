@@ -231,7 +231,7 @@ export default function AnalysisHistory() {
                   
                   <div className="flex justify-between items-start pt-2">
                     <h3 className="text-3xl font-serif italic tracking-tight leading-none group-hover:text-[#D4AF37] transition-colors">Refinement Result</h3>
-                    <Link to={`/result/${it.id}`} className="p-3 border border-gray-100 rounded-full hover:bg-black hover:text-white transition-all">
+                    <Link to="/analysis" className="p-3 border border-gray-100 rounded-full hover:bg-black hover:text-white transition-all">
                         <Sparkles size={14} />
                     </Link>
                   </div>
