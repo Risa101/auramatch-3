@@ -5,7 +5,8 @@ import { Suspense, lazy } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import DiscountBanner from "./components/DiscountBanner";
-import "./lib/i18n"; 
+import ErrorBoundary from "./components/ErrorBoundary";
+import "./lib/i18n";
 
 // ── Lazy pages (User Side) ────────────────────────────────────────────────────
 const AuraMatchPage   = lazy(() => import("./pages/AuramatchPage.jsx"));
@@ -75,7 +76,8 @@ function LoadingUI() {
 // ── App Root ──────────────────────────────────────────────────────────────────
 export default function App() {
   return (
-    <Router basename="/"> 
+    <ErrorBoundary>
+    <Router basename="/">
       <ChromeWrapper>
         <Routes>
           <Route path="/"                   element={<AuraMatchPage />} />
@@ -100,6 +102,7 @@ export default function App() {
         </Routes>
       </ChromeWrapper>
     </Router>
+    </ErrorBoundary>
   );
 }
 
