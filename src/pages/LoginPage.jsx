@@ -19,6 +19,53 @@ function resolveApiBaseUrl() {
   return "";
 }
 
+// ลอง endpoint ทั้งหมดพร้อมกัน แล้วใช้อันที่ตอบก่อน (timeout 8 วินาที)
+async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {
+  const candidates = [
+    { path: "/login", body: { email: emailNorm, password } },
+    { path: "/api/login", body: { email: emailNorm, password } },
+    { path: "/login", body: { username: emailNorm, password } },
+  ];
+
+  // กรอง duplicates ออก
+  const seen = new Set();
+  const unique = candidates.filter((c) => {
+    const key = `${c.path}:${JSON.stringify(c.body)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const results = await Promise.allSettled(
+      unique.map((c) =>
+        fetch(`${apiBaseUrl}${c.path}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(c.body),
+          signal: controller.signal,
+        }).then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || data.message || "AUTH_FAILED");
+          return data;
+        })
+      )
+    );
+
+    for (const r of results) {
+      if (r.status === "fulfilled") return { data: r.value, error: null };
+    }
+
+    const firstErr = results.find((r) => r.status === "rejected");
+    return { data: null, error: firstErr?.reason?.message || "AUTHENTICATION FAILED. PLEASE VERIFY." };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -27,13 +74,6 @@ export default function LoginPage() {
   const [err, setErr] = useState("");
 
   const apiBaseUrl = resolveApiBaseUrl();
-  const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@example.com")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-
-  const isAdminEmail = (e) => ADMIN_EMAILS.includes((e || "").toLowerCase());
-  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 
   async function afterLoginGo(userlike) {
     localStorage.setItem("auramatch:isLoggedIn", "true");
@@ -68,68 +108,14 @@ export default function LoginPage() {
         setErr("SERVER CONFIGURATION MISSING. CONTACT SUPPORT.");
         return;
       }
-      const adminFirstCandidates = [
-                { path: "/login", body: { email: emailNorm, password } },
-        { path: "/api/login", body: { email: emailNorm, password } },
-        { path: "/login", body: { username: emailNorm, password } },
-      ];
-      const userCandidates = [
-        { path: "/login", body: { email: emailNorm, password } },
-        { path: "/api/login", body: { email: emailNorm, password } },
-                { path: "/login", body: { username: emailNorm, password } },
-      ];
-      const loginCandidates = isAdminEmail(emailNorm) ? adminFirstCandidates : userCandidates;
 
-      let matchedData = null;
-      let lastError = "";
+      const { data, error } = await tryLoginEndpoints(apiBaseUrl, emailNorm, password);
 
-      for (const candidate of loginCandidates) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
-        try {
-          const res = await fetch(`${apiBaseUrl}${candidate.path}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(candidate.body),
-            signal: controller.signal,
-          });
-          const data = await res.json().catch(() => ({}));
-          if (res.ok) {
-            matchedData = data;
-            break;
-          }
-          lastError = (data.error || data.message || "").toString();
-        } catch (error) {
-          if (error?.name === "AbortError") {
-            lastError = "REQUEST TIMEOUT. PLEASE TRY AGAIN.";
-            break;
-          }
-          lastError = error?.message || "NETWORK ERROR";
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      }
-
-      // Local demo fallback for urgent presentations on localhost.
-      const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-      if (!matchedData && isLocalhost && isAdminEmail(emailNorm) && ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
-        await afterLoginGo({
-          uid: "local-admin",
-          email: emailNorm,
-          name: "Local Admin",
-          photoURL: "",
-          role: "admin",
-          provider: "local-dev",
-        });
+      if (!data) {
+        setErr((error || "AUTHENTICATION FAILED. PLEASE VERIFY.").toUpperCase());
         return;
       }
 
-      if (!matchedData) {
-        setErr((lastError || "AUTHENTICATION FAILED. PLEASE VERIFY.").toUpperCase());
-        return;
-      }
-
-      const data = matchedData;
       const userPayload = data.user || data;
       const userlike = {
         uid: String(userPayload.user_id || ""),

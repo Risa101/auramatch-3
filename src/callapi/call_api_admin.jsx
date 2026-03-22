@@ -1,29 +1,4 @@
-import axios from "axios";
-
-function resolveApiBaseUrl() {
-  const isLocalhostHost =
-    typeof window !== "undefined" &&
-    ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  if (isLocalhostHost) return "";
-
-  const raw = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "";
-  return String(raw).replace(/\/+$/, "");
-}
-
-const API_BASE_URL = resolveApiBaseUrl();
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("auramatch:token");
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import apiClient from "../api/client";
 
 const normalizeList = (res) => {
   const body = res?.data;

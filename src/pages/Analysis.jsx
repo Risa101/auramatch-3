@@ -969,6 +969,21 @@ export default function Analysis() {
   async function onPick(e) {
     const f = e.target.files?.[0];
     if (!f) return;
+
+    // File validation
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+    const MAX_SIZE_MB = 10;
+    if (!ALLOWED_TYPES.includes(f.type)) {
+      setError("กรุณาอัปโหลดไฟล์รูปภาพ (JPG, PNG, WEBP) เท่านั้น");
+      e.target.value = "";
+      return;
+    }
+    if (f.size > MAX_SIZE_MB * 1024 * 1024) {
+      setError(`ไฟล์ต้องมีขนาดไม่เกิน ${MAX_SIZE_MB} MB`);
+      e.target.value = "";
+      return;
+    }
+
     try {
       const dataUrl = await fileToDataURL(f);
       setFile(f);
