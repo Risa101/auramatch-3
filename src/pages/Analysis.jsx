@@ -1313,6 +1313,82 @@ export default function Analysis() {
                     <Stat label="Lips" value={SHAPE_RECS.lips[result.face.lips]} />
                   </div>
                 </div>
+
+                {/* ── Gemini + Matched Products ── */}
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                  {/* LEFT: Gemini AI Generation */}
+                  <div className="rounded-2xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFDFE] p-5">
+                    <div className="text-[11px] font-black uppercase tracking-[0.24em] text-[#D23669] mb-1">AI Makeover</div>
+                    <h4 className="text-base font-[900] tracking-tight text-[#2F2A31] mb-2">Generate Makeup with Gemini AI</h4>
+                    <p className="text-xs text-[#4A4A4A]/70 mb-4">AI will create a makeup portrait from your photo. Takes ~10–20 seconds.</p>
+                    <button
+                      onClick={runGeminiGeneration}
+                      disabled={geminiStatus === "loading"}
+                      className="rounded-full px-5 py-2 text-xs font-black tracking-[0.12em] uppercase bg-[#D23669] text-white hover:bg-[#B52E58] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {geminiStatus === "loading" ? "Generating..." : "✨ Generate with AI"}
+                    </button>
+                    {geminiError && <p className="mt-2 text-xs text-red-500">{geminiError}</p>}
+                    {geminiStatus === "loading" && (
+                      <div className="mt-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-[#D23669] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          </svg>
+                          <span className="text-xs font-semibold text-[#D23669]">Creating your look...</span>
+                        </div>
+                        <div className="aspect-square w-full max-w-[200px] rounded-xl bg-gradient-to-br from-[#F3D5E0] to-[#E6DCEB] animate-pulse" />
+                      </div>
+                    )}
+                    {geminiImage && geminiStatus === "done" && (
+                      <div className="mt-4">
+                        <img
+                          src={geminiImage}
+                          alt="Gemini AI Makeover"
+                          className="w-full max-w-[240px] rounded-2xl border border-[#F3D5E0] shadow-md"
+                        />
+                        <a
+                          href={geminiImage}
+                          download="ai-makeover.png"
+                          className="mt-3 inline-block rounded-full px-4 py-1.5 text-[10px] font-black tracking-[0.15em] uppercase bg-white text-[#D23669] border border-[#D23669] hover:bg-[#FFF0F5] transition"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* RIGHT: Products matched to personal color */}
+                  <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
+                    <div className="text-[11px] font-black uppercase tracking-[0.24em] text-[#D23669] mb-1">
+                      {result.season} Picks
+                    </div>
+                    <h4 className="text-base font-[900] tracking-tight text-[#2F2A31] mb-4">Cosmetics for Your Aura</h4>
+                    <div className="space-y-3">
+                      {(PRODUCTS[result.season] || []).map((p, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-2.5 rounded-xl border border-[#F0E4EA] bg-white hover:border-[#D23669]/30 transition">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#FFF5F8] shrink-0 border border-[#EEDDE4]">
+                            <img src={p.img} alt={p.name} className="w-full h-full object-cover" onError={e => { e.target.src = assetPath("assets/home2.webp"); }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-[#3A3437] truncate uppercase">{p.name}</p>
+                            <p className="text-xs font-bold text-[#D23669]">฿{p.price}</p>
+                          </div>
+                          <a
+                            href={p.shopUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="shrink-0 px-3 py-1.5 rounded-full bg-black text-white text-[9px] font-black uppercase tracking-widest hover:bg-[#D23669] transition"
+                          >
+                            Buy
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
               </div>
             ) : (
               <div className="mt-6 space-y-4">
