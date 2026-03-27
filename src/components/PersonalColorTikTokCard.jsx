@@ -1,4 +1,5 @@
 import { Play, Sparkles } from "lucide-react";
+import { imgUrl } from "../utils/imgUrl.js";
 
 export default function PersonalColorTikTokCard({ video, onSelect, delay = 0 }) {
   return (
@@ -11,7 +12,7 @@ export default function PersonalColorTikTokCard({ video, onSelect, delay = 0 }) 
       {/* 1. VIBRANT BACKGROUND (The Moving Canvas) */}
       <div className="absolute inset-0 w-full h-full group-hover:scale-110 transition-transform duration-[2s] ease-out">
         <img
-          src={video.thumbnail || "/assets/home.PNG"}
+          src={imgUrl(video.thumbnail || "/assets/home.PNG")}
           alt={video.title}
           loading="lazy"
           className="absolute inset-0 h-full w-full object-cover brightness-110 contrast-[1.05]"

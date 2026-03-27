@@ -7,7 +7,7 @@ import { getLooksBySeason } from "../callapi/call_api_user";
 
 export default function UltimateAcademy() {
   const navigate = useNavigate();
-  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const API_BASE_URL = (() => { const h = typeof window !== "undefined" ? window.location.hostname : ""; return ["localhost","127.0.0.1"].includes(h) ? "" : (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""); })();
 
   const navItems = [
     { label: "Home", to: "/" },
@@ -73,32 +73,32 @@ export default function UltimateAcademy() {
   const knowledgeBase = {
     Hue: {
       title: "Hue: Temperature",
-      content: "กฎของอุณหภูมิสีที่เป็นรากฐานของ Undertone สีที่ใช่จะทำให้ผิวดูสุขภาพดี ไม่ซีดจาง",
-      tips: "Warm Tone มักเข้ากับสีทอง ส่วน Cool Tone จะโดดเด่นในสีเงิน",
+      content: "The rule of color temperature that forms the foundation of Undertone — the right color makes skin look healthy and vibrant.",
+      tips: "Warm Tone pairs well with gold, while Cool Tone stands out in silver.",
       image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070",
       color: "bg-[#FFF4E0]"
     },
     Value: {
       title: "Value: Depth",
-      content: "ระดับความสว่าง-เข้มที่มีผลต่อความคมชัดบนใบหน้า การเลือก Value ผิดอาจทำให้หน้าดูจมหายไป",
-      tips: " High Value (สีอ่อน) ให้ความนุ่มนวล, Low Value (สีเข้ม) ให้ความน่าเกรงขาม",
+      content: "The level of lightness/darkness that affects sharpness on the face — choosing the wrong Value can make your face appear to disappear.",
+      tips: "High Value (light colors) gives softness; Low Value (dark colors) gives strength and authority.",
       image: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=1932",
       color: "bg-[#F3F4F6]"
     },
     Chroma: {
       title: "Chroma: Clarity",
-      content: "ความสดหรือความหม่น (Vivid vs Muted) ตัวกำหนดความ 'แพง' บางคนเหมาะกับสีสด บางคนเหมาะกับสีตุ่น",
-      tips: "ถ้าหน้าดูหมองในสี Neon ลองเปลี่ยนมาใช้สี Muted ที่มีความอมเทามากขึ้น",
+      content: "Vividness vs mutedness — the defining factor of looking 'luxurious.' Some suit vivid colors, others suit muted tones.",
+      tips: "If your face looks dull in Neon, try switching to a Muted color with more gray undertone.",
       image: "https://images.unsplash.com/photo-1502691876148-a84978f5d81b?q=80&w=2070",
       color: "bg-[#E8D9F2]"
     }
   };
 
   const seasonalData = {
-    Spring: { title: "Spring", sub: "Warm & Bright", best: "ส้มพีช, เขียวสด, เหลืองทอง", vibe: "พลังแห่งความสดใสด้วยโทนสีอุ่นที่สว่างกระจ่างใส", theory: "Yellow Base / High Clarity" },
-    Summer: { title: "Summer", sub: "Cool & Soft", best: "ฟ้าพาสเทล, ชมพูกุหลาบ, ม่วงหม่น", vibe: "ความละมุนอ่อนโยนในโทนสีเย็นแบบพาสเทล", theory: "Blue Base / Muted Value" },
-    Autumn: { title: "Autumn", sub: "Warm & Muted", best: "ส้มอิฐ, เขียวขี้ม้า, แดงมะฮอกกานี", vibe: "เสน่ห์ที่ลุ่มลึกและหรูหราด้วยโทนสีอุ่นแบบตุ่น", theory: "Yellow Base / Rich Depth" },
-    Winter: { title: "Winter", sub: "Cool & Brilliant", best: "น้ำเงินรอยัล, แดงทับทิม, ขาว/ดำ", vibe: "ความโดดเด่นขั้นสุดด้วยสีสดชัดในโทนเย็น", theory: "Blue Base / High Contrast" }
+    Spring: { title: "Spring", sub: "Warm & Bright", best: "Peach orange, vivid green, golden yellow", vibe: "The energy of brightness with warm, clear tones", theory: "Yellow Base / High Clarity" },
+    Summer: { title: "Summer", sub: "Cool & Soft", best: "Pastel blue, rose pink, dusty purple", vibe: "Soft and gentle in cool pastel tones", theory: "Blue Base / Muted Value" },
+    Autumn: { title: "Autumn", sub: "Warm & Muted", best: "Brick orange, olive green, mahogany red", vibe: "Deep, rich charm with warm muted tones", theory: "Yellow Base / Rich Depth" },
+    Winter: { title: "Winter", sub: "Cool & Brilliant", best: "Royal blue, ruby red, white/black", vibe: "Ultimate boldness with vivid cool tones", theory: "Blue Base / High Contrast" }
   };
 
   const undertoneData = [
@@ -106,7 +106,7 @@ export default function UltimateAcademy() {
       key: "Cool",
       title: "Cool Undertone",
       sub: "Blue / Pink Base",
-      desc: "ผิวมีอันเดอร์โทนอมชมพูหรืออมฟ้า เหมาะกับเครื่องประดับเงินและสีโทนเย็น เช่น Rose, Berry, Ash.",
+      desc: "Skin has a pink or blue undertone. Pairs well with silver jewelry and cool tones such as Rose, Berry, Ash.",
       chips: ["Silver", "Rose Pink", "Berry", "Navy"],
       bg: "bg-[#EEF4FF]",
       accent: "text-[#5D78C8]",
@@ -115,7 +115,7 @@ export default function UltimateAcademy() {
       key: "Warm",
       title: "Warm Undertone",
       sub: "Yellow / Golden Base",
-      desc: "ผิวมีอันเดอร์โทนอมเหลืองหรือทอง เหมาะกับเครื่องประดับทอง และสีอบอุ่น เช่น Peach, Coral, Camel.",
+      desc: "Skin has a yellow or golden undertone. Pairs well with gold jewelry and warm colors such as Peach, Coral, Camel.",
       chips: ["Gold", "Peach", "Coral", "Camel"],
       bg: "bg-[#FFF5EA]",
       accent: "text-[#CC7B2C]",
@@ -124,7 +124,7 @@ export default function UltimateAcademy() {
       key: "Neutral",
       title: "Neutral Undertone",
       sub: "Balanced Base",
-      desc: "ผิวมีสมดุลระหว่างโทนเย็นและโทนอุ่น เลือกใช้ได้ทั้งสองฝั่ง โดยเน้นสีที่ไม่สดหรือเข้มเกินไป.",
+      desc: "Skin is balanced between cool and warm tones. Works with both sides, favoring colors that are not too vivid or too dark.",
       chips: ["Taupe", "Dusty Rose", "Soft Beige", "Mauve"],
       bg: "bg-[#F4F4F4]",
       accent: "text-[#596273]",
@@ -132,33 +132,33 @@ export default function UltimateAcademy() {
   ];
 
   const faceShapes = [
-    { shape: "Oval", trait: "The Benchmark", desc: "สัดส่วนที่สมดุลที่สุด หน้าผากกว้างกว่าคางเล็กน้อย ช่วงแก้มโค้งมนสวยงาม", image: "/assets/oval.jpg" },
-    { shape: "Round", trait: "Circular Symmetry", desc: "ความกว้างโหนกแก้มเท่ากับความยาวใบหน้า เส้นกรามโค้งมน ไร้เหลี่ยมมุม", image: "/assets/round.jpg" },
-    { shape: "Square", trait: "Angular Precision", desc: "แนวกรามกว้างขนานกับหน้าผาก สร้างลุคที่ดูแข็งแรงและมีพลัง", image: "/assets/sqare.jpg" },
-    { shape: "Heart", trait: "Upper Dominance", desc: "หน้าผากกว้าง มีขวัญผมตรงกลาง และคางเรียวแหลมเหมือนสัญลักษณ์หัวใจ", image: "/assets/heart.jpg" },
-    { shape: "Diamond", trait: "Cheekbone Focus", desc: "โหนกแก้มเป็นส่วนที่กว้างที่สุด ขณะที่หน้าผากและกรามมีความเรียวแคบ", image: "/assets/diamond.jpg" },
-    { shape: "Oblong", trait: "Vertical Depth", desc: "ใบหน้ามีความยาวมากกว่าความกว้างอย่างชัดเจน โครงสร้างดูเพรียวบางหรูหรา", image: "/assets/rectangular.jpg" }
+    { shape: "Oval", trait: "The Benchmark", desc: "The most balanced proportions — forehead slightly wider than chin, cheeks beautifully curved.", image: "/assets/oval.jpg" },
+    { shape: "Round", trait: "Circular Symmetry", desc: "Cheekbone width equals face length, with rounded jawline and no sharp angles.", image: "/assets/round.jpg" },
+    { shape: "Square", trait: "Angular Precision", desc: "Wide jawline parallel to forehead, creating a strong and powerful look.", image: "/assets/sqare.jpg" },
+    { shape: "Heart", trait: "Upper Dominance", desc: "Wide forehead with a center hairline peak and a tapered pointed chin like a heart symbol.", image: "/assets/heart.jpg" },
+    { shape: "Diamond", trait: "Cheekbone Focus", desc: "Cheekbones are the widest point, while forehead and jaw are narrow and defined.", image: "/assets/diamond.jpg" },
+    { shape: "Oblong", trait: "Vertical Depth", desc: "Face length noticeably greater than width, with a slim and elegant bone structure.", image: "/assets/rectangular.jpg" }
   ];
 
   const closetCards = [
     {
       percent: "60%",
       title: "Neutral Base",
-      desc: "สีพื้นฐานสำหรับชิ้นหลัก เช่น สูท กางเกง เพื่อความคลาสสิก",
+      desc: "Base colors for key pieces such as suits and trousers, for a classic look.",
       // image: "/assets/ad7.JPG",
       highlight: false,
     },
     {
       percent: "30%",
       title: "Personal Hero",
-      desc: "จุดที่สีประจำฤดูกาลทำงานหนักที่สุดเพื่อขับออร่าให้ผิว",
+      desc: "Where your seasonal color works hardest to enhance your skin's aura.",
       // image: "/assets/ad8.JPG",
       highlight: true,
     },
     {
       percent: "10%",
       title: "Statement",
-      desc: "สีตัดกัน (Pop Color) เพื่อสร้างความโดดเด่นและสไตล์เฉพาะตัว",
+      desc: "Contrasting (Pop Color) to create a standout and distinctive personal style.",
       // image: "/assets/ad9.JPG",
       highlight: false,
     },
@@ -188,7 +188,7 @@ export default function UltimateAcademy() {
               <p className="text-[12px] font-bold text-gray-500 leading-relaxed uppercase tracking-wider mb-8 border-l-2 border-[#D23669] pl-6">
                 {selectedTopic ? knowledgeBase[selectedTopic].content : seasonalData[selectedSeason].vibe}
               </p>
-              <div className="bg-[#F9F9F9] p-8 rounded-[2.5rem]">
+              <div className="bg-[#FFF5F8] p-8 rounded-[2.5rem] border border-[#EEDDE4]">
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#D23669] mb-2">Technical Insight</p>
                 <p className="text-[11px] font-black uppercase text-[#4A4A4A] leading-relaxed italic">
                   {selectedTopic ? knowledgeBase[selectedTopic].tips : `Key Palette: ${seasonalData[selectedSeason].best}`}
@@ -278,7 +278,7 @@ export default function UltimateAcademy() {
               <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-4">Lesson 02</span>
               <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter text-[#4A4A4A] uppercase">The Four <span className="text-[#FF85A2]">Aura Archetypes</span></h2>
             </div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest max-w-[300px] text-right">การวิเคราะห์ปฏิกิริยาระหว่าง "เม็ดสีใต้ผิว" กับ "ค่าสีภายนอก"</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest max-w-[300px] text-right">Analysis of the interaction between "skin pigments" and "external color values"</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {Object.keys(seasonalData).map((seasonKey, i) => {
@@ -293,7 +293,7 @@ export default function UltimateAcademy() {
                     )}
                     <div className="absolute top-8 left-8"><span className="bg-white/95 text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">{seasonKey}</span></div>
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-end p-10">
-                       <p className="text-white text-[10px] font-black uppercase leading-relaxed italic">"เพิ่มความสว่างให้ผิวด้วย {seasonalData[seasonKey].best}"</p>
+                       <p className="text-white text-[10px] font-black uppercase leading-relaxed italic">"Brighten your skin with {seasonalData[seasonKey].best}"</p>
                     </div>
                   </div>
                   <div className="px-4">
@@ -316,7 +316,7 @@ export default function UltimateAcademy() {
               Cool <span className="text-[#FF85A2]">Warm</span> Neutral
             </h2>
             <p className="mt-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-              ใช้ Undertone เป็นฐานก่อนเลือกสีผม สีเสื้อผ้า และเมคอัพ
+              Use Undertone as your foundation before choosing hair color, outfit colors, and makeup.
             </p>
           </div>
 
@@ -326,14 +326,14 @@ export default function UltimateAcademy() {
                 key={item.key}
                 data-aos="fade-up"
                 data-aos-delay={idx * 80}
-                className={`${item.bg} rounded-[3rem] p-10 border border-black/5 shadow-sm hover:shadow-xl transition-all`}
+                className={`${item.bg} rounded-[3rem] p-10 border border-[#EEDDE4] shadow-sm hover:shadow-xl transition-all`}
               >
                 <p className={`text-[10px] font-black uppercase tracking-[0.25em] ${item.accent} mb-3`}>{item.sub}</p>
                 <h3 className="text-3xl font-[900] tracking-tighter uppercase text-[#4A4A4A] mb-4">{item.title}</h3>
                 <p className="text-[11px] font-bold text-gray-500 leading-relaxed mb-7">{item.desc}</p>
                 <div className="flex flex-wrap gap-2">
                   {item.chips.map((chip) => (
-                    <span key={chip} className="px-4 py-2 rounded-full bg-white text-[10px] font-black uppercase tracking-wider text-gray-500 border border-black/5">
+                    <span key={chip} className="px-4 py-2 rounded-full bg-white text-[10px] font-black uppercase tracking-wider text-gray-500 border border-[#EEDDE4]">
                       {chip}
                     </span>
                   ))}
@@ -342,7 +342,7 @@ export default function UltimateAcademy() {
             ))}
           </div>
 
-          <div className="mt-14 bg-[#F9F9F9] rounded-[3rem] p-8 md:p-12 border border-black/5">
+          <div className="mt-14 bg-[#F9F9F9] rounded-[3rem] p-8 md:p-12 border border-[#EEDDE4]">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#D23669] mb-2">
@@ -358,17 +358,17 @@ export default function UltimateAcademy() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-[2rem] p-6 border border-black/5">
+              <div className="bg-white rounded-[2rem] p-6 border border-[#EEDDE4]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 1</p>
-                <p className="text-[12px] font-bold text-gray-600">ยกข้อมือขึ้นในแสงธรรมชาติ หลีกเลี่ยงไฟเหลืองในห้อง</p>
+                <p className="text-[12px] font-bold text-gray-600">Hold your wrist up in natural daylight. Avoid yellow indoor lighting.</p>
               </div>
-              <div className="bg-white rounded-[2rem] p-6 border border-black/5">
+              <div className="bg-white rounded-[2rem] p-6 border border-[#EEDDE4]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 2</p>
-                <p className="text-[12px] font-bold text-gray-600">ดูเส้นเลือดบริเวณด้านในข้อมือ ว่าออกฟ้า/ม่วง หรือเขียว</p>
+                <p className="text-[12px] font-bold text-gray-600">Look at the veins on the inside of your wrist — are they blue/purple or green?</p>
               </div>
-              <div className="bg-white rounded-[2rem] p-6 border border-black/5">
+              <div className="bg-white rounded-[2rem] p-6 border border-[#EEDDE4]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 3</p>
-                <p className="text-[12px] font-bold text-gray-600">เทียบผลกับตารางด้านล่าง แล้วเลือกโทนสีตามคำแนะนำ</p>
+                <p className="text-[12px] font-bold text-gray-600">Compare the result with the table below, then choose your color tone as recommended.</p>
               </div>
             </div>
 
@@ -400,26 +400,26 @@ export default function UltimateAcademy() {
                 The Six <br /><span className="text-[#FF85A2]">Geometry</span> Archetypes
               </h2>
               <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] leading-loose border-l-4 border-[#D23669]/10 pl-8 mb-10">
-                การเข้าใจรูปหน้าจริงจะช่วยให้การลง Contour และ Highlight แม่นยำระดับมิลลิเมตร เพื่อปรับสมดุลระหว่างโครงสร้างกระดูกและการตกกระทบของแสง
+                Understanding your true face shape enables millimeter-precision Contour and Highlight placement, balancing bone structure against light reflection.
               </p>
-              <button onClick={() => navigate('/analysis')} className="bg-[#4A4A4A] hover:bg-[#D23669] text-white px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center gap-4 group">
+              <button onClick={() => navigate('/analysis')} className="bg-[#D23669] hover:bg-[#FF85A2] text-white px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-[#D23669]/30 flex items-center gap-4 group">
                 Start Biometric Scan <ArrowUpRight size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </button>
             </div>
             
             <div className="w-full lg:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { shape: "Oval", trait: "Ideal Balance", desc: "สัดส่วนที่สมดุลที่สุด หน้าผากและกรามมีความโค้งมนสวยงาม", bg: "#F1F5F9", image: faceShapes[0].image }, // Blue-Gray Pastel
-                { shape: "Square", trait: "Strong Presence", desc: "แนวกรามชัดเจน หน้าผากและโหนกแก้มกว้างไล่เลี่ยกัน", bg: "#FDF2F2", image: faceShapes[2].image }, // Red Pastel
-                { shape: "Round", trait: "Soft Contour", desc: "ความกว้างและยาวของใบหน้าเกือบเท่ากัน เน้นความละมุน", bg: "#FFFBEB", image: faceShapes[1].image }, // Amber Pastel
-                { shape: "Heart", trait: "Delicate Point", desc: "หน้าผากกว้างและค่อยๆ เรียวเล็กลงจนถึงปลายคางที่แหลม", bg: "#F5F3FF", image: faceShapes[3].image }, // Purple Pastel
-                { shape: "Diamond", trait: "Sharp Definition", desc: "โหนกแก้มเป็นจุดที่กว้างที่สุด พร้อมหน้าผากและคางที่เรียว", bg: "#ECFDF5", image: faceShapes[4].image }, // Emerald Pastel
-                { shape: "Long", trait: "Vertical Focus", desc: "ใบหน้ามีความยาวมากกว่าความกว้าง เน้นการปรับสมดุลแนวนอน", bg: "#EFF6FF", image: faceShapes[5].image }  // Blue Pastel
+                { shape: "Oval", trait: "Ideal Balance", desc: "The most balanced proportions — forehead and jaw beautifully rounded.", bg: "#F1F5F9", image: faceShapes[0].image }, // Blue-Gray Pastel
+                { shape: "Square", trait: "Strong Presence", desc: "Defined jawline, forehead and cheekbones at similar widths.", bg: "#FDF2F2", image: faceShapes[2].image }, // Red Pastel
+                { shape: "Round", trait: "Soft Contour", desc: "Face width and length are nearly equal, emphasizing softness.", bg: "#FFFBEB", image: faceShapes[1].image }, // Amber Pastel
+                { shape: "Heart", trait: "Delicate Point", desc: "Wide forehead that tapers gradually to a pointed chin.", bg: "#F5F3FF", image: faceShapes[3].image }, // Purple Pastel
+                { shape: "Diamond", trait: "Sharp Definition", desc: "Cheekbones are the widest point, with narrow forehead and jaw.", bg: "#ECFDF5", image: faceShapes[4].image }, // Emerald Pastel
+                { shape: "Long", trait: "Vertical Focus", desc: "Face length exceeds width — focus on horizontal balance.", bg: "#EFF6FF", image: faceShapes[5].image }  // Blue Pastel
               ].map((item, i) => (
                 <div 
                   key={item.shape} 
                   style={{ '--pastel-bg': item.bg }} 
-                  className="p-10 rounded-[3.5rem] bg-[var(--pastel-bg)] hover:bg-[#4A4A4A] group transition-all duration-700 min-h-[280px] flex flex-col justify-between cursor-default shadow-sm hover:shadow-2xl"
+                  className="p-10 rounded-[3.5rem] bg-[var(--pastel-bg)] hover:bg-[#D23669] group transition-all duration-700 min-h-[280px] flex flex-col justify-between cursor-default shadow-sm hover:shadow-2xl"
                 >
                   <div>
                     <div className="flex justify-between items-center mb-6">
@@ -431,7 +431,7 @@ export default function UltimateAcademy() {
                   </div>
                   <div className="h-44 rounded-[1.5rem] overflow-hidden mb-5 border border-white/70 shadow-sm bg-white">
                     <img
-                      src={item.image}
+                      src={resolveImageUrl(item.image)}
                       alt={item.shape}
                       className="w-full h-full object-contain p-2"
                       loading="lazy"

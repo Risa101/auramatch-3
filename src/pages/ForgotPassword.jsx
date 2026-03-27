@@ -46,10 +46,10 @@ export default function ForgotPassword() {
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr((data.error || "ขออภัย กรุณาลองใหม่อีกครั้ง").toString());
+        setErr((data.error || "Sorry, please try again.").toString());
         return;
       }
-      setMsg("ถ้ามีอีเมลนี้ในระบบ เราได้ส่งลิงก์รีเซ็ตไปให้แล้ว");
+      setMsg("If this email exists in our system, a reset link has been sent.");
       if (data.reset_link) {
         setResetLink(data.reset_link);
       }

@@ -1,25 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, ArrowUpRight, Loader2, X, CheckCircle2, Info } from 'lucide-react';
+import { Sparkles, ArrowUpRight, Loader2, X, CheckCircle2, Info, Heart } from 'lucide-react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { getLooksBySeason } from "../callapi/call_api_user";
+import { toggleLike, isLiked, subscribeLikes } from "../utils/likes";
 
 const SeasonalGallery = () => {
-  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const API_BASE_URL = (() => { const h = typeof window !== "undefined" ? window.location.hostname : ""; return ["localhost","127.0.0.1"].includes(h) ? "" : (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""); })();
 
   // --- States ---
   const [activeSeason, setActiveSeason] = useState('Spring');
   const [loading, setLoading] = useState(true);
   const [selectedLook, setSelectedLook] = useState(null);
+  const [likedIds, setLikedIds] = useState([]);
   const [seasonalData, setSeasonalData] = useState({
     Spring: [], Summer: [], Autumn: [], Winter: []
   });
 
   const seasonTheme = {
-    Spring: { bg: "#FFF7ED", accent: "#D23669", text: "Warm & Bright", details: "โทนสีพีช ชมพูคอรัล และเขียวอ่อน เสริมความสดใส" },
-    Summer: { bg: "#F0F9FF", accent: "#38BDF8", text: "Cool & Soft", details: "โทนสีฟ้าพาสเทล ชมพูนม และม่วงลาเวนเดอร์ ดูนุ่มนวล" },
-    Autumn: { bg: "#FEF2F2", accent: "#EF4444", text: "Warm & Deep", details: "โทนสีส้มอิฐ น้ำตาลทอง และเขียวขี้ม้า เสริมความลึกลับ" },
-    Winter: { bg: "#F5F3FF", accent: "#8B5CF6", text: "Cool & Vivid", details: "โทนสีน้ำเงินเข้ม ชมพูบานเย็น และขาวดำ เน้นความชัดเจน" }
+    Spring: { bg: "#FFF7ED", accent: "#D23669", text: "Warm & Bright", details: "Peach, coral pink, and soft green tones for a fresh radiant look." },
+    Summer: { bg: "#F0F9FF", accent: "#38BDF8", text: "Cool & Soft", details: "Pastel blue, milky pink, and lavender tones for a soft, gentle feel." },
+    Autumn: { bg: "#FEF2F2", accent: "#EF4444", text: "Warm & Deep", details: "Brick orange, golden brown, and olive green tones for a deep, mysterious look." },
+    Winter: { bg: "#F5F3FF", accent: "#8B5CF6", text: "Cool & Vivid", details: "Deep navy, fuchsia pink, and black/white tones for bold clarity." }
   };
 
   const fallbackSeasonalData = {
@@ -68,6 +70,10 @@ const SeasonalGallery = () => {
     window.scrollTo(0, 0);
   }, [initGalleryData]);
 
+  useEffect(() => {
+    return subscribeLikes((all) => setLikedIds(all.map(x => x.id)));
+  }, []);
+
   // Lock Body Scroll when Modal is open
   useEffect(() => {
     if (selectedLook) {
@@ -87,7 +93,7 @@ const SeasonalGallery = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] py-32 px-10 overflow-x-hidden font-sans selection:bg-[#FF85A2] selection:text-white">
+    <div className="min-h-screen bg-[#FCF8F8] py-32 px-10 overflow-x-hidden font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
       <div className="max-w-[1400px] mx-auto">
         
         {/* --- 1. HEADER SECTION --- */}
@@ -99,7 +105,7 @@ const SeasonalGallery = () => {
                 <div className="w-1.5 h-1.5 rounded-full bg-[#D23669] animate-pulse"></div>
                 <span className="text-[10px] tracking-[0.4em] uppercase text-[#D23669] font-black">Personal Color Intelligence</span>
               </div>
-              <h2 className="text-[4rem] md:text-[6.5rem] lg:text-[8rem] font-[900] leading-[0.85] tracking-tighter text-[#1A1A1A] uppercase">
+              <h2 className="text-[4rem] md:text-[6.5rem] lg:text-[8rem] font-[900] leading-[0.85] tracking-tighter text-[#3A3437] uppercase">
                 Makeup <br />
                 <span className="text-[#FF85A2] italic font-light lowercase pr-4">for</span>
                 <span>{activeSeason}</span>
@@ -111,7 +117,7 @@ const SeasonalGallery = () => {
                 <button 
                   key={s} 
                   onClick={() => setActiveSeason(s)} 
-                  className={`whitespace-nowrap px-8 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeSeason === s ? 'bg-[#1A1A1A] text-white shadow-xl translate-y-[-1px]' : 'text-gray-400 hover:text-black hover:bg-white/50'}`}
+                  className={`whitespace-nowrap px-8 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeSeason === s ? 'bg-[#D23669] text-white shadow-xl shadow-[#D23669]/30 translate-y-[-1px]' : 'text-gray-400 hover:text-[#D23669] hover:bg-[#FFF5F8]'}`}
                 >
                   {s}
                 </button>
@@ -122,13 +128,13 @@ const SeasonalGallery = () => {
 
         {/* --- 2. LUXURY MARQUEE --- */}
         <div className="relative mb-32 opacity-60">
-          <div className="bg-white/50 py-10 overflow-hidden border-y border-gray-100/80">
+          <div className="bg-[#FFF5F8]/80 py-10 overflow-hidden border-y border-[#EEDDE4]">
             <div className="flex animate-marquee whitespace-nowrap">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="flex items-center">
-                  <span className="text-[#1A1A1A] text-[11px] font-bold tracking-[0.8em] uppercase mx-16">Precision Aesthetic</span>
+                  <span className="text-[#D23669] text-[11px] font-bold tracking-[0.8em] uppercase mx-16">Precision Aesthetic</span>
                   <Sparkles size={14} className="text-[#FF85A2]" />
-                  <span className="text-[#1A1A1A] text-[11px] font-bold tracking-[0.8em] uppercase mx-16">Biometric Matching</span>
+                  <span className="text-[#D23669] text-[11px] font-bold tracking-[0.8em] uppercase mx-16">Biometric Matching</span>
                   <div className="w-16 h-[1px] bg-gray-200"></div>
                 </div>
               ))}
@@ -157,21 +163,33 @@ const SeasonalGallery = () => {
                     onClick={() => setSelectedLook(item)}
                 >
                   <div className="relative aspect-[4/5] rounded-[4rem] overflow-hidden shadow-sm transition-all duration-1000 group-hover:shadow-2xl group-hover:-translate-y-4 flex items-center justify-center" style={{ backgroundColor: seasonTheme[activeSeason].bg }}>
-                    <img 
-                        src={getFullImageUrl(item.image_url || item.image)} 
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110 z-10" 
-                        onError={(e) => e.target.style.opacity = '0'} 
-                        alt="" 
+                    <img
+                        src={getFullImageUrl(item.image_url || item.image)}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110 z-10"
+                        onError={(e) => e.target.style.opacity = '0'}
+                        alt=""
                     />
-                    
+
                     {/* Placeholder when image fails */}
                     <div className="flex flex-col items-center gap-4 opacity-[0.15] group-hover:opacity-30 transition-opacity duration-700">
                         <Sparkles size={50} className="text-[#D23669]" />
                         <span className="text-[9px] font-black uppercase tracking-[0.4em]">Visualizing</span>
                     </div>
 
+                    {/* Heart button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const lookId = `look_${item.look_id || item.id || i}`;
+                        toggleLike({ id: lookId, title: item.name, img: item.image_url || item.image, season: activeSeason, type: "look" });
+                      }}
+                      className="absolute top-5 right-5 z-30 p-3 rounded-full bg-white/80 backdrop-blur-md shadow-lg transition-all active:scale-90 hover:scale-110"
+                    >
+                      <Heart size={18} className={likedIds.includes(`look_${item.look_id || item.id || i}`) ? 'fill-red-500 text-red-500' : 'text-gray-400'} />
+                    </button>
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-12 z-20">
-                      <div className="bg-white text-black py-5 rounded-full text-[10px] font-black text-center uppercase tracking-[0.3em] shadow-2xl transform translate-y-8 group-hover:translate-y-0 transition-transform duration-700">
+                      <div className="bg-[#D23669] text-white py-5 rounded-full text-[10px] font-black text-center uppercase tracking-[0.3em] shadow-2xl transform translate-y-8 group-hover:translate-y-0 transition-transform duration-700">
                         Explore Look
                       </div>
                     </div>
@@ -183,9 +201,9 @@ const SeasonalGallery = () => {
                         <div className="w-8 h-[1px] bg-[#D23669]"></div>
                         <span className="text-[10px] font-black text-[#D23669] uppercase tracking-[0.2em]">{seasonTheme[activeSeason].text}</span>
                       </div>
-                      <h3 className="text-[28px] font-[900] uppercase text-[#1A1A1A] tracking-tighter leading-none group-hover:tracking-normal transition-all duration-500">{item.name}</h3>
+                      <h3 className="text-[28px] font-[900] uppercase text-[#3A3437] tracking-tighter leading-none group-hover:text-[#D23669] transition-all duration-500">{item.name}</h3>
                     </div>
-                    <div className="w-14 h-14 rounded-full border border-gray-100 flex items-center justify-center group-hover:bg-[#1A1A1A] group-hover:text-white transition-all duration-500 shrink-0 shadow-sm">
+                    <div className="w-14 h-14 rounded-full border border-[#EEDDE4] flex items-center justify-center group-hover:bg-[#D23669] group-hover:text-white group-hover:border-[#D23669] transition-all duration-500 shrink-0 shadow-sm">
                       <ArrowUpRight size={22} />
                     </div>
                   </div>
@@ -228,7 +246,7 @@ const SeasonalGallery = () => {
                     <Sparkles size={12} /> Personal Color Analysis
                 </div>
                 
-                <h2 className="text-5xl md:text-7xl font-[900] text-[#1A1A1A] uppercase tracking-tighter leading-[0.9] mb-8">
+                <h2 className="text-5xl md:text-7xl font-[900] text-[#3A3437] uppercase tracking-tighter leading-[0.9] mb-8">
                     {selectedLook.name}
                 </h2>
                 
@@ -237,19 +255,34 @@ const SeasonalGallery = () => {
                 </p>
                 
                 <div className="grid grid-cols-1 gap-6 mb-16">
-                    <div className="flex items-start gap-5 p-7 rounded-[2.5rem] bg-[#F9F9F9] border border-gray-100/50 hover:bg-white hover:shadow-xl transition-all duration-500 group">
+                    <div className="flex items-start gap-5 p-7 rounded-[2.5rem] bg-[#FFF5F8] border border-[#EEDDE4] hover:bg-white hover:shadow-[0_8px_24px_rgba(226,110,147,0.12)] transition-all duration-500 group">
                         <CheckCircle2 className="text-[#D23669] mt-1 transition-transform group-hover:scale-125 duration-500" size={20} />
                         <div>
-                            <h4 className="text-[11px] font-black uppercase tracking-wider text-[#1A1A1A] mb-2">Palette Insight</h4>
+                            <h4 className="text-[11px] font-black uppercase tracking-wider text-[#3A3437] mb-2">Palette Insight</h4>
                             <p className="text-[12px] text-gray-500 font-medium leading-relaxed">{seasonTheme[activeSeason].details}</p>
                         </div>
                     </div>
                 </div>
               </div>
               
-              <button className="w-full py-7 bg-[#1A1A1A] text-white rounded-full font-black text-[11px] tracking-[0.4em] hover:bg-[#D23669] transition-all duration-500 shadow-2xl uppercase mt-auto">
-                Apply This Master Look
-              </button>
+              <div className="flex gap-3 mt-auto">
+                <button
+                  onClick={() => {
+                    const lookId = `look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`;
+                    toggleLike({ id: lookId, title: selectedLook.name, img: selectedLook.image_url || selectedLook.image, season: activeSeason, type: "look" });
+                  }}
+                  className={`flex items-center justify-center gap-2 px-6 py-7 rounded-full font-black text-[11px] tracking-[0.4em] uppercase transition-all duration-300 border-2 ${
+                    likedIds.includes(`look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`)
+                      ? 'bg-red-50 border-red-400 text-red-500'
+                      : 'bg-white border-[#EEDDE4] text-gray-400 hover:border-[#D23669] hover:text-[#D23669]'
+                  }`}
+                >
+                  <Heart size={16} className={likedIds.includes(`look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`) ? 'fill-red-500' : ''} />
+                </button>
+                <button className="flex-1 py-7 bg-[#D23669] text-white rounded-full font-black text-[11px] tracking-[0.4em] hover:bg-[#FF85A2] transition-all duration-500 shadow-xl shadow-[#D23669]/30 uppercase">
+                  Apply This Master Look
+                </button>
+              </div>
             </div>
           </div>
         </div>

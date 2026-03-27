@@ -32,18 +32,18 @@ const assetPath = (p) => `${BASE_PATH}${String(p).replace(/^\/+/, "")}`;
 const SEASONS = ["Spring", "Summer", "Autumn", "Winter"];
 const FACE_TYPES = ["Oval", "Round", "Square", "Heart", "Diamond", "Rectangle"];
 const SEASON_META = {
-  Spring: { tone: "Warm • Bright", note: "ลุคสดใส โทนอุ่น", glow: "from-[#FFF1D8] to-[#FFDDE7]" },
-  Summer: { tone: "Cool • Soft", note: "ลุคนุ่มละมุน โทนเย็น", glow: "from-[#EAF2FF] to-[#F1E8FF]" },
-  Autumn: { tone: "Warm • Deep", note: "ลุคอบอุ่นเข้ม มีมิติ", glow: "from-[#F8E8D6] to-[#F6E1CF]" },
-  Winter: { tone: "Cool • Vivid", note: "ลุคคมชัด contrast สูง", glow: "from-[#ECECFF] to-[#E9EEF9]" },
+  Spring: { tone: "Warm • Bright", note: "Bright and vibrant, warm tone", glow: "from-[#FFF1D8] to-[#FFDDE7]" },
+  Summer: { tone: "Cool • Soft", note: "Soft and gentle, cool tone", glow: "from-[#EAF2FF] to-[#F1E8FF]" },
+  Autumn: { tone: "Warm • Deep", note: "Deep and warm, rich dimension", glow: "from-[#F8E8D6] to-[#F6E1CF]" },
+  Winter: { tone: "Cool • Vivid", note: "Sharp and vivid, high contrast", glow: "from-[#ECECFF] to-[#E9EEF9]" },
 };
 const FACE_META = {
-  Oval: "สมดุล ดูละมุน แต่งได้หลายสไตล์",
-  Round: "นุ่มนวล อ่อนวัย เหมาะกับการเพิ่มมิติ",
-  Square: "กรอบหน้าชัด ดูเท่และมั่นใจ",
-  Heart: "หน้าผากเด่น คางเรียว ดูหวาน",
-  Diamond: "โหนกแก้มเด่น ดูคมมีเสน่ห์",
-  Rectangle: "หน้าดูยาวสวย ดูโครงสร้างชัด",
+  Oval: "Balanced and soft, versatile with many styles",
+  Round: "Soft and youthful, great for adding dimension",
+  Square: "Strong jaw definition, looks bold and confident",
+  Heart: "Prominent forehead, tapered chin, looks sweet",
+  Diamond: "Defined cheekbones, sharp and charming",
+  Rectangle: "Elegantly elongated, clear bone structure",
 };
 
 /* ---------------- Palettes ---------------- */
@@ -164,29 +164,29 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 /* ---------- YouTube helpers ---------- */
 const FACE_SHAPE_TH = {
-  Oval: "รูปไข่",
-  Round: "ทรงกลม",
-  Square: "สี่เหลี่ยม",
-  Heart: "รูปหัวใจ",
-  Diamond: "รูปเพชร",
-  Rectangle: "สี่เหลี่ยมผืนผ้า",
-  Pear: "ทรงลูกแพร์",
+  Oval: "Oval",
+  Round: "Round",
+  Square: "Square",
+  Heart: "Heart",
+  Diamond: "Diamond",
+  Rectangle: "Rectangle",
+  Pear: "Pear",
 };
 const SEASON_TH = {
-  Spring: "สปริง",
-  Summer: "ซัมเมอร์",
-  Autumn: "ออทัมน์/เอิร์ธโทน",
-  Winter: "วินเทอร์",
+  Spring: "Spring",
+  Summer: "Summer",
+  Autumn: "Autumn / Earth Tone",
+  Winter: "Winter",
 };
 const EYE_QUERY = {
-  natural: "แต่งตา natural gradient",
-  cat: "อายไลเนอร์ cat eye ยกหาง",
-  dolly: "แต่งตา dolly eye กลมหวาน",
+  natural: "natural gradient eye makeup",
+  cat: "cat eye liner winged",
+  dolly: "dolly eye round sweet",
 };
 const BROW_QUERY = {
-  softArch: "เขียนคิ้ว soft arch",
-  straight: "คิ้วเกาหลีตรง",
-  arched: "คิ้วโก่ง high arch",
+  softArch: "soft arch brow tutorial",
+  straight: "straight korean brow",
+  arched: "high arch brow tutorial",
 };
 const buildYT = (q) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
@@ -197,31 +197,31 @@ function buildYouTubeLinks(result) {
   if (season) {
     const th = SEASON_TH[season] || season;
     links.push({
-      title: `แต่งหน้าโทน ${th} (Personal Color)`,
-      url: buildYT(`แต่งหน้า โทน ${season} personal color ไทย`),
+      title: `Makeup for ${th} tone (Personal Color)`,
+      url: buildYT(`makeup ${season} personal color tutorial`),
     });
     links.push({
-      title: `เลือกสีลิป/บลัช โทน ${th}`,
-      url: buildYT(`ลิป บลัช โทน ${season} personal color`),
+      title: `Lip & Blush colors for ${th} tone`,
+      url: buildYT(`lip blush ${season} personal color`),
     });
   }
   if (faceShape) {
     const th = FACE_SHAPE_TH[faceShape] || faceShape;
     links.push({
-      title: `คอนทัวร์รูปหน้า (${th})`,
-      url: buildYT(`คอนทัวร์ รูปหน้า ${th} how to`),
+      title: `Contour for ${th} face shape`,
+      url: buildYT(`contour face shape ${th} how to`),
     });
   }
   if (face?.eyes)
     links.push({
-      title: `เทคนิคตา: ${EYE_QUERY[face.eyes] || "แต่งตา"}`,
-      url: buildYT(EYE_QUERY[face.eyes] || "แต่งตา"),
+      title: `Eye technique: ${EYE_QUERY[face.eyes] || "eye makeup"}`,
+      url: buildYT(EYE_QUERY[face.eyes] || "eye makeup tutorial"),
     });
   if (face?.brows)
     links.push({
-      title: `เขียนคิ้ว: ${BROW_QUERY[face.brows] || "ทรงคิ้วเข้ากับใบหน้า"}`,
+      title: `Brow tutorial: ${BROW_QUERY[face.brows] || "brow shape for face"}`,
       url: buildYT(
-        BROW_QUERY[face.brows] || "เขียนคิ้ว ทรงคิ้ว เข้ากับใบหน้า"
+        BROW_QUERY[face.brows] || "brow shaping tutorial face shape"
       ),
     });
   return links.slice(0, 5);
@@ -531,10 +531,10 @@ function SelectedProductCard({ product, season }) {
           Match For {season || "Your Tone"}
         </div>
         <h4 className="text-xl font-[900] tracking-tight text-[#2F2A31]">{product.name}</h4>
-        <div className="text-sm text-[#6A6570]">ราคาโดยประมาณ</div>
+        <div className="text-sm text-[#6A6570]">Estimated price</div>
         <div className="text-2xl font-[900] text-[#D23669]">THB {product.price}</div>
         <p className="text-sm text-[#5B5560]">
-          ไอเท็มนี้ถูกเลือกจากเครื่องมือแต่งรูปของคุณ กดซื้อได้ทันทีจากร้านค้าออนไลน์
+          This item was selected from your makeover tool. Purchase it instantly from an online store.
         </p>
         <MagneticButton onClick={openShop} className="w-full">
           BUY THIS LOOK
@@ -579,7 +579,7 @@ function HairCard({ styleItem }) {
           {styleItem.name}
         </div>
         <div className="mt-1 text-xs text-[#4A4A4A]/60">
-          เหมาะกับรูปหน้าที่ต้องการบาลานซ์สัดส่วน
+          Ideal for face shapes that need balanced proportions
         </div>
       </div>
     </div>
@@ -598,11 +598,11 @@ function ytEmbedById(id) {
 function resolveVideoId(title) {
   const t = title.toLowerCase();
   const map = [
-    { match: ["personal color", "แต่งหน้าโทน", "season"], id: "rGn3IVEr7co" },
-    { match: ["spring", "ลุค spring"], id: "g8Mjj0w0C1k" },
-    { match: ["natural gradient", "แต่งตา", "eyeshadow"], id: "Z2PV7Jky3kc" },
-    { match: ["brow", "คิ้ว", "เขียนคิ้ว"], id: "K5IRRxUsgpY" },
-    { match: ["lip", "ลิป", "matte"], id: "1I2u8XUg5AY" },
+    { match: ["personal color", "makeup for", "season"], id: "rGn3IVEr7co" },
+    { match: ["spring", "spring look"], id: "g8Mjj0w0C1k" },
+    { match: ["natural gradient", "eye makeup", "eyeshadow"], id: "Z2PV7Jky3kc" },
+    { match: ["brow", "brow tutorial", "brow shaping"], id: "K5IRRxUsgpY" },
+    { match: ["lip", "lip tutorial", "matte"], id: "1I2u8XUg5AY" },
   ];
   for (const row of map) if (row.match.some((k) => t.includes(k))) return row.id;
   return null;
@@ -619,7 +619,7 @@ function YouTubeReels({ result }) {
     <section className={`${CARD} borderGlow`} style={{ borderColor: COLORS.accent }}>
       <SectionHeader
         title="YouTube Tutorials"
-        meta={<span className="text-xs text-[#4A4A4A]/60">เลื่อนเพื่อดูหลายคลิป • คลิกเล่นได้ทันที</span>}
+        meta={<span className="text-xs text-[#4A4A4A]/60">Scroll to see more clips • Click to play</span>}
       />
       <div className="reels">
         <button aria-label="prev" className="reel-nav reel-nav--left" onClick={() => scrollBy(-360)}>❮</button>
@@ -648,7 +648,7 @@ function YouTubeReels({ result }) {
   );
 }
 
-/* ✅ persist ผลวิเคราะห์ (อ็อบเจ็กต์เต็ม + broadcast + Firestore) */
+/* ✅ persist analysis result (full object + broadcast + Firestore) */
 async function persistAnalysisResult(full) {
   const payload = {
     season: full?.season ?? null,
@@ -803,7 +803,7 @@ function buildHistoryRow(entry) {
   };
 }
 
-/* ---------- helper: แปลงไฟล์เป็น data URL เพื่อ persist ได้จริง ---------- */
+/* ---------- helper: convert file to data URL for persistent storage ---------- */
 function fileToDataURL(file) {
   return new Promise((resolve, reject) => {
     const fr = new FileReader();
@@ -824,9 +824,9 @@ function readHistory() {
 function writeHistory(list) {
   try {
     localStorage.setItem("auramatch:analysisHistory", JSON.stringify(list));
-    // แจ้งทุกหน้าที่ฟังสองอีเวนต์นี้
-    window.dispatchEvent(new Event("history:updated")); // เดิม
-    window.dispatchEvent(new Event("history:changed")); // ใหม่
+    // Notify all pages listening to both events
+    window.dispatchEvent(new Event("history:updated")); // original
+    window.dispatchEvent(new Event("history:changed")); // new
   } catch (e) {
     console.warn("writeHistory failed (likely LS quota):", e);
   }
@@ -844,7 +844,7 @@ function pushHistory(entry) {
   const row = {
     id,
     ts: now,
-    createdAt: now, // ✅ สำหรับ History.jsx ที่อ้าง createdAt
+    createdAt: now, // ✅ for History.jsx that references createdAt
     season: entry?.season ?? null,
     faceShape: entry?.faceShape ?? null,
     preview: entry?.preview || "",
@@ -884,7 +884,7 @@ function applyToProfile(entry) {
 function shrinkDataURL(src, maxW = 640, quality = 0.75) {
   return new Promise((resolve, reject) => {
     if (!src) return resolve("");
-    // ถ้าไม่ใช่ data: (เช่นเป็น /assets/... ) ก็ไม่ต้องย่อ
+    // If not a data: URL (e.g. /assets/...) no need to shrink
     if (!String(src).startsWith("data:")) return resolve(src);
 
     const img = new Image();
@@ -974,12 +974,12 @@ export default function Analysis() {
     const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
     const MAX_SIZE_MB = 10;
     if (!ALLOWED_TYPES.includes(f.type)) {
-      setError("กรุณาอัปโหลดไฟล์รูปภาพ (JPG, PNG, WEBP) เท่านั้น");
+      setError("Please upload an image file (JPG, PNG, WEBP) only.");
       e.target.value = "";
       return;
     }
     if (f.size > MAX_SIZE_MB * 1024 * 1024) {
-      setError(`ไฟล์ต้องมีขนาดไม่เกิน ${MAX_SIZE_MB} MB`);
+      setError(`File size must not exceed ${MAX_SIZE_MB} MB.`);
       e.target.value = "";
       return;
     }
@@ -996,13 +996,13 @@ export default function Analysis() {
       setError("");
       await runAnalysis({ pickedFile: f, previewSrc: dataUrl, autoMode: true });
     } catch {
-      setError("ไม่สามารถอ่านไฟล์ได้ ลองใหม่อีกครั้ง");
+      setError("Unable to read the file. Please try again.");
     }
   }
 
   async function runAnalysis({ pickedFile = file, previewSrc = preview, autoMode = false } = {}) {
     if (!pickedFile && !previewSrc) {
-      setError("กรุณาอัปโหลดภาพก่อน");
+      setError("Please upload an image first.");
       return;
     }
     try {
@@ -1034,10 +1034,10 @@ export default function Analysis() {
       setStatus("done");
       setCurrentStep(2);
 
-      // 🔽 ย่อรูปก่อนบันทึก – กัน localStorage เต็ม
+      // 🔽 Shrink image before saving — prevent localStorage from overflowing
       const smallPreview = await shrinkDataURL(previewSrc, 640, 0.75);
 
-      // ✅ บันทึกผล + ประวัติ + โปรไฟล์ + แจ้งหน้าอื่น (ใช้รูปที่ย่อแล้ว)
+      // ✅ Save result + history + profile + notify other pages (using shrunken image)
       const entry = { ...data, preview: smallPreview };
       await persistAnalysisResult(entry);
       pushHistory(entry);
@@ -1055,7 +1055,7 @@ export default function Analysis() {
       setSaving(false);
     } catch (err) {
       console.error(err);
-      setError("เกิดข้อผิดพลาดในการวิเคราะห์ ลองใหม่อีกครั้ง");
+      setError("An error occurred during analysis. Please try again.");
       setStatus("error");
       setSaving(false);
       if (autoMode) setCurrentStep(1);
@@ -1068,14 +1068,14 @@ export default function Analysis() {
 
   async function runGeminiGeneration() {
     if (!file && !preview) {
-      setGeminiError("กรุณาอัปโหลดภาพก่อน");
+      setGeminiError("Please upload an image first.");
       return;
     }
     try {
       setGeminiError("");
       setGeminiStatus("loading");
 
-      // ถ้าไฟล์ว่าง (demo mode) ให้ fetch รูปจาก preview URL แทน
+      // If file is empty (demo mode), fetch image from preview URL instead
       let imageFile = file;
       if (!imageFile || imageFile.size === 0) {
         const resp = await fetch(preview);
@@ -1088,7 +1088,7 @@ export default function Analysis() {
       setGeminiStatus("done");
     } catch (err) {
       console.error(err);
-      setGeminiError("สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้ง");
+      setGeminiError("Image generation failed. Please try again.");
       setGeminiStatus("error");
     }
   }
@@ -1126,8 +1126,8 @@ export default function Analysis() {
     (currentStep === 4);
 
   const nextStep = () => {
-    if (currentStep === 1 && !preview) return setError("กรุณาอัปโหลดรูปก่อน");
-    if (currentStep === 2 && !result) return setError("กรุณาวิเคราะห์รูปก่อน");
+    if (currentStep === 1 && !preview) return setError("Please upload a photo first.");
+    if (currentStep === 2 && !result) return setError("Please analyze your photo first.");
     if (currentStep === 3) setStep3Done(true);
     if (currentStep === 4) setStep4Done(true);
     setCurrentStep((s) => Math.min(4, s + 1));
@@ -1139,7 +1139,7 @@ export default function Analysis() {
     <div className="bg-white text-[#4A4A4A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
       <main className="mx-auto max-w-[1400px] px-6 md:px-10 py-20">
         <section className={`${CARD} borderGlow`}>
-          <SectionHeader title="Analysis Process" meta={<span className="text-xs text-[#4A4A4A]/70">วงกลมสีชมพู = ขั้นตอนที่ทำแล้ว</span>} />
+          <SectionHeader title="Analysis Process" meta={<span className="text-xs text-[#4A4A4A]/70">Pink circle = completed step</span>} />
           <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
             {[1, 2, 3, 4].map((step, idx) => (
               <React.Fragment key={step}>
@@ -1179,15 +1179,15 @@ export default function Analysis() {
                 <div>
                   <div className="text-[11px] font-black uppercase tracking-[0.25em] text-[#D23669]">Quick Start</div>
                   <p className="mt-2 text-sm text-[#4A4A4A]/80">
-                    อัปโหลดรูปใบหน้าของคุณ แล้วระบบจะวิเคราะห์อัตโนมัติทันที ไม่ต้องกดวิเคราะห์เอง
+                    Upload your face photo and the system will analyze it automatically — no need to press anything.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-[#4A4A4A]/70">
-                  รองรับภาพจากกล้องมือถือและรูปในเครื่อง
+                  Supports photos from camera and local files
                 </div>
               </div>
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                <MagneticButton onClick={() => inputRef.current?.click()} className="text-[9px]">เลือกรูปจากโทรศัพท์</MagneticButton>
+                <MagneticButton onClick={() => inputRef.current?.click()} className="text-[9px]">Choose from Phone</MagneticButton>
                 <MagneticButton
                   onClick={fillDemo}
                   className="text-[9px]"
@@ -1205,30 +1205,30 @@ export default function Analysis() {
                   {preview ? <img src={preview} alt="preview" className="h-full w-full object-cover" /> : <img src={assetPath("assets/analysis1.jpeg")} alt="placeholder" className="h-full w-full object-cover" />}
                 </div>
                 <div className="border-t border-[#F0E4EA] bg-white/90 px-4 py-3 text-xs text-[#4A4A4A]/65">
-                  รูปตัวอย่างควรถ่ายตรง เห็นกรอบหน้า และไม่มีฟิลเตอร์
+                  Photo should be taken straight-on, face visible, no filters
                 </div>
               </div>
 
               <div className="space-y-3 rounded-3xl border border-[#EAD9E3] bg-[#FFFCFE] p-5">
                 <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#D23669]">Upload Status</div>
-                {status === "uploading" && <ProgressBar label="กำลังอัปโหลดภาพ…" />}
-                {status === "analyzing" && <ProgressBar label="กำลังวิเคราะห์ด้วย AI…" />}
+                {status === "uploading" && <ProgressBar label="Uploading image..." />}
+                {status === "analyzing" && <ProgressBar label="Analyzing with AI..." />}
                 {stepDone[1] ? (
-                  <div className="rounded-xl border border-[#FFD1DC] bg-[#FFF5F8] px-4 py-3 text-sm text-[#D23669] font-semibold">อัปโหลดเสร็จแล้ว</div>
+                  <div className="rounded-xl border border-[#FFD1DC] bg-[#FFF5F8] px-4 py-3 text-sm text-[#D23669] font-semibold">Upload complete</div>
                 ) : (
-                  <div className="rounded-xl border border-[#E6DCEB] bg-white px-4 py-3 text-sm text-[#4A4A4A]/70">ยังไม่ได้อัปโหลดรูป</div>
+                  <div className="rounded-xl border border-[#E6DCEB] bg-white px-4 py-3 text-sm text-[#4A4A4A]/70">No image uploaded yet</div>
                 )}
                 {error && <div className="rounded-lg border border-rose-200 px-3 py-2 text-[12px] text-rose-600 bg-rose-50">{error}</div>}
               </div>
             </div>
 
             <div className="mt-6 rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFCFE] p-5 md:p-6">
-              <h4 className="text-sm font-black uppercase tracking-[0.2em] text-[#D23669]">How To วิเคราะห์รูปให้แม่น</h4>
+              <h4 className="text-sm font-black uppercase tracking-[0.2em] text-[#D23669]">How To get accurate results</h4>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
-                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>1)</b> หันหน้าตรงเข้ากล้อง</div>
-                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>2)</b> ใช้แสงธรรมชาติหรือแสงขาว</div>
-                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>3)</b> เก็บผมให้เห็นกรอบหน้า</div>
-                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>4)</b> หลีกเลี่ยงฟิลเตอร์และมุมเอียง</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>1)</b> Face directly toward the camera</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>2)</b> Use natural or white light</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>3)</b> Pull hair back to expose your face</div>
+                <div className="rounded-2xl bg-white border border-[#F0E4EA] p-4 shadow-sm"><b>4)</b> Avoid filters and angled shots</div>
               </div>
             </div>
           </section>
@@ -1242,14 +1242,14 @@ export default function Analysis() {
                 <div>
                   <div className="text-[11px] font-black uppercase tracking-[0.25em] text-[#D23669]">AI Face Scan</div>
                   <p className="mt-2 text-sm text-[#4A4A4A]/80">
-                    ระบบอ่านโทนสีผิว โครงหน้า และองค์ประกอบบนใบหน้า เพื่อสร้างคำแนะนำที่แม่นขึ้นสำหรับคุณ
+                    The system reads skin tone, face structure, and facial features to generate more accurate recommendations for you.
                   </p>
                 </div>
                 <button
                   onClick={analyzeImage}
                   className="rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#4A4A4A] border-[#E6DCEB] bg-white hover:bg-[#FFF5F8]"
                 >
-                  วิเคราะห์ใหม่
+                  Re-Analyze
                 </button>
               </div>
             </div>
@@ -1268,14 +1268,14 @@ export default function Analysis() {
                       </div>
                       <div className="h-10 w-10 rounded-full border border-white/70 shadow-sm" style={{ background: PALETTES[result.season]?.[1] || "#ffd1dc" }} />
                     </div>
-                    <p className="mt-3 text-sm text-[#4A4A4A]/75">{SEASON_META[result.season]?.note || "ผลลัพธ์โทนสีตามบุคลิกผิว"}</p>
+                    <p className="mt-3 text-sm text-[#4A4A4A]/75">{SEASON_META[result.season]?.note || "Color tone result based on your complexion"}</p>
                   </div>
                   <div className="rounded-2xl border border-[#FFD1DC] bg-gradient-to-br from-[#FFF8FB] to-[#FFEAF2] p-6">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-xs uppercase tracking-[0.25em] font-black text-[#D23669]">Face Shape</div>
                         <div className="mt-2 text-3xl md:text-4xl font-[900] tracking-tight text-[#D23669]">{result.faceShape || "-"}</div>
-                        <p className="mt-1 text-sm text-[#4A4A4A]/75">{FACE_META[result.faceShape] || "รูปหน้าเฉพาะตัวของคุณ"}</p>
+                        <p className="mt-1 text-sm text-[#4A4A4A]/75">{FACE_META[result.faceShape] || "Your unique face shape"}</p>
                       </div>
                       <div className="rounded-xl border border-white/70 bg-white/70 px-2 py-1">
                         <FaceIcon type={result.faceShape || "Oval"} />
@@ -1290,7 +1290,7 @@ export default function Analysis() {
                     <div className="text-sm font-semibold mb-3 text-[#3B333A]">Season Palette</div>
                     <PaletteRow colors={PALETTES[result.season] || []} />
                     <div className="mt-3 text-xs text-[#4A4A4A]/65">
-                      โทนสีนี้ช่วยให้ผิวดูสว่างขึ้นและภาพรวมดูสมดุลมากขึ้น
+                      This color tone helps your skin look brighter and more balanced overall.
                     </div>
                   </div>
 
@@ -1299,7 +1299,7 @@ export default function Analysis() {
                     <div className="mt-3 space-y-2 text-sm text-[#4A4A4A]/75">
                       <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">Season: {result.season || "-"}</div>
                       <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">Face Shape: {result.faceShape || "-"}</div>
-                      <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">พร้อมใช้งานใน Step 3 และ Step 4</div>
+                      <div className="rounded-xl border border-[#F0E4EA] bg-white px-3 py-2">Ready to use in Step 3 and Step 4</div>
                     </div>
                   </div>
                 </div>
@@ -1318,7 +1318,7 @@ export default function Analysis() {
               <div className="mt-6 space-y-4">
                 {(status === "uploading" || status === "analyzing") ? (
                   <div className="rounded-3xl border border-[#EEDBE6] bg-[#FFFDFE] p-6 space-y-5">
-                    <ProgressBar label={status === "uploading" ? "กำลังอัปโหลดภาพ..." : "AI กำลังวิเคราะห์โครงหน้าและ personal color..."} />
+                    <ProgressBar label={status === "uploading" ? "Uploading image..." : "AI is analyzing face structure and personal color..."} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="rounded-2xl border border-[#FFD1DC] bg-gradient-to-br from-[#FFF8FB] to-[#FFEAF2] p-6 space-y-3">
                         <div className="h-3 w-24 animate-pulse rounded bg-[#F3D5E0]" />
@@ -1334,11 +1334,11 @@ export default function Analysis() {
                     <div className="flex gap-2">
                       {[1,2,3,4].map(i => <div key={i} className="h-7 w-7 animate-pulse rounded-md bg-[#F3D5E0]" />)}
                     </div>
-                    <p className="text-xs text-center text-[#4A4A4A]/50 animate-pulse">Gemini AI กำลังอ่านใบหน้าของคุณ...</p>
+                    <p className="text-xs text-center text-[#4A4A4A]/50 animate-pulse">Gemini AI is reading your face...</p>
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-[#EEDBE6] bg-[#FFFDFE] p-5">
-                    <p className="text-sm text-[#4A4A4A]/60">อัปโหลดรูปใน Step 1 แล้วผลจะมาแสดงอัตโนมัติที่หน้านี้</p>
+                    <p className="text-sm text-[#4A4A4A]/60">Upload your photo in Step 1 and the results will appear here automatically.</p>
                   </div>
                 )}
               </div>
@@ -1350,7 +1350,7 @@ export default function Analysis() {
           <section className={`${CARD} mt-8 borderGlow`}>
             <SectionHeader title="Step 3: Edit + Shop Makeup" />
             <p className="text-sm text-[#4A4A4A]/75">
-              แต่งหน้าบนรูปของคุณได้ทันที และเลือกซื้อเครื่องสำอางที่เหมาะกับโทนสีของคุณ
+              Apply makeup to your photo instantly and shop cosmetics suited to your color tone.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFDFE] p-4">
@@ -1371,26 +1371,26 @@ export default function Analysis() {
                   </div>
                 ) : (
                   <div className="mt-3 rounded-2xl border border-dashed border-[#E6DCEB] bg-white p-5 text-sm text-[#4A4A4A]/70">
-                    เลือกคิ้ว ตา หรือปากใน Makeover Studio แล้วการ์ดสินค้าจะขึ้นอัตโนมัติที่นี่
+                    Select brows, eyes, or lips in the Makeover Studio and the product card will appear here automatically.
                   </div>
                 )}
               </aside>
             </div>
             <div className="mt-5 rounded-xl border border-[#E6DCEB] bg-[#FFF7FA] px-4 py-3 text-sm text-[#4A4A4A]/75">
-              เลือกเมคอัพจากสตูดิโอ &gt; ดูรายละเอียด &gt; กด BUY THIS LOOK เพื่อไปหน้าสั่งซื้อได้ทันที
+              Select makeup from the studio &gt; View details &gt; Press BUY THIS LOOK to go to the purchase page instantly.
             </div>
 
             {/* ===== Gemini AI Image Generation ===== */}
             <div className="mt-6 rounded-3xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFDFE] p-5">
               <div className="text-[11px] font-black uppercase tracking-[0.24em] text-[#D23669] mb-1">AI Makeover</div>
-              <h4 className="text-lg font-[900] tracking-tight text-[#2F2A31] mb-2">สร้างภาพแต่งหน้าด้วย Gemini AI</h4>
-              <p className="text-sm text-[#4A4A4A]/70 mb-4">AI จะสร้างภาพแต่งหน้าจากรูปของคุณ ใช้เวลาประมาณ 10-20 วินาที</p>
+              <h4 className="text-lg font-[900] tracking-tight text-[#2F2A31] mb-2">Generate a Makeup Look with Gemini AI</h4>
+              <p className="text-sm text-[#4A4A4A]/70 mb-4">AI will create a makeup photo from your image, taking about 10–20 seconds.</p>
               <button
                 onClick={runGeminiGeneration}
                 disabled={geminiStatus === "loading"}
                 className="rounded-full px-6 py-2.5 text-sm font-black tracking-[0.12em] uppercase bg-[#D23669] text-white border border-[#D23669] hover:bg-[#B52E58] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {geminiStatus === "loading" ? "กำลังสร้างภาพ..." : "✨ สร้างภาพด้วย AI"}
+                {geminiStatus === "loading" ? "Generating image..." : "✨ Generate with AI"}
               </button>
               {geminiError && (
                 <p className="mt-3 text-sm text-red-500">{geminiError}</p>
@@ -1402,20 +1402,20 @@ export default function Analysis() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                     </svg>
-                    <span className="text-sm font-semibold text-[#D23669]">Gemini AI กำลังสร้างภาพแต่งหน้า</span>
+                    <span className="text-sm font-semibold text-[#D23669]">Gemini AI is generating your makeup look</span>
                   </div>
                   <div className="space-y-2 text-xs text-[#4A4A4A]/60">
-                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669] animate-pulse" />วิเคราะห์ใบหน้า...</div>
-                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669]/50 animate-pulse" style={{animationDelay:"0.3s"}} />เลือก palette ตามโทนสี...</div>
-                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669]/30 animate-pulse" style={{animationDelay:"0.6s"}} />สร้างภาพ editorial สไตล์...</div>
+                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669] animate-pulse" />Analyzing face...</div>
+                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669]/50 animate-pulse" style={{animationDelay:"0.3s"}} />Selecting palette for your tone...</div>
+                    <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#D23669]/30 animate-pulse" style={{animationDelay:"0.6s"}} />Creating editorial-style image...</div>
                   </div>
                   <div className="aspect-[4/3] w-full max-w-sm rounded-xl bg-gradient-to-br from-[#F3D5E0] to-[#E6DCEB] animate-pulse" />
-                  <p className="text-[11px] text-[#4A4A4A]/50 text-center">ใช้เวลาประมาณ 10–20 วินาที กรุณารอสักครู่</p>
+                  <p className="text-[11px] text-[#4A4A4A]/50 text-center">Takes approximately 10–20 seconds. Please wait.</p>
                 </div>
               )}
               {geminiImage && geminiStatus === "done" && (
                 <div className="mt-4">
-                  <p className="text-xs font-semibold text-[#D23669] mb-2 uppercase tracking-widest">ผลลัพธ์จาก AI</p>
+                  <p className="text-xs font-semibold text-[#D23669] mb-2 uppercase tracking-widest">AI Result</p>
                   <img
                     src={geminiImage}
                     alt="Gemini AI Makeover"
@@ -1426,7 +1426,7 @@ export default function Analysis() {
                     download="ai-makeover.png"
                     className="mt-3 inline-block rounded-full px-5 py-2 text-xs font-black tracking-[0.15em] uppercase bg-white text-[#D23669] border border-[#D23669] hover:bg-[#FFF0F5] transition"
                   >
-                    ดาวน์โหลดภาพ
+                    Download Image
                   </a>
                 </div>
               )}
@@ -1439,16 +1439,16 @@ export default function Analysis() {
                   step3Done ? "bg-[#D23669] text-white border-[#D23669]" : "bg-white text-[#4A4A4A] border-[#E6DCEB]"
                 }`}
               >
-                {step3Done ? "ยกเลิกเสร็จสิ้นขั้นตอน 3" : "ทำขั้นตอน 3 เสร็จแล้ว"}
+                {step3Done ? "Undo Step 3 completion" : "Mark Step 3 as done"}
               </button>
-              {step3Done && <span className="text-sm font-semibold text-[#D23669]">บันทึกขั้นตอน 3 แล้ว</span>}
+              {step3Done && <span className="text-sm font-semibold text-[#D23669]">Step 3 saved</span>}
             </div>
           </section>
         )}
 
         {currentStep === 4 && (
           <section className={`${CARD} mt-8 borderGlow`}>
-            <SectionHeader title="Step 4: Recommendations" meta={<span className="text-xs text-[#4A4A4A]/70">เครื่องสำอาง • สีผม • ทรงผม • คลิปสอน • สีเสื้อผ้า</span>} />
+            <SectionHeader title="Step 4: Recommendations" meta={<span className="text-xs text-[#4A4A4A]/70">Cosmetics • Hair Color • Hairstyle • Tutorial Clips • Outfit Colors</span>} />
             {result ? (
               <div className="space-y-8">
                 <div className="rounded-3xl border border-[#FFD1DC] bg-gradient-to-br from-[#FFF8FB] via-[#FFF1F6] to-[#FFE9F2] p-5 md:p-6">
@@ -1459,11 +1459,11 @@ export default function Analysis() {
                         {result.season} Tone • {result.faceShape} Shape
                       </h4>
                       <p className="mt-2 text-sm text-[#4A4A4A]/75">
-                        ลุคที่เหมาะกับคุณในตอนนี้ พร้อมคำแนะนำเครื่องสำอาง สีผม และทรงผมที่คุมโทนเดียวกัน
+                        The look that suits you right now, with recommendations for cosmetics, hair color, and hairstyles in the same tone.
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-[#4A4A4A]/70">
-                      วิเคราะห์จาก Personal Color และโครงหน้า
+                      Analyzed from Personal Color and face structure
                     </div>
                   </div>
                 </div>
@@ -1495,7 +1495,7 @@ export default function Analysis() {
                       {(HAIR_STYLE_MAP[result.faceShape] || []).map((s) => <HairCard key={s.key} styleItem={s} />)}
                     </div>
                   ) : (
-                    <p className="text-sm text-[#4A4A4A]/60 mt-2">ยังไม่มีทรงผมแนะนำสำหรับรูปหน้านี้</p>
+                    <p className="text-sm text-[#4A4A4A]/60 mt-2">No hairstyle recommendations available for this face shape yet.</p>
                   )}
                 </div>
 
@@ -1522,19 +1522,19 @@ export default function Analysis() {
                       step4Done ? "bg-[#D23669] text-white border-[#D23669]" : "bg-white text-[#4A4A4A] border-[#E6DCEB]"
                     }`}
                   >
-                    {step4Done ? "ยกเลิกเสร็จสิ้นขั้นตอน 4" : "ทำขั้นตอน 4 เสร็จแล้ว"}
+                    {step4Done ? "Undo Step 4 completion" : "Mark Step 4 as done"}
                   </button>
                   <button
                     onClick={() => navigate("/cosmetics")}
                     className="rounded-full bg-[#111] text-white px-5 py-2 text-xs font-black tracking-[0.15em] uppercase"
                   >
-                    ไปหน้า Cosmetics
+                    Go to Cosmetics
                   </button>
-                  {step4Done && <span className="text-sm font-semibold text-[#D23669]">บันทึกขั้นตอน 4 แล้ว</span>}
+                  {step4Done && <span className="text-sm font-semibold text-[#D23669]">Step 4 saved</span>}
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-[#4A4A4A]/60">ทำ Step 2 ก่อน แล้วระบบจะแนะนำเครื่องสำอาง สีผม ทรงผม คลิป และสีเสื้อผ้า</p>
+              <p className="text-sm text-[#4A4A4A]/60">Complete Step 2 first and the system will recommend cosmetics, hair color, hairstyles, clips, and outfit colors.</p>
             )}
           </section>
         )}
@@ -1546,21 +1546,21 @@ export default function Analysis() {
             className="rounded-full border px-5 py-2 text-xs font-black uppercase tracking-[0.15em] disabled:opacity-40"
             style={{ borderColor: "#E6DCEB" }}
           >
-            ย้อนกลับ
+            Back
           </button>
           <button
             onClick={nextStep}
             disabled={!canGoNext || currentStep === 4}
             className="rounded-full bg-[#D23669] text-white px-5 py-2 text-xs font-black uppercase tracking-[0.15em] disabled:opacity-40"
           >
-            ถัดไป
+            Next
           </button>
         </section>
 
         
 
         <p className="mt-6 text-center text-xs text-[#4A4A4A]/60">
-          *คำแนะนำนี้เพื่อการแนะนำด้านความงามทั่วไป ไม่ใช่การวินิจฉัยทางการแพทย์
+          *These recommendations are for general beauty guidance only and are not a medical diagnosis.
         </p>
       </main>
 

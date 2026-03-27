@@ -19,7 +19,7 @@ function resolveApiBaseUrl() {
   return "";
 }
 
-// ลอง endpoint ทั้งหมดพร้อมกัน แล้วใช้อันที่ตอบก่อน (timeout 8 วินาที)
+// Try all endpoints simultaneously and use whichever responds first (timeout 8 seconds)
 async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {
   const candidates = [
     { path: "/login", body: { email: emailNorm, password } },
@@ -27,7 +27,7 @@ async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {
     { path: "/login", body: { username: emailNorm, password } },
   ];
 
-  // กรอง duplicates ออก
+  // Filter out duplicates
   const seen = new Set();
   const unique = candidates.filter((c) => {
     const key = `${c.path}:${JSON.stringify(c.body)}`;
@@ -146,15 +146,24 @@ export default function LoginPage() {
     try {
       const res = await signInWithPopup(auth, provider);
       const u = res.user;
-      const token = await u.getIdToken();
-      localStorage.setItem("auramatch:token", token);
+
+      // Sync with backend to get a numeric user_id for saving analysis etc.
+      const syncRes = await fetch(`${API_BASE_URL}/api/firebase-sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: u.email, name: u.displayName, photo_url: u.photoURL || "" }),
+      });
+      const syncData = await syncRes.json();
+      const backendUser = syncData.user || {};
+
+      localStorage.setItem("auramatch:token", syncData.token || "");
       await afterLoginGo({
-        uid: u.uid,
-        email: u.email,
-        name: u.displayName,
-        photoURL: u.photoURL || "",
+        uid: String(backendUser.user_id || ""),
+        email: backendUser.email || u.email,
+        name: backendUser.username || u.displayName,
+        photoURL: backendUser.avatar || u.photoURL || "",
         provider: name,
-        role: "user",
+        role: backendUser.role || "user",
       });
     } catch (e) {
       setErr(`CONNECTION FAILED WITH ${name.toUpperCase()}`);
@@ -165,7 +174,7 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#F6F3F1] text-[#1A1A1A]">
-      <div className="absolute inset-0 bg-[url('/assets/home2.webp')] bg-cover bg-center" />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(/assets/home2.webp)` }} />
       <div className="absolute inset-0 bg-white/55" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1100px] items-center justify-center px-6 py-20">
@@ -173,7 +182,7 @@ export default function LoginPage() {
           <div className="mb-8 text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669]">Auramatch</p>
             <h1 className="mt-3 text-3xl font-[900] tracking-tight">Login</h1>
-            <p className="mt-2 text-[12px] text-gray-500">เข้าสู่ระบบเพื่อใช้งานบริการทั้งหมดของคุณ</p>
+            <p className="mt-2 text-[12px] text-gray-500">Log in to access all of your services.</p>
           </div>
 
           {err && (

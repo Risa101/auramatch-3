@@ -2,12 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getOrCreateWelcomeCoupon, notifyCouponChanged } from "../utils/coupon";
 
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@example.com")
-  .split(",")
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean);
-
-const isAdminEmail = (e) => ADMIN_EMAILS.includes((e || "").toLowerCase());
 
 function resolveApiBaseUrl() {
   const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
@@ -37,8 +31,8 @@ export default function RegisterPage() {
   const apiBaseUrl = resolveApiBaseUrl();
 
   function validatePassword(p) {
-    if (p.length < 8) return "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร";
-    if (!/[A-Za-z]/.test(p) || !/[0-9]/.test(p)) return "รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข";
+    if (p.length < 8) return "Password must be at least 8 characters long.";
+    if (!/[A-Za-z]/.test(p) || !/[0-9]/.test(p)) return "Password must contain both letters and numbers.";
     return "";
   }
 
@@ -48,12 +42,12 @@ export default function RegisterPage() {
     const nm = name.trim();
     const emailNorm = email.trim().toLowerCase();
 
-    if (!nm) return setErr("กรุณากรอกชื่อ-นามสกุล");
-    if (!emailNorm) return setErr("กรุณากรอกอีเมล");
+    if (!nm) return setErr("Please enter your full name.");
+    if (!emailNorm) return setErr("Please enter your email address.");
     const pwErr = validatePassword(pw);
     if (pwErr) return setErr(pwErr);
-    if (pw !== pw2) return setErr("ยืนยันรหัสผ่านไม่ตรงกัน");
-    if (!agree) return setErr("กรุณายอมรับเงื่อนไขการใช้บริการ");
+    if (pw !== pw2) return setErr("Passwords do not match.");
+    if (!agree) return setErr("Please accept the terms of service.");
     if (!apiBaseUrl) return setErr("SERVER CONFIGURATION MISSING. CONTACT SUPPORT.");
 
     setLoading(true);
@@ -91,7 +85,7 @@ export default function RegisterPage() {
       }
 
       if (!matchedResult) {
-        setErr(lastErrorMessage || "ขออภัย สมัครสมาชิกไม่สำเร็จ");
+        setErr(lastErrorMessage || "Sorry, registration failed. Please try again.");
         return;
       }
 
@@ -120,7 +114,7 @@ export default function RegisterPage() {
 
       navigate(adminFlag ? "/admin/dashboard" : "/", { replace: true });
     } catch (e) {
-      setErr(e.message || "ขออภัย สมัครสมาชิกไม่สำเร็จ");
+      setErr(e.message || "Sorry, registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

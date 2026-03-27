@@ -28,15 +28,15 @@ export default function ResetPassword() {
     e.preventDefault();
     setErr(""); setMsg("");
     if (!token) {
-      setErr("ลิงก์ไม่ถูกต้องหรือหมดอายุ");
+      setErr("This link is invalid or has expired.");
       return;
     }
     if (pw.length < 8) {
-      setErr("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+      setErr("Password must be at least 8 characters long.");
       return;
     }
     if (pw !== pw2) {
-      setErr("ยืนยันรหัสผ่านไม่ตรงกัน");
+      setErr("Passwords do not match.");
       return;
     }
     if (!apiBaseUrl) {
@@ -60,10 +60,10 @@ export default function ResetPassword() {
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr((data.error || "ขออภัย กรุณาลองใหม่อีกครั้ง").toString());
+        setErr((data.error || "Sorry, please try again.").toString());
         return;
       }
-      setMsg("รีเซ็ตรหัสผ่านสำเร็จ กำลังพาไปหน้าเข้าสู่ระบบ...");
+      setMsg("Password reset successful. Redirecting to login...");
       setTimeout(() => navigate("/login"), 1200);
     } catch (e) {
       if (e?.name === "AbortError") {

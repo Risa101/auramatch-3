@@ -4,8 +4,8 @@ import MagneticButton from "./MagneticButton.jsx";
 import SectionHeader from "./SectionHeader.jsx";
 import "./MakeoverStudio.css";
 
-const BASE_PATH = import.meta.env.BASE_URL || "/";
-const assetPath = (p) => `${BASE_PATH}${String(p).replace(/^\/+/, "")}`;
+import { imgUrl } from "../utils/imgUrl.js";
+const assetPath = (p) => imgUrl(`/${String(p).replace(/^\/+/, "")}`);
 
 /* ---------- DATA ---------- */
 // 🎨 คิ้ว

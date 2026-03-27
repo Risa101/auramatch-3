@@ -4,6 +4,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { getdataProducts } from "../callapi/call_api_user";
 import { Link } from "react-router-dom";
+import { toggleLike as globalToggleLike, subscribeLikes } from "../utils/likes";
 
 // --- DATA: PERSONAL COLOR ---
 const personalColorData = [
@@ -11,7 +12,7 @@ const personalColorData = [
     id: '01',
     name: 'Spring',
     tag: 'Warm, Bright & Vitality',
-    desc: 'กลุ่มสีโทนอุ่นที่สดใส สว่าง และมีความใส (Clarity) สูง ช่วยขับให้ผิวดูเปล่งปลั่งมีเลือดฝาด',
+    desc: 'Warm, bright, and high-clarity color group that makes skin look radiant and glowing.',
     color: 'bg-[#FFF5F0]',
     textColor: 'text-[#E67E22]',
     palette: [
@@ -25,7 +26,7 @@ const personalColorData = [
     id: '02',
     name: 'Summer',
     tag: 'Cool, Soft & Elegant',
-    desc: 'กลุ่มสีโทนเย็นที่มีความละมุน (Muted) และเจือเทา ให้ลุคที่ดูสุภาพ เรียบหรู และอ่อนโยน',
+    desc: 'Cool, muted, gray-tinted color group that creates a refined, elegant, and gentle look.',
     color: 'bg-[#F0F5FF]',
     textColor: 'text-[#7D8CC4]',
     palette: [
@@ -39,7 +40,7 @@ const personalColorData = [
     id: '03',
     name: 'Autumn',
     tag: 'Warm, Rich & Earthy',
-    desc: 'กลุ่มสีโทนอุ่นที่เข้มและลึก (Deep) มีความหม่นและคลาสสิก เหมือนสีสันของธรรมชาติฤดูใบไม้ร่วง',
+    desc: 'Warm, deep, and muted color group with a classic quality, like the hues of autumn nature.',
     color: 'bg-[#F9F4E8]',
     textColor: 'text-[#8B4513]',
     palette: [
@@ -53,7 +54,7 @@ const personalColorData = [
     id: '04',
     name: 'Winter',
     tag: 'Cool, Vivid & Sharp',
-    desc: 'กลุ่มสีโทนเย็นที่เข้มข้น ชัดเจน และมี Contrast สูง ช่วยขับเน้นเครื่องหน้าให้ดูคมชัดและโดดเด่น',
+    desc: 'Cool, vivid, and high-contrast color group that accentuates facial features for a sharp and striking look.',
     color: 'bg-[#F4F4F4]',
     textColor: 'text-[#2C3E50]',
     palette: [
@@ -66,7 +67,7 @@ const personalColorData = [
 ];
 
 const CosmeticStore = () => {
-  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const API_BASE_URL = (() => { const h = typeof window !== "undefined" ? window.location.hostname : ""; return ["localhost","127.0.0.1"].includes(h) ? "" : (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""); })();
   const fallbackProducts = [
     {
       product_id: 9001,
@@ -111,7 +112,7 @@ const CosmeticStore = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [likedProducts, setLikedProducts] = useState({});
+  const [likedIds, setLikedIds] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState('All');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -121,7 +122,7 @@ const CosmeticStore = () => {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8; // แสดง 8 ชิ้นต่อหน้า
+  const itemsPerPage = 8; // Show 8 items per page
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -147,6 +148,10 @@ const CosmeticStore = () => {
     AOS.init({ duration: 800 });
   }, []);
 
+  useEffect(() => {
+    return subscribeLikes((all) => setLikedIds(all.map(x => x.id)));
+  }, []);
+
   // Handlers
   const openPurchaseModal = (product) => {
     setSelectedProduct(product);
@@ -158,8 +163,16 @@ const CosmeticStore = () => {
     setSelectedProduct(null);
   };
 
-  const toggleLike = (id) => {
-    setLikedProducts(prev => ({ ...prev, [id]: !prev[id] }));
+  const handleToggleProductLike = (e, item) => {
+    e.stopPropagation();
+    globalToggleLike({
+      id: `product_${item.product_id}`,
+      title: item.name,
+      img: item.image_url,
+      price: item.price,
+      category: item.category,
+      type: "product",
+    });
   };
 
   const resetFilters = () => {
@@ -187,9 +200,9 @@ const CosmeticStore = () => {
 
   const getBadge = (item) => {
     if (item?.is_new || item?.isNew) return { label: 'NEW', color: 'bg-black' };
-    if (parseFloat(item?.rating) >= 4.8) return { label: 'BEST SELLER', color: 'bg-[#D23669]' };
+    if (parseFloat(item?.rating) >= 4.8) return { label: 'BEST SELLER', color: 'bg-[#D23669] text-white' };
     const stock = item?.stock ?? item?.quantity ?? item?.inventory ?? null;
-    if (typeof stock === 'number' && stock <= 5) return { label: 'LIMITED', color: 'bg-[#FFB7B2]' };
+    if (typeof stock === 'number' && stock <= 5) return { label: 'LIMITED', color: 'bg-[#D23669]' };
     return null;
   };
 
@@ -235,7 +248,7 @@ const CosmeticStore = () => {
   const totalPages = Math.ceil(effectiveProducts.length / itemsPerPage);
   const currentItems = effectiveProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // สินค้าที่เกี่ยวข้อง (Related Products)
+  // Related Products
   const relatedProducts = products
     .filter(p => p.category === selectedProduct?.category && p.product_id !== selectedProduct?.product_id)
     .slice(0, 3);
@@ -288,9 +301,9 @@ const CosmeticStore = () => {
 
 
                   {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
-                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* ล็อคความสูง Container */}
+                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* Lock Container height */}
                     <div className="relative w-full">
-                      {/* ใช้ Grid เพื่อให้ทุกอันวางในตำแหน่งที่เท่ากันเป๊ะ */}
+                      {/* Use Grid so every chip is exactly positioned */}
                       <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
                         {item.palette.map((color, pIdx) => (
                           <div
@@ -298,31 +311,31 @@ const CosmeticStore = () => {
                             className={`
             relative rounded-full border border-white/40 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23, 1, 0.32, 1)]
             
-            /* กำหนดรูปทรงวงรีให้คงที่ */
+            /* Fixed oval shape */
             h-10 w-full max-w-[30px] mx-auto
-            
-            /* สถานะปกติ: โชว์ 4 สีแรกในแถวแรก */
+
+            /* Default: show first 4 colors */
             ${pIdx < 4
                                 ? 'opacity-100'
                                 : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
                               }
             
-            /* Interaction: เมื่อ Hover ที่วงรีแต่ละอัน */
+            /* Interaction: on hover over each oval chip */
             hover:scale-125 hover:z-50 hover:shadow-lg hover:border-white
           `}
                             style={{
                               backgroundColor: color,
-                              /* สั่งให้ทยอยโผล่มาทีละเม็ดอย่างเป็นระเบียบ */
+                              /* Stagger chips appearing one by one */
                               transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
                             }}
                           >
-                            {/* Glass Reflection เอฟเฟกต์แก้วสะท้อน */}
+                            {/* Glass Reflection effect */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
                           </div>
                         ))}
                       </div>
 
-                      {/* Footer Hint: ปรับตำแหน่งให้คงที่ */}
+                      {/* Footer Hint: fixed position */}
                       <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
                         <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
                         <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
@@ -359,18 +372,18 @@ const CosmeticStore = () => {
       <div className="pt-24 pb-16 px-8 bg-[#FFF9F5] rounded-b-[4rem]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
           <div>
-            <span className="bg-white px-4 py-1.5 rounded-full text-[10px] font-bold text-[#FFB7B2] uppercase tracking-widest border border-orange-50">
+            <span className="bg-white px-4 py-1.5 rounded-full text-[10px] font-bold text-[#D23669] uppercase tracking-widest border border-orange-50">
               {selectedSeason === 'All' ? 'Every Season' : `Specially for ${selectedSeason}`}
             </span>
             <h1 className="text-5xl md:text-7xl font-black text-gray-800 mt-6 leading-none tracking-tighter uppercase">
-              AURA <span className="text-[#FFB7B2]">BOUTIQUE</span>
+              AURA <span className="text-[#D23669]">BOUTIQUE</span>
             </h1>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {['All', 'Spring', 'Summer', 'Autumn', 'Winter'].map((season) => (
                 <button
                   key={season}
                   onClick={() => handleSelectSeason(season)}
-                  className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${selectedSeason === season ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-white hover:text-gray-700'}`}
+                  className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${selectedSeason === season ? 'bg-[#D23669] text-white border-[#D23669] shadow-lg' : 'bg-white text-gray-500 border-[#EEDDE4] hover:text-[#D23669] hover:border-[#D23669]'}`}
                 >
                   {season}
                 </button>
@@ -384,7 +397,7 @@ const CosmeticStore = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/80 backdrop-blur-md pl-12 pr-6 py-4 rounded-full border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FFB7B2] text-sm font-bold"
+                className="w-full bg-white/80 backdrop-blur-md pl-12 pr-6 py-4 rounded-full border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D23669] text-sm font-bold"
               />
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             </div>
@@ -392,7 +405,7 @@ const CosmeticStore = () => {
               <select
                 value={sortBy}
                 onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-                className="w-full bg-white/80 backdrop-blur-md px-6 py-4 rounded-full border border-white shadow-sm text-[11px] font-black uppercase tracking-widest text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]"
+                className="w-full bg-white/80 backdrop-blur-md px-6 py-4 rounded-full border border-white shadow-sm text-[11px] font-black uppercase tracking-widest text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D23669]"
               >
                 <option>Best Seller</option>
                 <option>Price: Low to High</option>
@@ -408,12 +421,12 @@ const CosmeticStore = () => {
       <div ref={productsSectionRef} className="max-w-7xl mx-auto px-6 -mt-10">
         <div className="flex bg-white/90 backdrop-blur-xl p-2 rounded-full shadow-xl border border-white mb-16 overflow-x-auto no-scrollbar">
           {['All', 'Blush', 'Eye', 'Lip', 'Cushion'].map((cat) => (
-            <button key={cat} onClick={() => { setActiveCategory(cat); setCurrentPage(1); }} className={`px-10 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${activeCategory === cat ? 'bg-[#FFB7B2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>{cat}</button>
+            <button key={cat} onClick={() => { setActiveCategory(cat); setCurrentPage(1); }} className={`px-10 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${activeCategory === cat ? 'bg-[#D23669] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>{cat}</button>
           ))}
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20"><Loader2 className="animate-spin text-[#FFB7B2]" size={40} /></div>
+          <div className="flex flex-col items-center justify-center py-20"><Loader2 className="animate-spin text-[#D23669]" size={40} /></div>
         ) : error ? (
           <div className="rounded-[2.5rem] bg-white p-12 text-center shadow-lg border border-gray-50">
             <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-6">{error}</p>
@@ -435,12 +448,12 @@ const CosmeticStore = () => {
                 <div key={item.product_id} data-aos="fade-up" className="group cursor-pointer" onClick={() => openPurchaseModal(item)}>
                   <div className="bg-white rounded-[3rem] p-4 shadow-sm border border-gray-50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 relative h-full flex flex-col">
                     <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden mb-6 bg-[#FAF9F8]">
-                      <img src={getFullImageUrl(item.image_url)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} />
-                      <button onClick={(e) => { e.stopPropagation(); toggleLike(item.product_id); }} className="absolute top-6 right-6 z-20 p-3 rounded-full bg-white/80 backdrop-blur-md shadow-lg transition-all active:scale-90">
-                        <Heart size={18} className={`${likedProducts[item.product_id] ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                      <img src={getFullImageUrl(item.image_url)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} onError={(e) => { e.target.onerror = null; e.target.src = '/assets/home2.webp'; }} />
+                      <button onClick={(e) => handleToggleProductLike(e, item)} className="absolute top-6 right-6 z-20 p-3 rounded-full bg-white/80 backdrop-blur-md shadow-lg transition-all active:scale-90 hover:scale-110">
+                        <Heart size={18} className={likedIds.includes(`product_${item.product_id}`) ? 'fill-red-500 text-red-500' : 'text-gray-400'} />
                       </button>
                       {item.personal_color_tags?.toLowerCase().includes(selectedSeason.toLowerCase()) && (
-                        <div className="absolute top-6 left-6 z-10 bg-[#FFB7B2] text-white text-[8px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 uppercase animate-pulse">
+                        <div className="absolute top-6 left-6 z-10 bg-[#D23669] text-white text-[8px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 uppercase animate-pulse">
                           <Sparkles size={10} /> Perfect Match
                         </div>
                       )}
@@ -452,13 +465,13 @@ const CosmeticStore = () => {
                     </div>
                     <div className="px-2 flex-grow">
                       <div className="flex justify-between items-center mb-1">
-                        <p className="text-[9px] font-black text-[#FFB7B2] uppercase tracking-widest">{item.category}</p>
+                        <p className="text-[9px] font-black text-[#D23669] uppercase tracking-widest">{item.category}</p>
                         <div className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400" /><span className="text-[10px] font-bold text-gray-400">{item.rating}</span></div>
                       </div>
                       <h3 className="text-md font-black text-gray-800 leading-tight mb-4 line-clamp-2">{item.name}</h3>
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
                         <span className="text-lg font-black text-gray-800">฿{parseFloat(item.price).toLocaleString()}</span>
-                        <div className="bg-black text-white p-2.5 rounded-full group-hover:bg-[#FFB7B2] transition-all"><ShoppingBag size={16} /></div>
+                        <div className="bg-black text-white p-2.5 rounded-full group-hover:bg-[#D23669] transition-all"><ShoppingBag size={16} /></div>
                       </div>
                     </div>
                   </div>
@@ -499,55 +512,145 @@ const CosmeticStore = () => {
           <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[4rem] shadow-2xl overflow-y-auto no-scrollbar animate-in zoom-in-95 duration-300">
             <button onClick={closeModal} className="absolute top-8 right-8 z-50 p-2 bg-gray-100 rounded-full hover:bg-black hover:text-white transition-all"><X size={20} /></button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-16">
-              {/* Left Side: Product View & Review */}
-              <div>
-                <div className="aspect-square rounded-[3rem] overflow-hidden mb-8 shadow-2xl border-4 border-white">
-                  <img src={getFullImageUrl(selectedProduct.image_url)} className="w-full h-full object-cover" alt="" />
-                </div>
-                {/* Review Summary */}
-                <div className="bg-[#FFF9F5] p-6 rounded-[2.5rem] border border-orange-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex text-yellow-400"><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /></div>
-                    <span className="font-black text-lg text-gray-800">{selectedProduct.rating}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+              {/* Left: Image + Specs */}
+              <div className="p-8 lg:p-10 flex flex-col gap-6">
+                {/* Image */}
+                <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-xl border border-[#EEDDE4] bg-[#FFF5F8]">
+                  <img src={getFullImageUrl(selectedProduct.image_url)} className="w-full h-full object-cover" alt="" onError={(e) => { e.target.onerror=null; e.target.src='/assets/home2.webp'; }} />
+                  {selectedProduct.is_official_store == 1 && (
+                    <div className="absolute top-4 left-4 bg-[#D23669] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                      Official Store
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                      <span className="text-[11px] font-black text-gray-800">{parseFloat(selectedProduct.rating).toFixed(1)}</span>
+                    </div>
                   </div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed">Most customers with <span className="text-[#FFB7B2]">{selectedSeason}</span> aura love this product for its long-lasting and natural pigment.</p>
+                </div>
+
+                {/* Product Specs Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedProduct.finish_type && (
+                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Finish</p>
+                      <p className="text-[11px] font-black uppercase text-[#3A3437] capitalize">{selectedProduct.finish_type}</p>
+                    </div>
+                  )}
+                  {selectedProduct.coverage_level && (
+                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Coverage</p>
+                      <p className="text-[11px] font-black uppercase text-[#3A3437] capitalize">{selectedProduct.coverage_level}</p>
+                    </div>
+                  )}
+                  {selectedProduct.suitable_for_skin_type && (
+                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Skin Type</p>
+                      <p className="text-[11px] font-black uppercase text-[#3A3437] capitalize">{selectedProduct.suitable_for_skin_type}</p>
+                    </div>
+                  )}
+                  {selectedProduct.suitable_for_color && (
+                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Undertone</p>
+                      <p className="text-[11px] font-black uppercase text-[#3A3437]">{selectedProduct.suitable_for_color}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stock Status */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${selectedProduct.stock > 10 ? 'bg-green-400' : selectedProduct.stock > 0 ? 'bg-yellow-400' : 'bg-red-400'}`} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    {selectedProduct.stock > 10 ? 'In Stock' : selectedProduct.stock > 0 ? `Only ${selectedProduct.stock} left` : 'Out of Stock'}
+                  </span>
                 </div>
               </div>
 
-              {/* Right Side: Purchase & Related */}
-              <div className="flex flex-col h-full">
-                <div>
-                  <span className="text-[10px] font-black text-[#FFB7B2] uppercase tracking-[0.3em]">{selectedProduct.category}</span>
-                  <h3 className="text-3xl font-[900] text-gray-800 leading-tight mb-2 tracking-tighter uppercase">{selectedProduct.name}</h3>
-                  <p className="text-3xl font-black text-gray-900 mb-10">฿{parseFloat(selectedProduct.price).toLocaleString()}</p>
-
-                  <div className="space-y-4 mb-12">
-                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Select Platform</p>
-                    <a href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full bg-black text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:scale-[1.02] active:scale-95 transition-all">TikTok Shop</a>
-                    <a href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full bg-[#EE4D2D] text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:scale-[1.02] active:scale-95 transition-all">Shopee Mall</a>
-                    <a href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full bg-[#10078F] text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg">
-                      Lazada Official
-                    </a>
+              {/* Right: Info + Purchase */}
+              <div className="p-8 lg:p-10 flex flex-col border-t lg:border-t-0 lg:border-l border-[#EEDDE4]">
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="text-[9px] font-black text-[#D23669] uppercase tracking-[0.3em] bg-[#FFF5F8] px-3 py-1 rounded-full border border-[#EEDDE4]">{selectedProduct.category}</span>
+                    {selectedProduct.seasonTags && selectedProduct.seasonTags.split(',').map(tag => tag.trim()).filter(Boolean).map(tag => (
+                      <span key={tag} className="text-[9px] font-black uppercase tracking-widest bg-[#F5F3FF] text-purple-600 px-3 py-1 rounded-full border border-purple-100">{tag}</span>
+                    ))}
                   </div>
+                  <h3 className="text-2xl font-[900] text-[#3A3437] leading-tight tracking-tighter uppercase mb-1">{selectedProduct.name}</h3>
+                  {selectedProduct.description && (
+                    <p className="text-[12px] text-gray-500 leading-relaxed mt-2">{selectedProduct.description}</p>
+                  )}
+                </div>
+
+                {/* Price */}
+                <div className="flex items-baseline gap-2 mb-6 pb-6 border-b border-[#F5EEF0]">
+                  <span className="text-4xl font-[900] text-[#3A3437]">฿{parseFloat(selectedProduct.price).toLocaleString()}</span>
+                </div>
+
+                {/* Personal Color Match */}
+                {selectedProduct.personal_color_tags && (
+                  <div className="mb-6 p-4 bg-[#FFF5F8] rounded-2xl border border-[#EEDDE4]">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-[#D23669] mb-2">Best for Personal Color</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProduct.personal_color_tags.split(',').map(tag => tag.trim()).filter(Boolean).map(tag => (
+                        <span key={tag} className={`text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${tag.toLowerCase() === selectedSeason.toLowerCase() ? 'bg-[#D23669] text-white' : 'bg-white text-gray-500 border border-[#EEDDE4]'}`}>{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shades */}
+                {selectedProduct.shades && selectedProduct.shades.trim() && (
+                  <div className="mb-6">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Available Shades</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProduct.shades.split(',').map(s => s.trim()).filter(Boolean).map(shade => (
+                        <span key={shade} className="text-[9px] font-black uppercase px-3 py-1.5 rounded-full bg-white border border-[#EEDDE4] text-gray-600 hover:border-[#D23669] hover:text-[#D23669] cursor-pointer transition-colors">{shade}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Buy Buttons */}
+                <div className="space-y-3 mt-auto">
+                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Available at</p>
+                  <a href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer"
+                    className="flex items-center justify-center w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#D23669] transition-all">
+                    TikTok Shop
+                  </a>
+                  <a href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer"
+                    className="flex items-center justify-center w-full bg-[#EE4D2D] text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:opacity-90 transition-all">
+                    Shopee Mall
+                  </a>
+                  <a href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer"
+                    className="flex items-center justify-center w-full bg-[#0F0E8E] text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:opacity-90 transition-all">
+                    Lazada Official
+                  </a>
                 </div>
 
                 {/* Related Products */}
-                <div className="mt-auto pt-8 border-t border-gray-100">
-                  <h5 className="text-[11px] font-black uppercase text-gray-400 tracking-[0.2em] mb-6">More for your Aura</h5>
-                  <div className="space-y-4">
-                    {relatedProducts.map(rel => (
-                      <div key={rel.product_id} onClick={() => setSelectedProduct(rel)} className="flex items-center gap-5 p-3 rounded-[1.5rem] hover:bg-gray-50 cursor-pointer transition-all border border-transparent hover:border-gray-100">
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 shadow-sm"><img src={getFullImageUrl(rel.image_url)} className="w-full h-full object-cover" alt="" /></div>
-                        <div className="flex-grow">
-                          <p className="text-[12px] font-black text-gray-800 line-clamp-1 uppercase">{rel.name}</p>
-                          <p className="text-[11px] font-bold text-[#FFB7B2]">฿{parseFloat(rel.price).toLocaleString()}</p>
+                {relatedProducts.length > 0 && (
+                  <div className="mt-8 pt-6 border-t border-[#F5EEF0]">
+                    <h5 className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">More for your Aura</h5>
+                    <div className="space-y-3">
+                      {relatedProducts.map(rel => (
+                        <div key={rel.product_id} onClick={() => setSelectedProduct(rel)}
+                          className="flex items-center gap-4 p-3 rounded-2xl hover:bg-[#FFF5F8] cursor-pointer transition-all border border-transparent hover:border-[#EEDDE4]">
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FFF5F8] shrink-0 border border-[#EEDDE4]">
+                            <img src={getFullImageUrl(rel.image_url)} className="w-full h-full object-cover" alt="" onError={(e) => { e.target.onerror=null; e.target.src='/assets/home2.webp'; }} />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <p className="text-[11px] font-black text-[#3A3437] line-clamp-1 uppercase">{rel.name}</p>
+                            <p className="text-[10px] font-bold text-[#D23669]">฿{parseFloat(rel.price).toLocaleString()}</p>
+                          </div>
+                          <ArrowRight size={14} className="text-gray-300 shrink-0" />
                         </div>
-                        <ArrowRight size={16} className="text-gray-300" />
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

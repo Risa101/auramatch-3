@@ -39,7 +39,7 @@ export default function AuramatchDailyDose() {
     { label: "Analysis", to: "/analysis" },
     { label: "Shop", to: "/cosmetics" }
   ];
-  const apiBase = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const apiBase = (() => { const h = typeof window !== "undefined" ? window.location.hostname : ""; return ["localhost","127.0.0.1"].includes(h) ? "" : (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""); })();
   const isLocalhostHost =
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname);
@@ -142,7 +142,7 @@ export default function AuramatchDailyDose() {
       id: '01',
       name: 'Spring',
       tag: 'Warm, Bright & Vitality',
-      desc: 'กลุ่มสีโทนอุ่นที่สดใส สว่าง และมีความใส (Clarity) สูง ช่วยขับให้ผิวดูเปล่งปลั่งมีเลือดฝาด',
+      desc: 'Warm, bright, and high-clarity color group that makes skin look radiant and glowing.',
       color: 'bg-[#FFF5F0]',
       textColor: 'text-[#E67E22]',
       palette: [
@@ -156,7 +156,7 @@ export default function AuramatchDailyDose() {
       id: '02',
       name: 'Summer',
       tag: 'Cool, Soft & Elegant',
-      desc: 'กลุ่มสีโทนเย็นที่มีความละมุน (Muted) และเจือเทา ให้ลุคที่ดูสุภาพ เรียบหรู และอ่อนโยน',
+      desc: 'Cool, muted, gray-tinted color group that creates a refined, elegant, and gentle look.',
       color: 'bg-[#F0F5FF]',
       textColor: 'text-[#7D8CC4]',
       palette: [
@@ -170,7 +170,7 @@ export default function AuramatchDailyDose() {
       id: '03',
       name: 'Autumn',
       tag: 'Warm, Rich & Earthy',
-      desc: 'กลุ่มสีโทนอุ่นที่เข้มและลึก (Deep) มีความหม่นและคลาสสิก เหมือนสีสันของธรรมชาติฤดูใบไม้ร่วง',
+      desc: 'Warm, deep, and muted color group with a classic quality, like the hues of autumn nature.',
       color: 'bg-[#F9F4E8]',
       textColor: 'text-[#8B4513]',
       palette: [
@@ -184,7 +184,7 @@ export default function AuramatchDailyDose() {
       id: '04',
       name: 'Winter',
       tag: 'Cool, Vivid & Sharp',
-      desc: 'กลุ่มสีโทนเย็นที่เข้มข้น ชัดเจน และมี Contrast สูง ช่วยขับเน้นเครื่องหน้าให้ดูคมชัดและโดดเด่น',
+      desc: 'Cool, vivid, and high-contrast color group that accentuates facial features for a sharp and striking look.',
       color: 'bg-[#F4F4F4]',
       textColor: 'text-[#2C3E50]',
       palette: [
@@ -205,7 +205,7 @@ export default function AuramatchDailyDose() {
       if (!userId) return;
       const favs = await getFavoritesByUserApi(userId);
 
-      // แปลงข้อมูล Array เป็น Object เพื่อให้เช็คสถานะหัวใจได้เร็วขึ้น
+      // Convert Array to Object for faster heart-state checks
       const favMap = {};
       favs.forEach(item => {
         favMap[item.product_id] = true;
@@ -221,30 +221,30 @@ export default function AuramatchDailyDose() {
     const user = userRaw ? JSON.parse(userRaw) : null;
     const userId = user?.uid ? Number(user.uid) : null;
     if (!userId) {
-      alert("กรุณาเข้าสู่ระบบก่อนใช้งานรายการโปรด");
+      alert("Please log in before using the favorites feature.");
       return;
     }
 
-    // 1. Update UI ทันที (Optimistic Update)
+    // 1. Update UI immediately (Optimistic Update)
     setLikedProducts(prev => ({ ...prev, [productId]: !prev[productId] }));
 
     try {
-      // 2. เรียก API ที่เราเขียนไว้ใน favorite_bp
+      // 2. Call the API defined in favorite_bp
       await toggleFavoriteApi(userId, productId);
     } catch (error) {
-      // 3. ถ้า Error ให้คืนค่าเดิม (Rollback)
+      // 3. On error, roll back to previous state (Rollback)
       setLikedProducts(prev => ({ ...prev, [productId]: !prev[productId] }));
-      alert("ไม่สามารถบันทึกรายการโปรดได้ในขณะนี้");
+      alert("Unable to save to favorites at this time.");
     }
   };
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // ใช้ Promise.all ดึงทั้งสินค้าขายดี และ Looks ตามฤดูกาลพร้อมกัน
+      // Use Promise.all to fetch both best-sellers and looks by season simultaneously
       const [bsData, looksData] = await Promise.all([
         getBestSellerProducts(),
-        getLooksBySeason(activeColor) // เรียกใช้ API looks โดยส่งค่า activeColor (Spring, Summer, etc.)
+        getLooksBySeason(activeColor) // Call the looks API passing activeColor (Spring, Summer, etc.)
       ]);
 
       const safeBestSellers =
@@ -262,17 +262,17 @@ export default function AuramatchDailyDose() {
           : (isLocalhostHost ? (fallbackLooksBySeason[activeColor] || []) : []);
 
       setBestSellers(safeBestSellers);
-      setMakeupLooks(safeLooks); // อัปเดตข้อมูลที่ดึงมาจากหลังบ้านลงใน State
+      setMakeupLooks(safeLooks); // Update state with data fetched from the backend
     } catch (err) {
       console.error("Fetch Data Error:", err);
       setBestSellers(isLocalhostHost ? fallbackBestSellers : []);
       setMakeupLooks(isLocalhostHost ? (fallbackLooksBySeason[activeColor] || []) : []);
     } finally {
       setIsLoading(false);
-      // ให้ AOS (Animation) ทำงานหลังจากโหลดข้อมูลเสร็จ
+      // Trigger AOS (Animation) after data has loaded
       setTimeout(() => AOS.refresh(), 500);
     }
-  }, [activeColor]); // 👈 สำคัญมาก: ต้องใส่ [activeColor] เพื่อให้โหลดใหม่เมื่อคลิกเปลี่ยนสี
+  }, [activeColor]); // 👈 Important: must include [activeColor] to reload when the color tab changes
 
   useEffect(() => {
     fetchData();
@@ -297,7 +297,7 @@ export default function AuramatchDailyDose() {
       {/* --- 1. HERO --- */}
       <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#F6E9EE]">
         <div className="absolute inset-0 z-0">
-          <img src="/assets/home2.webp" alt="" className="h-full w-full object-cover opacity-100" />
+          <img src={buildApiImage("/assets/home2.webp")} alt="" className="h-full w-full object-cover opacity-100" />
           <div
             className="absolute inset-0 opacity-100"
             aria-hidden="true"
@@ -367,12 +367,12 @@ export default function AuramatchDailyDose() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {[
-              { label: "Oval", desc: "หน้ารูปไข่", color: "bg-[#FFEBF0]" },
-              { label: "Round", desc: "หน้ากลม", color: "bg-[#E0F2FE]" },
-              { label: "Square", desc: "หน้าเหลี่ยม", color: "bg-[#F3F4F6]" },
-              { label: "Heart", desc: "รูปหัวใจ", color: "bg-[#FFF4E0]" },
-              { label: "Diamond", desc: "รูปเพชร", color: "bg-[#E8D9F2]" },
-              { label: "Long", desc: "หน้ายาว", color: "bg-[#E2F3E7]" }
+              { label: "Oval", desc: "Oval Face", color: "bg-[#FFEBF0]" },
+              { label: "Round", desc: "Round Face", color: "bg-[#E0F2FE]" },
+              { label: "Square", desc: "Square Face", color: "bg-[#F3F4F6]" },
+              { label: "Heart", desc: "Heart Shape", color: "bg-[#FFF4E0]" },
+              { label: "Diamond", desc: "Diamond Shape", color: "bg-[#E8D9F2]" },
+              { label: "Long", desc: "Long Face", color: "bg-[#E2F3E7]" }
             ].map((shape, i) => (
               <div key={shape.label} data-aos="zoom-in" data-aos-delay={i * 100} className={`group ${shape.color} p-8 rounded-3xl border border-[#ECDDE2] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(226,110,147,0.12)] cursor-pointer`}>
                 <div className="w-12 h-16 mb-4 border border-[#D23669]/20 rounded-full flex items-center justify-center group-hover:border-[#D23669] transition-colors">
@@ -433,9 +433,9 @@ export default function AuramatchDailyDose() {
 
 
                   {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
-                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* ล็อคความสูง Container */}
+                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* Lock Container height */}
                     <div className="relative w-full">
-                      {/* ใช้ Grid เพื่อให้ทุกอันวางในตำแหน่งที่เท่ากันเป๊ะ */}
+                      {/* Use Grid so every chip is exactly positioned */}
                       <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
                         {item.palette.map((color, pIdx) => (
                           <div
@@ -443,31 +443,31 @@ export default function AuramatchDailyDose() {
                             className={`
             relative rounded-full border border-white/40 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23, 1, 0.32, 1)]
             
-            /* กำหนดรูปทรงวงรีให้คงที่ */
+            /* Fixed oval shape */
             h-10 w-full max-w-[30px] mx-auto
-            
-            /* สถานะปกติ: โชว์ 4 สีแรกในแถวแรก */
+
+            /* Default: show first 4 colors */
             ${pIdx < 4
                                 ? 'opacity-100'
                                 : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
                               }
             
-            /* Interaction: เมื่อ Hover ที่วงรีแต่ละอัน */
+            /* Interaction: on hover over each oval chip */
             hover:scale-125 hover:z-50 hover:shadow-lg hover:border-white
           `}
                             style={{
                               backgroundColor: color,
-                              /* สั่งให้ทยอยโผล่มาทีละเม็ดอย่างเป็นระเบียบ */
+                              /* Stagger chips appearing one by one */
                               transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
                             }}
                           >
-                            {/* Glass Reflection เอฟเฟกต์แก้วสะท้อน */}
+                            {/* Glass Reflection effect */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
                           </div>
                         ))}
                       </div>
 
-                      {/* Footer Hint: ปรับตำแหน่งให้คงที่ */}
+                      {/* Footer Hint: fixed position */}
                       <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
                         <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
                         <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
@@ -628,7 +628,7 @@ export default function AuramatchDailyDose() {
                 className="group text-center cursor-pointer"
                 onClick={() => openProductModal(p)}
               >
-                {/* Container รูปภาพ */}
+                {/* Image container */}
                 <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-[#fefdfd] mb-8 group-hover:shadow-[0_14px_34px_rgba(226,110,147,0.18)] transition-all duration-500 border border-[#EEDDE4]">
                   <img
                     src={buildApiImage(p.image_url)}
@@ -638,7 +638,7 @@ export default function AuramatchDailyDose() {
                     alt={p.name}
                   />
 
-                  {/* --- ปุ่มหัวใจที่เพิ่มเข้ามา --- */}
+                  {/* --- Like button --- */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -705,7 +705,7 @@ export default function AuramatchDailyDose() {
                 </div>
 
                 <p className="mt-6 text-sm leading-relaxed text-gray-500">
-                  เลือกแพลตฟอร์มที่สะดวกเพื่อสั่งซื้อสินค้าได้ทันที
+                  Choose your preferred platform to purchase immediately.
                 </p>
 
                 <div className="mt-8 space-y-3">
@@ -740,7 +740,7 @@ export default function AuramatchDailyDose() {
         </div>
       )}
 
-      {/* --- 5.5 THE LOOKS ARCHIVE (ดึงจากหลังบ้าน) --- */}
+      {/* --- 5.5 THE LOOKS ARCHIVE (fetched from backend) --- */}
       <section className="py-28 bg-[#FFF7FA]">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
@@ -777,7 +777,7 @@ export default function AuramatchDailyDose() {
                   onClick={() => setSelectedLook(look)}
                 >
                   <div className="aspect-[4/5] overflow-hidden">
-                    {/* ในส่วน THE LOOKS ARCHIVE */}
+                    {/* In the THE LOOKS ARCHIVE section */}
                     <img
                       src={buildApiImage(look.image_url)}
                       loading="lazy"
@@ -845,7 +845,7 @@ export default function AuramatchDailyDose() {
                   {selectedLook.look_name}
                 </h3>
                 <p className="mt-6 text-sm leading-relaxed text-gray-500">
-                  {selectedLook.description || "ลุคนี้ถูกออกแบบให้สอดคล้องกับโทนสีประจำตัวของคุณ โดยเน้นบาลานซ์ผิว โทนตา และโทนปากให้เด่นแบบเป็นธรรมชาติ"}
+                  {selectedLook.description || "This look is designed to align with your personal color tone, emphasizing balanced skin, eye tone, and lip tone in a natural way."}
                 </p>
                 <div className="mt-auto pt-8">
                   <button
@@ -892,8 +892,8 @@ export default function AuramatchDailyDose() {
             </h2>
             <div className="space-y-4">
               {[
-                { q: "ศิลปะแห่งการประมวลผล?", a: "AI ของเราวิเคราะห์โครงสร้างความงามในระดับ Biometric Mapping เพื่อหาจุดที่สมบูรณ์แบบที่สุดของคุณ" },
-                { q: "เอกสิทธิ์เฉพาะบุคคล?", a: "ทุกผลลัพธ์คือลิขสิทธิ์ความงามเฉพาะตัวคุณ ข้อมูลจะถูกจัดเก็บแบบส่วนตัวเพื่อความปลอดภัย" }
+                { q: "The art of processing?", a: "Our AI analyzes beauty structure at the Biometric Mapping level to find your most perfect features." },
+                { q: "Personalized exclusivity?", a: "Every result is your own exclusive beauty fingerprint. Data is stored privately for your security." }
               ].map((item, i) => (
                 <details key={i} className="group bg-white rounded-3xl px-8 md:px-10 py-7 cursor-pointer hover:bg-[#FFF7FA] hover:shadow-[0_10px_24px_rgba(226,110,147,0.12)] transition-all border border-[#EEDDE4]">
                   <summary className="flex justify-between items-center list-none font-[900] text-xs uppercase tracking-[0.2em] text-[#4A4A4A]">
@@ -953,7 +953,7 @@ export default function AuramatchDailyDose() {
             <div className="space-y-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest">Connect</h4>
               <div className="flex gap-4">
-                {/* ใส่ Social Icons ตรงนี้ */}
+                {/* Insert Social Icons here */}
                 <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">INSTAGRAM</span>
                 <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">TIKTOK</span>
               </div>

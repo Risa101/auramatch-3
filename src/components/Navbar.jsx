@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import i18n from "../lib/i18n";
 import { useTranslation } from "react-i18next";
+import { imgUrl } from "../utils/imgUrl";
 import { ShoppingBag, Menu, X, History, User, LogOut, ChevronDown } from "lucide-react";
 
 export default function NavbarDailyDose() {
@@ -120,41 +121,53 @@ export default function NavbarDailyDose() {
               <ShoppingBag size={20} strokeWidth={2.5} />
             </Link>
           ) : (
-            <div className="relative" onMouseEnter={() => setAcctOpen(true)} onMouseLeave={() => setAcctOpen(false)}>
-              <button className="flex items-center gap-2 p-1 pr-3 rounded-full border-2 border-[#FFD1DC] hover:border-[#D23669] transition-all bg-white group">
+            <div className="relative">
+              {/* Backdrop — คลิกข้างนอกปิด */}
+              {acctOpen && (
+                <div className="fixed inset-0 z-10" onClick={() => setAcctOpen(false)} />
+              )}
+
+              <button
+                onClick={() => setAcctOpen(v => !v)}
+                className="relative z-20 flex items-center gap-2 p-1 pr-3 rounded-full border-2 border-[#FFD1DC] hover:border-[#D23669] transition-all bg-white"
+              >
                 <div className="w-8 h-8 rounded-full overflow-hidden shadow-inner">
-                  <img 
-                    src={me.photoURL || `https://ui-avatars.com/api/?name=${me.name}&background=D23669&color=fff`} 
-                    className="w-full h-full object-cover" 
-                    alt="Profile" 
+                  <img
+                    src={imgUrl(me.photoURL || "") || `https://ui-avatars.com/api/?name=${encodeURIComponent(me.name || "U")}&background=D23669&color=fff`}
+                    className="w-full h-full object-cover"
+                    alt="Profile"
                   />
                 </div>
                 <ChevronDown size={14} className={`text-[#D23669] transition-transform duration-300 ${acctOpen ? "rotate-180" : ""}`} />
               </button>
 
               {/* DROPDOWN MENU */}
-              <div className={`absolute right-0 mt-2 w-48 bg-white border-2 border-black rounded-[24px] p-2 shadow-[8px_8px_0px_0px_rgba(210,54,105,0.2)] transition-all duration-300 ${acctOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
-                <div className="px-4 py-3 border-b border-gray-100 mb-2">
-                  <p className="text-[10px] font-black text-[#D23669] uppercase truncate">{me.name}</p>
-                  <p className="text-[8px] font-bold text-gray-400 truncate">{me.email}</p>
+              {acctOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white border-2 border-black rounded-[24px] p-2 shadow-[8px_8px_0px_0px_rgba(210,54,105,0.2)] z-20">
+                  <div className="px-4 py-3 border-b border-gray-100 mb-1">
+                    <p className="text-[10px] font-black text-[#D23669] uppercase truncate">{me.name}</p>
+                    <p className="text-[8px] font-bold text-gray-400 truncate">{me.email}</p>
+                  </div>
+
+                  <Link to="/account" onClick={() => setAcctOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
+                    <User size={16} className="text-[#D23669]" /> Profile
+                  </Link>
+                  <Link to="/history" onClick={() => setAcctOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
+                    <History size={16} className="text-[#D23669]" /> History
+                  </Link>
+
+                  <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <LogOut size={16} /> Logout
+                  </button>
                 </div>
-                
-                <Link to="/account" className="flex items-center gap-3 p-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
-                  <User size={16} className="text-[#D23669]" /> Profile
-                </Link>
-                <Link to="/history" className="flex items-center gap-3 p-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
-                  <History size={16} className="text-[#D23669]" /> History
-                </Link>
-                
-                <div className="h-px bg-gray-100 my-2 mx-2" />
-                
-                <button 
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 p-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                >
-                  <LogOut size={16} /> Logout
-                </button>
-              </div>
+              )}
             </div>
           )}
 

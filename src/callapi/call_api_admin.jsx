@@ -108,10 +108,7 @@ export async function getAdminProducts() {
 
 export async function getStockList() {
   const res = await apiClient.get("/stock");
-  const body = res?.data;
-  if (Array.isArray(body)) return body;
-  if (Array.isArray(body?.data)) return body.data;
-  return [];
+  return normalizeList(res);
 }
 
 export async function createStockItem({ product_id, quantity }) {
@@ -150,58 +147,22 @@ export async function deleteAdminProduct(product_id) {
 }
 
 export async function getAdminUsers() {
-  const endpoints = ["/users", "/api/users", "/admin/users", "/user", "/api/user"];
-
-  let firstSuccessfulList = null;
-
-  for (const url of endpoints) {
-    try {
-      const res = await apiClient.get(url);
-      const list = normalizeList(res);
-      if (list.length > 0) {
-        return list.map(normalizeUser);
-      }
-      if (firstSuccessfulList === null) {
-        firstSuccessfulList = list;
-      }
-    } catch (err) {
-      if (err?.response?.status === 404) continue;
-      throw err;
-    }
-  }
-
-  return (firstSuccessfulList || []).map(normalizeUser);
+  const res = await apiClient.get("/admin/users");
+  return normalizeList(res).map(normalizeUser);
 }
 
 export async function createAdminUser(payload) {
-  const res = await requestWithFallback([
-    { method: "post", url: "/users", data: payload },
-    { method: "post", url: "/api/users", data: payload },
-    { method: "post", url: "/admin/users", data: payload },
-  ]);
+  const res = await apiClient.post("/admin/users", payload);
   return normalizeUser(normalizeItem(res) || res?.data || {});
 }
 
 export async function updateAdminUser(user_id, payload) {
-  const encoded = encodeURIComponent(user_id);
-  const res = await requestWithFallback([
-    { method: "put", url: `/users/${encoded}`, data: payload },
-    { method: "patch", url: `/users/${encoded}`, data: payload },
-    { method: "put", url: `/api/users/${encoded}`, data: payload },
-    { method: "patch", url: `/api/users/${encoded}`, data: payload },
-    { method: "put", url: `/admin/users/${encoded}`, data: payload },
-    { method: "patch", url: `/admin/users/${encoded}`, data: payload },
-  ]);
+  const res = await apiClient.put(`/admin/users/${encodeURIComponent(user_id)}`, payload);
   return normalizeUser(normalizeItem(res) || res?.data || {});
 }
 
 export async function deleteAdminUser(user_id) {
-  const encoded = encodeURIComponent(user_id);
-  await requestWithFallback([
-    { method: "delete", url: `/users/${encoded}` },
-    { method: "delete", url: `/api/users/${encoded}` },
-    { method: "delete", url: `/admin/users/${encoded}` },
-  ]);
+  await apiClient.delete(`/admin/users/${encodeURIComponent(user_id)}`);
   return true;
 }
 
@@ -225,88 +186,75 @@ function toPromotionPayload(payload) {
 
 export async function createAdminPromotion(payload) {
   const data = toPromotionPayload(payload);
-  const res = await requestWithFallback([
-    { method: "post", url: "/admin/promotions", data },
-    { method: "post", url: "/promotions", data },
-    { method: "post", url: "/promotion", data },
-  ]);
+  const res = await apiClient.post("/admin/promotions", data);
   return normalizePromotion(normalizeItem(res) || res?.data || {});
 }
 
 export async function updateAdminPromotion(promotion_id, payload) {
-  const encoded = encodeURIComponent(promotion_id);
   const data = toPromotionPayload(payload);
-  const res = await requestWithFallback([
-    { method: "put", url: `/admin/promotions/${encoded}`, data },
-    { method: "patch", url: `/admin/promotions/${encoded}`, data },
-    { method: "put", url: `/promotions/${encoded}`, data },
-    { method: "patch", url: `/promotions/${encoded}`, data },
-    { method: "put", url: `/promotion/${encoded}`, data },
-    { method: "patch", url: `/promotion/${encoded}`, data },
-  ]);
+  const res = await apiClient.put(`/admin/promotions/${encodeURIComponent(promotion_id)}`, data);
   return normalizePromotion(normalizeItem(res) || res?.data || {});
 }
 
 export async function deleteAdminPromotion(promotion_id) {
-  const encoded = encodeURIComponent(promotion_id);
-  await requestWithFallback([
-    { method: "delete", url: `/admin/promotions/${encoded}` },
-    { method: "delete", url: `/promotions/${encoded}` },
-    { method: "delete", url: `/promotion/${encoded}` },
-  ]);
+  await apiClient.delete(`/admin/promotions/${encodeURIComponent(promotion_id)}`);
   return true;
 }
 
 export async function getAdminReviews() {
-  const res = await requestWithFallback([
-    { method: "get", url: "/admin/reviews" },
-    { method: "get", url: "/reviews" },
-    { method: "get", url: "/review" },
-  ]);
+  const res = await apiClient.get("/admin/reviews");
   return normalizeList(res).map(normalizeReview);
 }
 
 export async function createAdminReview(payload) {
   const data = {
-    ...payload,
     user_id: Number(payload?.user_id || 0),
     product_id: Number(payload?.product_id || 0),
     rating: Number(payload?.rating || 0),
     comment: payload?.comment || "",
   };
-  const res = await requestWithFallback([
-    { method: "post", url: "/admin/reviews", data },
-    { method: "post", url: "/reviews", data },
-    { method: "post", url: "/review", data },
-  ]);
+  const res = await apiClient.post("/admin/reviews", data);
   return normalizeReview(normalizeItem(res) || res?.data || {});
 }
 
 export async function updateAdminReview(review_id, payload) {
-  const encoded = encodeURIComponent(review_id);
   const data = {
-    ...payload,
-    user_id: payload?.user_id != null ? Number(payload.user_id) : undefined,
-    product_id: payload?.product_id != null ? Number(payload.product_id) : undefined,
     rating: payload?.rating != null ? Number(payload.rating) : undefined,
+    comment: payload?.comment,
   };
-  const res = await requestWithFallback([
-    { method: "put", url: `/admin/reviews/${encoded}`, data },
-    { method: "patch", url: `/admin/reviews/${encoded}`, data },
-    { method: "put", url: `/reviews/${encoded}`, data },
-    { method: "patch", url: `/reviews/${encoded}`, data },
-    { method: "put", url: `/review/${encoded}`, data },
-    { method: "patch", url: `/review/${encoded}`, data },
-  ]);
+  const res = await apiClient.put(`/admin/reviews/${encodeURIComponent(review_id)}`, data);
   return normalizeReview(normalizeItem(res) || res?.data || {});
 }
 
 export async function deleteAdminReview(review_id) {
-  const encoded = encodeURIComponent(review_id);
-  await requestWithFallback([
-    { method: "delete", url: `/admin/reviews/${encoded}` },
-    { method: "delete", url: `/reviews/${encoded}` },
-    { method: "delete", url: `/review/${encoded}` },
-  ]);
+  await apiClient.delete(`/admin/reviews/${encodeURIComponent(review_id)}`);
+  return true;
+}
+
+// ─── Brands ───────────────────────────────────────────────────────────────────
+const normalizeBrand = (item) => ({
+  id: item?.brand_id ?? item?.id,
+  brand_id: item?.brand_id ?? item?.id,
+  brand_name: item?.brand_name ?? item?.name ?? "",
+  logo_path: item?.logo_path ?? item?.logo ?? item?.logo_url ?? "",
+});
+
+export async function getAdminBrands() {
+  const res = await apiClient.get("/brands");
+  return normalizeList(res).map(normalizeBrand);
+}
+
+export async function createAdminBrand({ brand_name, logo_path }) {
+  const res = await apiClient.post("/brands", { brand_name, logo_path });
+  return res?.data || null;
+}
+
+export async function updateAdminBrand(brand_id, { brand_name, logo_path }) {
+  const res = await apiClient.put(`/brands/${encodeURIComponent(brand_id)}`, { brand_name, logo_path });
+  return res?.data || null;
+}
+
+export async function deleteAdminBrand(brand_id) {
+  await apiClient.delete(`/brands/${encodeURIComponent(brand_id)}`);
   return true;
 }
