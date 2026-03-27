@@ -248,10 +248,30 @@ const CosmeticStore = () => {
   const totalPages = Math.ceil(effectiveProducts.length / itemsPerPage);
   const currentItems = effectiveProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Related Products
-  const relatedProducts = products
-    .filter(p => p.category === selectedProduct?.category && p.product_id !== selectedProduct?.product_id)
-    .slice(0, 3);
+  // "More for your Aura" — products matching user's personal color season
+  const userSeason = (() => {
+    try {
+      const history = JSON.parse(localStorage.getItem("auramatch:history") || "[]");
+      return history[0]?.season || null;
+    } catch { return null; }
+  })();
+
+  const relatedProducts = (() => {
+    if (!selectedProduct) return [];
+    const season = userSeason;
+    if (season) {
+      // กรองตาม personal color ของผู้ใช้ ยกเว้นสินค้าปัจจุบัน
+      const byColor = products.filter(p =>
+        p.product_id !== selectedProduct.product_id &&
+        p.personal_color_tags?.toLowerCase().includes(season.toLowerCase())
+      );
+      if (byColor.length >= 2) return byColor.slice(0, 3);
+    }
+    // fallback: หมวดเดียวกัน
+    return products
+      .filter(p => p.category === selectedProduct.category && p.product_id !== selectedProduct.product_id)
+      .slice(0, 3);
+  })();
 
   const navItems = [
     { label: "Home", to: "/" },
@@ -633,7 +653,9 @@ const CosmeticStore = () => {
                 {/* Related Products */}
                 {relatedProducts.length > 0 && (
                   <div className="mt-8 pt-6 border-t border-[#F5EEF0]">
-                    <h5 className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">More for your Aura</h5>
+                    <h5 className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">
+                      {userSeason ? `Best for ${userSeason} Aura` : "More for your Aura"}
+                    </h5>
                     <div className="space-y-3">
                       {relatedProducts.map(rel => (
                         <div key={rel.product_id} onClick={() => setSelectedProduct(rel)}
