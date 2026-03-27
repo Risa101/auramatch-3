@@ -1034,6 +1034,9 @@ export default function Analysis() {
       setStatus("done");
       setCurrentStep(2);
 
+      // Auto-generate Gemini image in background
+      runGeminiGeneration({ pickedFile, previewSrc });
+
       // 🔽 Shrink image before saving — prevent localStorage from overflowing
       const smallPreview = await shrinkDataURL(previewSrc, 640, 0.75);
 
@@ -1066,8 +1069,10 @@ export default function Analysis() {
     await runAnalysis();
   }
 
-  async function runGeminiGeneration() {
-    if (!file && !preview) {
+  async function runGeminiGeneration({ pickedFile: passedFile, previewSrc: passedPreview } = {}) {
+    const targetFile = passedFile || file;
+    const targetPreview = passedPreview || preview;
+    if (!targetFile && !targetPreview) {
       setGeminiError("Please upload an image first.");
       return;
     }
@@ -1075,10 +1080,9 @@ export default function Analysis() {
       setGeminiError("");
       setGeminiStatus("loading");
 
-      // If file is empty (demo mode), fetch image from preview URL instead
-      let imageFile = file;
+      let imageFile = targetFile;
       if (!imageFile || imageFile.size === 0) {
-        const resp = await fetch(preview);
+        const resp = await fetch(targetPreview);
         const blob = await resp.blob();
         imageFile = new File([blob], "image.jpg", { type: blob.type || "image/jpeg" });
       }
@@ -1320,14 +1324,23 @@ export default function Analysis() {
                   <div className="rounded-2xl border border-[#F3D5E0] bg-gradient-to-b from-[#FFF7FA] to-[#FFFDFE] p-5">
                     <div className="text-[11px] font-black uppercase tracking-[0.24em] text-[#D23669] mb-1">AI Makeover</div>
                     <h4 className="text-base font-[900] tracking-tight text-[#2F2A31] mb-2">Generate Makeup with Gemini AI</h4>
-                    <p className="text-xs text-[#4A4A4A]/70 mb-4">AI will create a makeup portrait from your photo. Takes ~10–20 seconds.</p>
-                    <button
-                      onClick={runGeminiGeneration}
-                      disabled={geminiStatus === "loading"}
-                      className="rounded-full px-5 py-2 text-xs font-black tracking-[0.12em] uppercase bg-[#D23669] text-white hover:bg-[#B52E58] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {geminiStatus === "loading" ? "Generating..." : "✨ Generate with AI"}
-                    </button>
+                    <p className="text-xs text-[#4A4A4A]/70 mb-4">AI is generating a makeup portrait from your photo automatically.</p>
+                    {geminiStatus === "idle" && (
+                      <button
+                        onClick={runGeminiGeneration}
+                        className="rounded-full px-5 py-2 text-xs font-black tracking-[0.12em] uppercase bg-[#D23669] text-white hover:bg-[#B52E58] transition"
+                      >
+                        ✨ Generate Again
+                      </button>
+                    )}
+                    {geminiStatus === "done" && (
+                      <button
+                        onClick={runGeminiGeneration}
+                        className="rounded-full px-5 py-2 text-xs font-black tracking-[0.12em] uppercase bg-white text-[#D23669] border border-[#D23669] hover:bg-[#FFF0F5] transition"
+                      >
+                        ✨ Regenerate
+                      </button>
+                    )}
                     {geminiError && <p className="mt-2 text-xs text-red-500">{geminiError}</p>}
                     {geminiStatus === "loading" && (
                       <div className="mt-4 space-y-3">
