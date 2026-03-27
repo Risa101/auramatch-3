@@ -1034,8 +1034,10 @@ export default function Analysis() {
       setStatus("done");
       setCurrentStep(2);
 
-      // Auto-generate Gemini image in background
-      runGeminiGeneration({ pickedFile, previewSrc });
+      // Auto-generate Gemini image in background (only if not already done)
+      if (geminiStatus === "idle") {
+        runGeminiGeneration({ pickedFile, previewSrc });
+      }
 
       // 🔽 Shrink image before saving — prevent localStorage from overflowing
       const smallPreview = await shrinkDataURL(previewSrc, 640, 0.75);
@@ -1092,7 +1094,12 @@ export default function Analysis() {
       setGeminiStatus("done");
     } catch (err) {
       console.error(err);
-      setGeminiError("Image generation failed. Please try again.");
+      const msg = err?.response?.data?.error || err?.message || "";
+      if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
+        setGeminiError("Gemini API quota exceeded. Please wait a moment and try again.");
+      } else {
+        setGeminiError("Image generation failed. Please try again.");
+      }
       setGeminiStatus("error");
     }
   }
