@@ -460,7 +460,7 @@ export default function UltimateAcademy() {
               ].map((item, i) => (
                 <div key={item.shape} className="group bg-white overflow-hidden hover:bg-[#EBC2C8] transition-all duration-500 cursor-default">
                   <div className="aspect-square overflow-hidden bg-[#F7F4F2]">
-                    <img src={resolveImageUrl(item.image)} alt={item.shape}
+                    <img src={item.image} alt={item.shape}
                       className="w-full h-full object-cover scale-[1.3] group-hover:scale-[1.35] transition-transform duration-500" loading="lazy" />
                   </div>
                   <div className="p-5 border-t border-[#E8E0DC] group-hover:border-[#333]">
