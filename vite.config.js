@@ -8,7 +8,7 @@ export default defineConfig({
   base: "/", // ใช้ base path หากโฟลเดอร์โปรเจกต์ถูกย้าย
   server: {
     proxy: {
-      "^/(api|admin|products|looks|promotions|brands|favorites|login|register|forgot-password|reset-password|delete_analysis)": {
+      "^/(api|admin|products|looks|promotions|brands|favorites|login|register|forgot-password|reset-password|delete_analysis|makeup|hair|faceshape|overlays|eye|product|avatars|uploads|static)": {
         target: "http://127.0.0.1:5010",
         changeOrigin: true,
       },

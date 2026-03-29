@@ -1,10 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, Star, Sparkles, Heart, Loader2, Search, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Heart, Search, ArrowRight, X } from 'lucide-react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import { getdataProducts } from "../callapi/call_api_user";
-import { Link } from "react-router-dom";
+import { getdataProducts, generateGeminiImage } from "../callapi/call_api_user";
+import { Link, useLocation } from "react-router-dom";
 import { toggleLike as globalToggleLike, subscribeLikes } from "../utils/likes";
+
+function b64ToFile(dataUrl, filename = 'face.jpg') {
+  try {
+    const [header, data] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)[1];
+    const binary = atob(data);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new File([arr], filename, { type: mime });
+  } catch { return null; }
+}
+
+function getUserFacePhoto() {
+  try {
+    const u = JSON.parse(localStorage.getItem('auramatch:user') || 'null');
+    return u?.lastAnalysis?.preview || null;
+  } catch { return null; }
+}
 
 // --- DATA: PERSONAL COLOR ---
 const personalColorData = [
@@ -107,6 +125,8 @@ const CosmeticStore = () => {
     },
   ];
 
+  const location = useLocation();
+
   // States
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +137,10 @@ const CosmeticStore = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState('Best Seller');
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
+  const [tryOnStatus, setTryOnStatus] = useState('idle'); // idle | loading | done | error
+  const [tryOnImage, setTryOnImage] = useState('');
+  const [tryOnError, setTryOnError] = useState('');
   const productsSectionRef = useRef(null);
 
   // Pagination State
@@ -152,6 +175,19 @@ const CosmeticStore = () => {
     return subscribeLikes((all) => setLikedIds(all.map(x => x.id)));
   }, []);
 
+  // Auto-open product modal when navigated from Trends with openProductId
+  useEffect(() => {
+    const openId = location.state?.openProductId;
+    if (!openId || products.length === 0) return;
+    const target = products.find(p => String(p.product_id) === String(openId));
+    if (target) {
+      setSelectedProduct(target);
+      setIsModalOpen(true);
+      // scroll to product grid
+      productsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [products, location.state]);
+
   // Handlers
   const openPurchaseModal = (product) => {
     setSelectedProduct(product);
@@ -161,6 +197,34 @@ const CosmeticStore = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
+    setTryOnStatus('idle');
+    setTryOnImage('');
+    setTryOnError('');
+  };
+
+  const handleTryOn = async () => {
+    const facePhoto = getUserFacePhoto();
+    if (!facePhoto) {
+      setTryOnError('Please complete a face analysis first to use Virtual Try-On.');
+      return;
+    }
+    const faceFile = b64ToFile(facePhoto);
+    if (!faceFile) { setTryOnError('Could not load your face photo.'); return; }
+    setTryOnStatus('loading');
+    setTryOnError('');
+    setTryOnImage('');
+    const cat = selectedProduct?.category?.toLowerCase() || 'makeup';
+    const name = selectedProduct?.name || 'product';
+    const season = selectedProduct?.personal_color_tags || '';
+    const prompt = `Apply ${name} (${cat}) to this face. ${season ? `This is a ${season} personal color product.` : ''} Keep the same person's face, natural and realistic result. Show clearly how this ${cat} product looks when worn.`;
+    try {
+      const res = await generateGeminiImage({ file: faceFile, prompt });
+      setTryOnImage(res?.image || res?.data_url || '');
+      setTryOnStatus('done');
+    } catch (e) {
+      setTryOnError('Try-On failed. Please try again.');
+      setTryOnStatus('error');
+    }
   };
 
   const handleToggleProductLike = (e, item) => {
@@ -207,7 +271,7 @@ const CosmeticStore = () => {
   };
 
   const getFullImageUrl = (imagePath) => {
-    if (!imagePath) return "/assets/home2.webp";
+    if (!imagePath) return "";
     if (String(imagePath).startsWith("http")) return imagePath;
     const cleanPath = String(imagePath).trim();
     const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
@@ -256,132 +320,85 @@ const CosmeticStore = () => {
     } catch { return null; }
   })();
 
+  // Cross-sell pairing map: for each category, the preferred complement order
+  const CROSS_SELL_ORDER = {
+    Lip:     ['Blush', 'Eye', 'Cushion'],
+    Blush:   ['Lip', 'Eye', 'Cushion'],
+    Eye:     ['Lip', 'Blush', 'Cushion'],
+    Cushion: ['Lip', 'Blush', 'Eye'],
+  };
+  const PAIR_REASON = {
+    Lip:     { Blush: 'Complements this lip tone', Eye: 'Balances with eye drama', Cushion: 'Perfect base for this shade' },
+    Blush:   { Lip: 'Matches this blush tone', Eye: 'Adds dimension', Cushion: 'Creates a flawless base' },
+    Eye:     { Lip: 'Balances the eye look', Blush: 'Adds a natural flush', Cushion: 'Smooth canvas for bold eyes' },
+    Cushion: { Lip: 'Completes the full look', Blush: 'Natural flush on top', Eye: 'Defines eyes on fresh skin' },
+  };
+
   const relatedProducts = (() => {
     if (!selectedProduct) return [];
+    const currentCat = selectedProduct.category;
     const season = userSeason;
-    if (season) {
-      // กรองตาม personal color ของผู้ใช้ ยกเว้นสินค้าปัจจุบัน
-      const byColor = products.filter(p =>
-        p.product_id !== selectedProduct.product_id &&
-        p.personal_color_tags?.toLowerCase().includes(season.toLowerCase())
-      );
-      if (byColor.length >= 2) return byColor.slice(0, 3);
-    }
-    // fallback: หมวดเดียวกัน
-    return products
-      .filter(p => p.category === selectedProduct.category && p.product_id !== selectedProduct.product_id)
-      .slice(0, 3);
+    const pairedCats = CROSS_SELL_ORDER[currentCat] || Object.keys(CROSS_SELL_ORDER).filter(c => c !== currentCat);
+
+    return pairedCats.map(targetCat => {
+      // Best pick: same season first, then any in that category
+      const pool = products.filter(p => p.product_id !== selectedProduct.product_id && p.category === targetCat);
+      const seasonMatch = season
+        ? pool.find(p => p.personal_color_tags?.toLowerCase().includes(season.toLowerCase()))
+        : null;
+      const pick = seasonMatch || pool[0] || null;
+      if (!pick) return null;
+      return { ...pick, _pairReason: PAIR_REASON[currentCat]?.[targetCat] || 'Pairs well together' };
+    }).filter(Boolean).slice(0, 3);
   })();
 
-  const navItems = [
-    { label: "Home", to: "/" },
-    { label: "Academy", to: "/academy" },
-    { label: "Analysis", to: "/analysis" },
-    { label: "Shop", to: "/shop" },
-  ];
 
   return (
-    <div className="min-h-screen bg-[#FDFBF9] pb-20 font-sans">
+    <div className="min-h-screen bg-white text-[#1A1A1A] font-sans pt-[60px] lg:pt-[180px]">
 
       {/* --- SECTION 1: PERSONAL COLOR SELECTOR --- */}
-      {/* --- 4. PERSONAL COLOR (Balanced Palette Version) --- */}
-      <section className="py-20 bg-[#F9F9F9] overflow-hidden">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="mb-12 text-center">
-            <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-2">Color Harmony</span>
-            <h2 className="text-3xl md:text-4xl font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
-              Discover Your <span className="text-[#D23669]">Season</span>
+      <section className="py-20 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="border-t border-[#E8E0DC] pt-10 mb-12" data-aos="fade-up">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Color Harmony</p>
+            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
+              Discover Your<br /><span className="font-[700] italic">Season</span>
             </h2>
           </div>
 
-          <div className="flex flex-col md:flex-row h-[500px] gap-3 w-full items-stretch">
-            {personalColorData.map((item, idx) => (
+          <div className="flex flex-col md:flex-row h-[500px] gap-px bg-[#E8E0DC] w-full">
+            {personalColorData.map((item) => (
               <div
                 key={item.name}
                 onClick={() => handleSelectSeason(item.name)}
-                className={`group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25, 1, 0.35, 1)] cursor-pointer overflow-hidden rounded-[2.5rem] ${item.color} shadow-sm border border-black/5`}
+                className="group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.35,1)] cursor-pointer overflow-hidden bg-white"
               >
                 <div className="absolute inset-0 p-8 flex flex-col z-20">
+                  <p className="text-[10px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">{item.id}</p>
+                  <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] uppercase mb-1">{item.name}</h4>
+                  <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-4">{item.tag}</p>
 
-                  {/* Top Section */}
-                  <div className="relative">
-                    <span className={`text-4xl font-[900] opacity-10 block transition-transform duration-700 group-hover:-translate-y-2 ${item.textColor}`}>
-                      {item.id}
-                    </span>
-
-                    <div className="mt-2 transform transition-all duration-500 group-hover:translate-x-1">
-                      <h4 className={`text-2xl font-[900] tracking-tighter uppercase leading-none mb-1 ${item.textColor}`}>
-                        {item.name}
-                      </h4>
-                      <p className={`text-[9px] font-black uppercase tracking-[0.2em] opacity-70 ${item.textColor}`}>
-                        {item.tag}
-                      </p>
+                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700">
+                    <div className="grid grid-cols-6 gap-1.5 w-full">
+                      {item.palette.map((color, pIdx) => (
+                        <div
+                          key={pIdx}
+                          className={`h-8 w-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'}`}
+                          style={{ backgroundColor: color, transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms' }}
+                        />
+                      ))}
                     </div>
                   </div>
 
-
-                  {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
-                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* Lock Container height */}
-                    <div className="relative w-full">
-                      {/* Use Grid so every chip is exactly positioned */}
-                      <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
-                        {item.palette.map((color, pIdx) => (
-                          <div
-                            key={pIdx}
-                            className={`
-            relative rounded-full border border-white/40 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23, 1, 0.32, 1)]
-            
-            /* Fixed oval shape */
-            h-10 w-full max-w-[30px] mx-auto
-
-            /* Default: show first 4 colors */
-            ${pIdx < 4
-                                ? 'opacity-100'
-                                : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
-                              }
-            
-            /* Interaction: on hover over each oval chip */
-            hover:scale-125 hover:z-50 hover:shadow-lg hover:border-white
-          `}
-                            style={{
-                              backgroundColor: color,
-                              /* Stagger chips appearing one by one */
-                              transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
-                            }}
-                          >
-                            {/* Glass Reflection effect */}
-                            <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Footer Hint: fixed position */}
-                      <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
-                        <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
-                        <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
-                          24 Shades Palette
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Section */}
                   <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-300 transform translate-y-6 group-hover:translate-y-0">
-                    <p className="text-[12px] font-medium leading-relaxed text-gray-600 mb-5 max-w-[280px]">
-                      {item.desc}
-                    </p>
-
-                    <button className={`flex items-center gap-2 font-black text-[9px] uppercase tracking-[0.15em] py-3 px-6 rounded-full bg-white shadow-sm hover:shadow-md transition-all ${item.textColor}`}>
-                      Details
-                      <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-                    </button>
+                    <p className="text-xs font-[300] text-[#555] leading-relaxed mb-4 max-w-[280px]">{item.desc}</p>
+                    <div className="border border-[#1A1A1A] px-5 py-2 inline-block">
+                      <span className="text-[9px] tracking-[0.25em] uppercase text-[#1A1A1A] font-[500]">Shop Season →</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Background Highlight */}
-                <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-                  <div className={`absolute -bottom-10 left-1/2 -translate-x-1/2 w-[120%] h-1/3 bg-white opacity-30 blur-[60px] rounded-[100%] transform translate-y-32 group-hover:translate-y-0 transition-all duration-1000`} />
-                </div>
+                <div className="absolute inset-0 bg-[#FAF7F5] opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none" />
               </div>
             ))}
           </div>
@@ -389,285 +406,370 @@ const CosmeticStore = () => {
       </section>
 
       {/* --- SECTION 2: HERO & SEARCH --- */}
-      <div className="pt-24 pb-16 px-8 bg-[#FFF9F5] rounded-b-[4rem]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-          <div>
-            <span className="bg-white px-4 py-1.5 rounded-full text-[10px] font-bold text-[#D23669] uppercase tracking-widest border border-orange-50">
-              {selectedSeason === 'All' ? 'Every Season' : `Specially for ${selectedSeason}`}
-            </span>
-            <h1 className="text-5xl md:text-7xl font-black text-gray-800 mt-6 leading-none tracking-tighter uppercase">
-              AURA <span className="text-[#D23669]">BOUTIQUE</span>
-            </h1>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              {['All', 'Spring', 'Summer', 'Autumn', 'Winter'].map((season) => (
-                <button
-                  key={season}
-                  onClick={() => handleSelectSeason(season)}
-                  className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${selectedSeason === season ? 'bg-[#D23669] text-white border-[#D23669] shadow-lg' : 'bg-white text-gray-500 border-[#EEDDE4] hover:text-[#D23669] hover:border-[#D23669]'}`}
-                >
-                  {season}
-                </button>
-              ))}
+      <section className="py-16 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="border-t border-[#E8E0DC] pt-10 mb-10 flex flex-wrap items-end justify-between gap-6" data-aos="fade-up">
+            <div>
+              <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">
+                {selectedSeason === 'All' ? 'All Seasons' : `Specially for ${selectedSeason}`}
+              </p>
+              <h1 className="text-[3rem] md:text-[5rem] font-[200] leading-[1] uppercase text-[#1A1A1A]">
+                Aura<br /><span className="font-[700] italic">Boutique</span>
+              </h1>
             </div>
-          </div>
-          <div className="flex w-full flex-col gap-4 md:w-80">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/80 backdrop-blur-md pl-12 pr-6 py-4 rounded-full border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D23669] text-sm font-bold"
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            </div>
-            <div className="relative">
-              <select
+
+            <div className="flex flex-col gap-3 w-full md:w-72">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full border border-[#E8E0DC] px-4 py-3 text-[10px] font-[400] tracking-[0.1em] placeholder:text-[#aaa] focus:outline-none focus:border-[#1A1A1A] transition-all pr-10"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888]" size={14} />
+              </div>
+              {/* <select
                 value={sortBy}
                 onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-                className="w-full bg-white/80 backdrop-blur-md px-6 py-4 rounded-full border border-white shadow-sm text-[11px] font-black uppercase tracking-widest text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D23669]"
+                className="border border-[#E8E0DC] px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-[#888] focus:outline-none focus:border-[#1A1A1A] transition-all bg-white"
               >
                 <option>Best Seller</option>
                 <option>Price: Low to High</option>
                 <option>Price: High to Low</option>
                 <option>Rating</option>
-              </select>
+              </select> */}
             </div>
           </div>
+
+          <div className="flex flex-wrap gap-2 mb-2">
+            {['All', 'Spring', 'Summer', 'Autumn', 'Winter'].map((season) => (
+              <button
+                key={season}
+                onClick={() => handleSelectSeason(season)}
+                className={`px-5 py-2 text-[9px] font-[500] uppercase tracking-[0.25em] border transition-all ${selectedSeason === season ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]' : 'border-[#E8E0DC] text-[#888] hover:border-[#1A1A1A] hover:text-[#1A1A1A]'}`}
+              >
+                {season}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* --- SECTION 3: PRODUCTS & PAGINATION --- */}
-      <div ref={productsSectionRef} className="max-w-7xl mx-auto px-6 -mt-10">
-        <div className="flex bg-white/90 backdrop-blur-xl p-2 rounded-full shadow-xl border border-white mb-16 overflow-x-auto no-scrollbar">
-          {['All', 'Blush', 'Eye', 'Lip', 'Cushion'].map((cat) => (
-            <button key={cat} onClick={() => { setActiveCategory(cat); setCurrentPage(1); }} className={`px-10 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${activeCategory === cat ? 'bg-[#D23669] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>{cat}</button>
-          ))}
-        </div>
+      <section ref={productsSectionRef} className="pb-20 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="flex border-b border-[#E8E0DC] mb-12 overflow-x-auto no-scrollbar">
+            {['All', 'Blush', 'Eye', 'Lip', 'Cushion'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
+                className={`px-6 py-4 text-[10px] font-[500] uppercase tracking-[0.25em] shrink-0 transition-all border-b-2 -mb-px ${activeCategory === cat ? 'border-[#1A1A1A] text-[#1A1A1A]' : 'border-transparent text-[#888] hover:text-[#1A1A1A]'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
 
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20"><Loader2 className="animate-spin text-[#D23669]" size={40} /></div>
-        ) : error ? (
-          <div className="rounded-[2.5rem] bg-white p-12 text-center shadow-lg border border-gray-50">
-            <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-6">{error}</p>
-            <button onClick={resetFilters} className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest">
-              Reset Filters
-            </button>
-          </div>
-        ) : currentItems.length === 0 ? (
-          <div className="rounded-[2.5rem] bg-white p-12 text-center shadow-lg border border-gray-50">
-            <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-6">No products match your filters</p>
-            <button onClick={resetFilters} className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest">
-              Reset Filters
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {currentItems.map((item) => (
-                <div key={item.product_id} data-aos="fade-up" className="group cursor-pointer" onClick={() => openPurchaseModal(item)}>
-                  <div className="bg-white rounded-[3rem] p-4 shadow-sm border border-gray-50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 relative h-full flex flex-col">
-                    <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden mb-6 bg-[#FAF9F8]">
-                      <img src={getFullImageUrl(item.image_url)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} onError={(e) => { e.target.onerror = null; e.target.src = '/assets/home2.webp'; }} />
-                      <button onClick={(e) => handleToggleProductLike(e, item)} className="absolute top-6 right-6 z-20 p-3 rounded-full bg-white/80 backdrop-blur-md shadow-lg transition-all active:scale-90 hover:scale-110">
-                        <Heart size={18} className={likedIds.includes(`product_${item.product_id}`) ? 'fill-red-500 text-red-500' : 'text-gray-400'} />
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-8 h-8 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : currentItems.length === 0 ? (
+            <div className="border border-[#E8E0DC] p-12 text-center">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#888] font-[300] mb-6">No products match your filters</p>
+              <button onClick={resetFilters} className="bg-[#1A1A1A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] transition-all">
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-px bg-[#E8E0DC]">
+                {currentItems.map((item) => (
+                  <div
+                    key={item.product_id}
+                    data-aos="fade-up"
+                    className="group cursor-pointer bg-white"
+                    onClick={() => openPurchaseModal(item)}
+                  >
+                    <div className="relative aspect-[3/4] overflow-hidden bg-[#F7F4F2]">
+                      {getFullImageUrl(item.image_url) ? (
+                        <img
+                          src={getFullImageUrl(item.image_url)}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          alt={item.name}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      ) : null}
+                      <button
+                        onClick={(e) => handleToggleProductLike(e, item)}
+                        className="absolute top-4 right-4 z-20 p-2 bg-white/80 transition-all"
+                      >
+                        <Heart size={14} className={likedIds.includes(`product_${item.product_id}`) ? 'fill-red-500 text-red-500' : 'text-[#888]'} />
                       </button>
-                      {item.personal_color_tags?.toLowerCase().includes(selectedSeason.toLowerCase()) && (
-                        <div className="absolute top-6 left-6 z-10 bg-[#D23669] text-white text-[8px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 uppercase animate-pulse">
-                          <Sparkles size={10} /> Perfect Match
+                      {selectedSeason !== 'All' && item.personal_color_tags?.toLowerCase().includes(selectedSeason.toLowerCase()) && (
+                        <div className="absolute top-4 left-4 bg-[#D23669] text-white text-[8px] font-[600] px-2 py-1 uppercase tracking-[0.15em]">
+                          Match
                         </div>
                       )}
                       {getBadge(item) && (
-                        <div className={`absolute bottom-6 left-6 z-10 ${getBadge(item).color} text-white text-[8px] font-black px-3 py-1.5 rounded-full shadow-lg uppercase`}>
+                        <div className="absolute bottom-4 left-4 bg-[#1A1A1A] text-white text-[8px] font-[500] px-2 py-1 uppercase tracking-[0.15em]">
                           {getBadge(item).label}
                         </div>
                       )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
                     </div>
-                    <div className="px-2 flex-grow">
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="text-[9px] font-black text-[#D23669] uppercase tracking-widest">{item.category}</p>
-                        <div className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400" /><span className="text-[10px] font-bold text-gray-400">{item.rating}</span></div>
-                      </div>
-                      <h3 className="text-md font-black text-gray-800 leading-tight mb-4 line-clamp-2">{item.name}</h3>
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
-                        <span className="text-lg font-black text-gray-800">฿{parseFloat(item.price).toLocaleString()}</span>
-                        <div className="bg-black text-white p-2.5 rounded-full group-hover:bg-[#D23669] transition-all"><ShoppingBag size={16} /></div>
+
+                    <div className="p-4 border-t border-[#E8E0DC]">
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">{item.category}</p>
+                      <h3 className="text-xs font-[500] text-[#1A1A1A] leading-snug mb-3 line-clamp-2 uppercase tracking-[0.05em]">{item.name}</h3>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-[600] text-[#1A1A1A]">฿{parseFloat(item.price).toLocaleString()}</span>
+                        <div className="flex items-center gap-1">
+                          <Star size={10} className="fill-[#C5A358] text-[#C5A358]" />
+                          <span className="text-[10px] font-[300] text-[#888]">{item.rating}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* --- PAGINATION (1 2 3) --- */}
-            {totalPages > 1 && (
-              <div className="mt-20 flex justify-center items-center gap-3">
-                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-3 bg-white rounded-full shadow-sm hover:bg-gray-100 disabled:opacity-30" disabled={currentPage === 1}>
-                  <ChevronLeft size={20} />
-                </button>
-                <div className="flex gap-2">
+              {totalPages > 1 && (
+                <div className="mt-16 flex justify-center items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="w-10 h-10 border border-[#E8E0DC] text-[#888] text-xs hover:border-[#1A1A1A] hover:text-[#1A1A1A] disabled:opacity-30 transition-all"
+                  >
+                    ‹
+                  </button>
                   {[...Array(totalPages)].map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setCurrentPage(i + 1)}
-                      className={`w-12 h-12 rounded-full font-black text-xs transition-all ${currentPage === i + 1 ? 'bg-black text-white shadow-xl scale-110' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                      className={`w-10 h-10 text-[10px] font-[500] transition-all border ${currentPage === i + 1 ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]' : 'border-[#E8E0DC] text-[#888] hover:border-[#1A1A1A] hover:text-[#1A1A1A]'}`}
                     >
                       {i + 1}
                     </button>
                   ))}
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="w-10 h-10 border border-[#E8E0DC] text-[#888] text-xs hover:border-[#1A1A1A] hover:text-[#1A1A1A] disabled:opacity-30 transition-all"
+                  >
+                    ›
+                  </button>
                 </div>
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-3 bg-white rounded-full shadow-sm hover:bg-gray-100 disabled:opacity-30" disabled={currentPage === totalPages}>
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
 
-      {/* --- PURCHASE MODAL (Enhanced) --- */}
+      {/* --- PRODUCT MODAL --- */}
       {isModalOpen && selectedProduct && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={closeModal}></div>
-          <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[4rem] shadow-2xl overflow-y-auto no-scrollbar animate-in zoom-in-95 duration-300">
-            <button onClick={closeModal} className="absolute top-8 right-8 z-50 p-2 bg-gray-100 rounded-full hover:bg-black hover:text-white transition-all"><X size={20} /></button>
+          <div className="absolute inset-0 bg-black/60" onClick={closeModal} />
+          <div className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar">
+            <button
+              onClick={closeModal}
+              className="absolute top-5 right-5 z-50 w-9 h-9 border border-[#E8E0DC] flex items-center justify-center text-[#888] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all"
+            >
+              <X size={16} />
+            </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-              {/* Left: Image + Specs */}
-              <div className="p-8 lg:p-10 flex flex-col gap-6">
-                {/* Image */}
-                <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-xl border border-[#EEDDE4] bg-[#FFF5F8]">
-                  <img src={getFullImageUrl(selectedProduct.image_url)} className="w-full h-full object-cover" alt="" onError={(e) => { e.target.onerror=null; e.target.src='/assets/home2.webp'; }} />
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+              {/* LEFT: image + try-on */}
+              <div className="p-8 border-b lg:border-b-0 lg:border-r border-[#E8E0DC] flex flex-col gap-6">
+                <div className="relative aspect-square overflow-hidden bg-[#F7F4F2]">
+                  <img
+                    src={getFullImageUrl(selectedProduct.image_url)}
+                    className="w-full h-full object-cover"
+                    alt=""
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
                   {selectedProduct.is_official_store == 1 && (
-                    <div className="absolute top-4 left-4 bg-[#D23669] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
-                      Official Store
+                    <div className="absolute top-4 left-4 bg-[#1A1A1A] text-white text-[8px] font-[600] uppercase tracking-[0.15em] px-3 py-1">
+                      Official
                     </div>
                   )}
-                  <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                      <span className="text-[11px] font-black text-gray-800">{parseFloat(selectedProduct.rating).toFixed(1)}</span>
-                    </div>
+                  <div className="absolute bottom-4 right-4 bg-white px-3 py-1.5 flex items-center gap-1.5">
+                    <Star size={10} className="text-[#C5A358] fill-[#C5A358]" />
+                    <span className="text-[10px] font-[500] text-[#1A1A1A]">{parseFloat(selectedProduct.rating).toFixed(1)}</span>
                   </div>
                 </div>
 
-                {/* Product Specs Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  {selectedProduct.finish_type && (
-                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Finish</p>
-                      <p className="text-[11px] font-black uppercase text-[#3A3437] capitalize">{selectedProduct.finish_type}</p>
+                <div className="border-t border-[#E8E0DC] pt-5">
+                  <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-4">Virtual Try-On</p>
+                  {!getUserFacePhoto() ? (
+                    <p className="text-xs font-[300] text-[#555]">
+                      <Link to="/analysis" className="text-[#D23669] underline">Analyze your face</Link> first to try on products.
+                    </p>
+                  ) : tryOnStatus === 'idle' || tryOnStatus === 'error' ? (
+                    <div>
+                      <button
+                        onClick={handleTryOn}
+                        className="w-full bg-[#1A1A1A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] transition-all"
+                      >
+                        Try On My Face
+                      </button>
+                      {tryOnError && <p className="mt-2 text-xs text-[#D23669]">{tryOnError}</p>}
                     </div>
-                  )}
-                  {selectedProduct.coverage_level && (
-                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Coverage</p>
-                      <p className="text-[11px] font-black uppercase text-[#3A3437] capitalize">{selectedProduct.coverage_level}</p>
+                  ) : tryOnStatus === 'loading' ? (
+                    <div className="flex items-center gap-3 text-xs font-[300] text-[#555]">
+                      <div className="w-4 h-4 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
+                      AI is applying makeup...
                     </div>
-                  )}
-                  {selectedProduct.suitable_for_skin_type && (
-                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Skin Type</p>
-                      <p className="text-[11px] font-black uppercase text-[#3A3437] capitalize">{selectedProduct.suitable_for_skin_type}</p>
+                  ) : tryOnStatus === 'done' && tryOnImage ? (
+                    <div>
+                      <div className="grid grid-cols-2 gap-px bg-[#E8E0DC] mb-3">
+                        <div className="bg-white">
+                          <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] p-2">Before</p>
+                          <img src={getUserFacePhoto()} alt="Before" className="w-full aspect-square object-cover" />
+                        </div>
+                        <div className="bg-white">
+                          <p className="text-[9px] tracking-[0.3em] uppercase text-[#D23669] font-[300] p-2">After</p>
+                          <img src={tryOnImage} alt="After" className="w-full aspect-square object-cover" />
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleTryOn}
+                        className="w-full border border-[#E8E0DC] text-[#888] py-2 text-[9px] font-[500] uppercase tracking-[0.2em] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all"
+                      >
+                        Try Again
+                      </button>
                     </div>
-                  )}
-                  {selectedProduct.suitable_for_color && (
-                    <div className="bg-[#FFF5F8] rounded-2xl p-4 border border-[#EEDDE4]">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-[#D23669] mb-1">Undertone</p>
-                      <p className="text-[11px] font-black uppercase text-[#3A3437]">{selectedProduct.suitable_for_color}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Stock Status */}
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${selectedProduct.stock > 10 ? 'bg-green-400' : selectedProduct.stock > 0 ? 'bg-yellow-400' : 'bg-red-400'}`} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    {selectedProduct.stock > 10 ? 'In Stock' : selectedProduct.stock > 0 ? `Only ${selectedProduct.stock} left` : 'Out of Stock'}
-                  </span>
+                  ) : null}
                 </div>
               </div>
 
-              {/* Right: Info + Purchase */}
-              <div className="p-8 lg:p-10 flex flex-col border-t lg:border-t-0 lg:border-l border-[#EEDDE4]">
-                {/* Header */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[9px] font-black text-[#D23669] uppercase tracking-[0.3em] bg-[#FFF5F8] px-3 py-1 rounded-full border border-[#EEDDE4]">{selectedProduct.category}</span>
-                    {selectedProduct.seasonTags && selectedProduct.seasonTags.split(',').map(tag => tag.trim()).filter(Boolean).map(tag => (
-                      <span key={tag} className="text-[9px] font-black uppercase tracking-widest bg-[#F5F3FF] text-purple-600 px-3 py-1 rounded-full border border-purple-100">{tag}</span>
-                    ))}
+              {/* RIGHT: details + buy */}
+              <div className="p-8 flex flex-col gap-6">
+                <div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className="text-[9px] font-[500] uppercase tracking-[0.2em] text-[#888] border border-[#E8E0DC] px-3 py-1">{selectedProduct.category}</span>
                   </div>
-                  <h3 className="text-2xl font-[900] text-[#3A3437] leading-tight tracking-tighter uppercase mb-1">{selectedProduct.name}</h3>
+                  <h3 className="text-xl font-[600] text-[#1A1A1A] leading-tight uppercase mb-2">{selectedProduct.name}</h3>
                   {selectedProduct.description && (
-                    <p className="text-[12px] text-gray-500 leading-relaxed mt-2">{selectedProduct.description}</p>
+                    <p className="text-xs font-[300] text-[#555] leading-relaxed">{selectedProduct.description}</p>
                   )}
                 </div>
 
-                {/* Price */}
-                <div className="flex items-baseline gap-2 mb-6 pb-6 border-b border-[#F5EEF0]">
-                  <span className="text-4xl font-[900] text-[#3A3437]">฿{parseFloat(selectedProduct.price).toLocaleString()}</span>
+                <div className="border-t border-[#E8E0DC] pt-5">
+                  <span className="text-3xl font-[200] text-[#1A1A1A]">฿{parseFloat(selectedProduct.price).toLocaleString()}</span>
                 </div>
 
-                {/* Personal Color Match */}
                 {selectedProduct.personal_color_tags && (
-                  <div className="mb-6 p-4 bg-[#FFF5F8] rounded-2xl border border-[#EEDDE4]">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#D23669] mb-2">Best for Personal Color</p>
+                  <div className="border border-[#E8E0DC] p-4">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Best for Season</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedProduct.personal_color_tags.split(',').map(tag => tag.trim()).filter(Boolean).map(tag => (
-                        <span key={tag} className={`text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${tag.toLowerCase() === selectedSeason.toLowerCase() ? 'bg-[#D23669] text-white' : 'bg-white text-gray-500 border border-[#EEDDE4]'}`}>{tag}</span>
+                        <span
+                          key={tag}
+                          className={`text-[9px] font-[500] uppercase tracking-[0.15em] px-3 py-1 border transition-all ${tag.toLowerCase() === selectedSeason.toLowerCase() ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]' : 'border-[#E8E0DC] text-[#888]'}`}
+                        >
+                          {tag}
+                        </span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Shades */}
+                {(selectedProduct.finish_type || selectedProduct.coverage_level || selectedProduct.suitable_for_skin_type || selectedProduct.stock !== undefined) && (
+                  <div className="grid grid-cols-2 gap-px bg-[#E8E0DC]">
+                    {selectedProduct.finish_type && (
+                      <div className="bg-white p-4">
+                        <p className="text-[8px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">Finish</p>
+                        <p className="text-[11px] font-[500] uppercase text-[#1A1A1A]">{selectedProduct.finish_type}</p>
+                      </div>
+                    )}
+                    {selectedProduct.coverage_level && (
+                      <div className="bg-white p-4">
+                        <p className="text-[8px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">Coverage</p>
+                        <p className="text-[11px] font-[500] uppercase text-[#1A1A1A]">{selectedProduct.coverage_level}</p>
+                      </div>
+                    )}
+                    {selectedProduct.suitable_for_skin_type && (
+                      <div className="bg-white p-4">
+                        <p className="text-[8px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">Skin Type</p>
+                        <p className="text-[11px] font-[500] uppercase text-[#1A1A1A]">{selectedProduct.suitable_for_skin_type}</p>
+                      </div>
+                    )}
+                    {selectedProduct.stock !== undefined && (
+                      <div className="bg-white p-4">
+                        <p className="text-[8px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">Stock</p>
+                        <p className="text-[11px] font-[500] uppercase text-[#1A1A1A]">{selectedProduct.stock > 10 ? 'In Stock' : selectedProduct.stock > 0 ? `${selectedProduct.stock} left` : 'Sold Out'}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {selectedProduct.shades && selectedProduct.shades.trim() && (
-                  <div className="mb-6">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Available Shades</p>
+                  <div>
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Shades</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedProduct.shades.split(',').map(s => s.trim()).filter(Boolean).map(shade => (
-                        <span key={shade} className="text-[9px] font-black uppercase px-3 py-1.5 rounded-full bg-white border border-[#EEDDE4] text-gray-600 hover:border-[#D23669] hover:text-[#D23669] cursor-pointer transition-colors">{shade}</span>
+                        <span key={shade} className="text-[9px] font-[400] uppercase px-3 py-1 border border-[#E8E0DC] text-[#555] hover:border-[#1A1A1A] hover:text-[#1A1A1A] cursor-pointer transition-all">{shade}</span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Buy Buttons */}
-                <div className="space-y-3 mt-auto">
-                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Available at</p>
-                  <a href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer"
-                    className="flex items-center justify-center w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#D23669] transition-all">
+                <div className="border-t border-[#E8E0DC] pt-5 space-y-2">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Available at</p>
+                  <a
+                    href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center w-full bg-[#1A1A1A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#010101] transition-all"
+                  >
                     TikTok Shop
                   </a>
-                  <a href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer"
-                    className="flex items-center justify-center w-full bg-[#EE4D2D] text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:opacity-90 transition-all">
-                    Shopee Mall
+                  <a
+                    href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center w-full bg-[#EE4D2D] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D94429] transition-all"
+                  >
+                    Shopee
                   </a>
-                  <a href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name)}`} target="_blank" rel="noreferrer"
-                    className="flex items-center justify-center w-full bg-[#0F0E8E] text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:opacity-90 transition-all">
-                    Lazada Official
+                  <a
+                    href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center w-full bg-[#0F0E8E] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#0D0C7A] transition-all"
+                  >
+                    Lazada
                   </a>
                 </div>
 
-                {/* Related Products */}
                 {relatedProducts.length > 0 && (
-                  <div className="mt-8 pt-6 border-t border-[#F5EEF0]">
-                    <h5 className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">
-                      {userSeason ? `Best for ${userSeason} Aura` : "More for your Aura"}
-                    </h5>
-                    <div className="space-y-3">
+                  <div className="border-t border-[#E8E0DC] pt-5">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-4">
+                      {userSeason ? `Complete Your ${userSeason} Look` : 'Complete the Look'}
+                    </p>
+                    <div className="divide-y divide-[#E8E0DC]">
                       {relatedProducts.map(rel => (
-                        <div key={rel.product_id} onClick={() => setSelectedProduct(rel)}
-                          className="flex items-center gap-4 p-3 rounded-2xl hover:bg-[#FFF5F8] cursor-pointer transition-all border border-transparent hover:border-[#EEDDE4]">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FFF5F8] shrink-0 border border-[#EEDDE4]">
-                            <img src={getFullImageUrl(rel.image_url)} className="w-full h-full object-cover" alt="" onError={(e) => { e.target.onerror=null; e.target.src='/assets/home2.webp'; }} />
+                        <div
+                          key={rel.product_id}
+                          onClick={() => setSelectedProduct(rel)}
+                          className="flex items-center gap-4 py-4 cursor-pointer group"
+                        >
+                          <div className="w-12 h-12 overflow-hidden bg-[#F7F4F2] shrink-0">
+                            <img
+                              src={getFullImageUrl(rel.image_url)}
+                              className="w-full h-full object-cover group-hover:scale-[1.04] transition"
+                              alt=""
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
                           </div>
                           <div className="flex-grow min-w-0">
-                            <p className="text-[11px] font-black text-[#3A3437] line-clamp-1 uppercase">{rel.name}</p>
-                            <p className="text-[10px] font-bold text-[#D23669]">฿{parseFloat(rel.price).toLocaleString()}</p>
+                            <p className="text-[10px] font-[500] text-[#1A1A1A] line-clamp-1 uppercase">{rel.name}</p>
+                            <p className="text-[9px] text-[#888] font-[300]">{rel._pairReason}</p>
+                            <p className="text-[10px] font-[500] text-[#D23669]">฿{parseFloat(rel.price).toLocaleString()}</p>
                           </div>
-                          <ArrowRight size={14} className="text-gray-300 shrink-0" />
+                          <ArrowRight size={12} className="text-[#888] shrink-0" />
                         </div>
                       ))}
                     </div>
@@ -678,45 +780,6 @@ const CosmeticStore = () => {
           </div>
         </div>
       )}
-
-      {/* --- FOOTER --- */}
-      <footer className="bg-white border-t border-gray-100 mt-24 pt-20 pb-10">
-        <div className="max-w-[1400px] mx-auto px-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-            <div className="col-span-1 md:col-span-2 space-y-6">
-              <h3 className="text-2xl font-[900] tracking-tighter uppercase">Aura<span className="text-[#D23669]">Match</span></h3>
-              <p className="text-[11px] font-bold text-gray-400 uppercase leading-loose max-w-sm">
-                Leading the intersection of biometric technology and premium beauty aesthetics.
-                Your personalized dose of confidence, delivered daily.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest">Navigation</h4>
-              <ul className="space-y-2">
-                {navItems.map((item, i) => (
-                  <li key={i}>
-                    <Link to={item.to} className="text-[10px] font-bold text-gray-400 hover:text-[#D23669] transition-colors uppercase">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest">Connect</h4>
-              <div className="flex gap-4">
-                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">INSTAGRAM</span>
-                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">TIKTOK</span>
-              </div>
-            </div>
-          </div>
-          <div className="text-center pt-10 border-t border-gray-50">
-            <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em]">
-              © 2026 AURAMATCH BIOMETRIC BEAUTY LAB. ALL RIGHTS RESERVED.
-            </p>
-          </div>
-        </div>
-      </footer>
 
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
     </div>

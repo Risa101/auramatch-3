@@ -1,13 +1,10 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate, Link, NavLink } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { TUTORIAL_RESOURCES } from "../data/tutorialResources";
-import PersonalColorTikTokCard from "../components/PersonalColorTikTokCard";
 import TikTokModal from "../components/TikTokModal";
-import { Star, ArrowRight, Sparkles, PlayCircle, Heart, ShoppingBag, Menu, X } from "lucide-react";
+import { Star, ArrowRight, Heart, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import i18n from "../lib/i18n";
 
 // ✅ API Connections
 import {
@@ -15,18 +12,15 @@ import {
   toggleFavoriteApi
 } from "../callapi/call_api_user";
 
-const BASE_PATH = "/";
-
 export default function AuramatchDailyDose() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  useTranslation();
   const [bestSellers, setBestSellers] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [makeupLooks, setMakeupLooks] = useState([]);
   const [activeColor, setActiveColor] = useState("Spring");
+  const [faceGender, setFaceGender] = useState("female");
   const [likedProducts, setLikedProducts] = useState({});
   const [selectedLook, setSelectedLook] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -39,11 +33,13 @@ export default function AuramatchDailyDose() {
     { label: "Analysis", to: "/analysis" },
     { label: "Shop", to: "/cosmetics" }
   ];
-  const apiBase = (() => { const h = typeof window !== "undefined" ? window.location.hostname : ""; return ["localhost","127.0.0.1"].includes(h) ? "" : (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""); })();
+  const apiBase = (() => { const h = typeof window !== "undefined" ? window.location.hostname : ""; return ["localhost", "127.0.0.1"].includes(h) ? "" : (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""); })();
   const isLocalhostHost =
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const goAdvisor = () => navigate("/advisor");
+
+  const goAnalysis = () => navigate("/analysis");
 
   const buildApiImage = (path) => {
     if (!path) return "/assets/home2.webp";
@@ -64,14 +60,6 @@ export default function AuramatchDailyDose() {
   };
 
 
-  const horizontalPicks = [
-    { title: '', tag: '', tone: '', img: '/assets/ad11.JPG' },
-    { title: '', tag: '', tone: '', img: '/assets/ad7.JPG' },
-    { title: '', tag: '', tone: '', img: '/assets/ad2.jpeg' },
-    { title: '', tag: '', tone: '', img: '/assets/ad4.JPG' },
-    { title: '', tag: '', tone: '', img: '/assets/ad8.JPG' },
-    { title: '', tag: '', tone: '', img: '/assets/home2.webp' },
-  ];
 
   const fashionBySeason = [
     {
@@ -283,268 +271,237 @@ export default function AuramatchDailyDose() {
   }, [fetchData]);
 
   if (isLoading) return (
-    <div className="h-screen bg-[#F7F7F8] flex items-center justify-center">
-      <div className="relative flex flex-col items-center gap-4">
-        <div className="w-16 h-16 border-4 border-[#D23669]/20 border-t-[#D23669] rounded-full animate-spin"></div>
-        <span className="text-[10px] tracking-[0.28em] uppercase text-[#D23669] font-black">Preparing Your Dose...</span>
+    <div className="h-screen bg-white flex items-center justify-center">
+      <div className="flex flex-col items-center gap-5">
+        <div className="w-8 h-8 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Loading</span>
       </div>
     </div>
   );
 
   return (
-    <div className="bg-[#FCF8F8] text-[#3A3437] font-sans selection:bg-[#FFDCE6] selection:text-[#C85A7D] antialiased">
-
+    
+    <div className="bg-[#FAF7F5] text-[#1A1A1A] font-sans selection:bg-[#FFDCE6] selection:text-[#C85A7D] antialiased pt-[60px] lg:pt-[180px]">
       {/* --- 1. HERO --- */}
-      <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#F6E9EE]">
-        <div className="absolute inset-0 z-0">
-          <img src={buildApiImage("/assets/home2.webp")} alt="" className="h-full w-full object-cover opacity-100" />
-          <div
-            className="absolute inset-0 opacity-100"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.18) 28%, rgba(255,255,255,0.0) 58%)",
-            }}
-          />
-        </div>
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
-          <div data-aos="fade-right" className="max-w-xl space-y-6">
-            <div className="inline-flex items-center gap-2 bg-white/25 px-3 py-1 rounded-full border border-white/40 backdrop-blur-sm">
-              <Sparkles size={10} className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,.2)]" />
-              <span className="text-[8px] tracking-[0.2em] uppercase text-white font-black drop-shadow-[0_1px_2px_rgba(0,0,0,.2)]">Innovation 2026</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-white uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,.24)]">
-              The <span className="text-[#FF85A2]">Aura</span> <br /> Match <span className="font-light italic text-white">Dose</span>
-            </h1>
-            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.15em] text-white max-w-sm leading-relaxed drop-shadow-[0_1px_6px_rgba(0,0,0,.22)]">
-              The highly-absorbable, biometric-based, and enjoyable solution to your perfect beauty match.
-            </p>
-            <div className="pt-4">
-              <button onClick={() => navigate("/analysis")} className="bg-[#D23669] text-white px-8 py-4 rounded-full text-[9px] font-[900] uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_24px_rgba(210,54,105,.35)]">
-                Begin Analysis
-              </button>
-            </div>
-          </div>
+      <header className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+        <img src="/laglace/homee.webp" alt="" fetchpriority="high" decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 opacity-0"
+          onLoad={(e) => e.currentTarget.classList.replace("opacity-0", "opacity-100")} />
+        {/* Center vignette — darkens around center-bottom so text stays readable */}
+        <div className="absolute inset-0 bg-black/40" />
+
+        {/* Centered text block */}
+        <div className="relative z-10 flex flex-col items-center text-center px-6" data-aos="fade-up">
+
+          {/* Eyebrow */}
+          <p className="text-[10px] tracking-[0.5em] uppercase text-white font-[400] mb-6 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+            AuraMatch &nbsp;·&nbsp; 2026
+          </p>
+
+          {/* Main heading */}
+          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[200] leading-[0.88] tracking-[0.08em] text-white uppercase mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            Your
+          </h1>
+          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[800] leading-[0.88] tracking-[-0.01em] text-white uppercase italic mb-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            Aura Match
+          </h1>
+
+          {/* Thin divider */}
+          <div className="w-12 h-px bg-white/50 mb-6" />
+
+          {/* Subtitle */}
+          <p className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-white font-[300] max-w-xs leading-loose mb-10 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+            Biometric beauty analysis.<br />Personalized for your skin, season &amp; soul.
+          </p>
+
+          {/* CTA */}
+          <button onClick={() => navigate("/analysis")}
+            className="bg-white text-[#1A1A1A] px-10 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] border border-white hover:bg-[#EBC2C8] hover:text-black hover:border-black transition-all duration-300">
+            Begin Analysis
+          </button>
         </div>
       </header>
 
-      {/* --- 2. MARQUEE --- */}
-      <div className="bg-[#E88DA6] py-3 overflow-hidden border-y border-[#EAC4D0] relative z-20">
+      {/* --- MARQUEE DIVIDER --- */}
+      {/* <div className="overflow-hidden border-y border-[#E8E0DC] py-3.5">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...Array(10)].map((_, i) => (
-            <span key={i} className="text-white/95 text-[9px] font-[800] tracking-[0.32em] uppercase mx-10">
-              • DISCOVER YOUR SHAPE • ANALYSE YOUR COLOR • BOOST YOUR AURA •
-            </span>
+            <div key={i} className="flex items-center gap-10 px-10">
+              <span className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Discover Your Shape</span>
+              <span className="text-[#D0C8C4] select-none">—</span>
+              <span className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Analyse Your Color</span>
+              <span className="text-[#D0C8C4] select-none">—</span>
+              <span className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Boost Your Aura</span>
+              <span className="text-[#D0C8C4] select-none">—</span>
+            </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
-      {/* --- 3. FACE SHAPE LIBRARY --- */}
+      {/* --- FACE SHAPE LIBRARY --- */}
       <section
-        className="py-28 bg-[#FFFDFD] overflow-hidden cursor-pointer"
-        role="link"
-        tabIndex={0}
-        onClick={goAdvisor}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            goAdvisor();
-          }
-        }}
+        className="py-20 bg-white overflow-hidden cursor-pointer"
+        role="link" tabIndex={0} onClick={goAdvisor}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goAdvisor(); } }}
       >
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-            <div data-aos="fade-right" className="space-y-4">
-              <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669]">Face Geometry</span>
-              {/* Scaled to Match Hero */}
-              <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
-                Which <span className="text-[#FF85A2]">Shape</span> <br /> Are You?
+        {/* Header */}
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12 mb-10" data-aos="fade-up">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Face Geometry</p>
+              <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
+                Which Shape<br /><span className="font-[700] italic">Are You?</span>
               </h2>
             </div>
-            <p data-aos="fade-left" className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em] max-w-xs leading-loose text-left md:text-right pb-2">
-              Every face shape has its own unique charm. Discover yours through AI analysis.
-            </p>
+            {/* Gender toggle */}
+            <div className="flex gap-px bg-[#E8E0DC]" onClick={(e) => e.stopPropagation()}>
+              {["female", "male"].map((g) => (
+                <button key={g} onClick={(e) => { e.stopPropagation(); setFaceGender(g); }}
+                  className={`px-5 py-2 text-[9px] font-[600] uppercase tracking-[0.3em] transition-all duration-200 ${faceGender === g ? "bg-[#1A1A1A] text-white" : "bg-white text-[#888] hover:text-[#1A1A1A]"}`}>
+                  {g === "female" ? "Female" : "Male"}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        </div>
+
+        {/* Full-bleed horizontal strip — no side padding, images flush to edges */}
+        <div className="overflow-x-auto snap-x snap-mandatory no-scrollbar md:overflow-visible">
+          <div className="flex md:grid md:grid-cols-6 gap-2 min-w-max md:min-w-0 px-6 md:px-12">
             {[
-              { label: "Oval", desc: "Oval Face", color: "bg-[#FFEBF0]" },
-              { label: "Round", desc: "Round Face", color: "bg-[#E0F2FE]" },
-              { label: "Square", desc: "Square Face", color: "bg-[#F3F4F6]" },
-              { label: "Heart", desc: "Heart Shape", color: "bg-[#FFF4E0]" },
-              { label: "Diamond", desc: "Diamond Shape", color: "bg-[#E8D9F2]" },
-              { label: "Long", desc: "Long Face", color: "bg-[#E2F3E7]" }
-            ].map((shape, i) => (
-              <div key={shape.label} data-aos="zoom-in" data-aos-delay={i * 100} className={`group ${shape.color} p-8 rounded-3xl border border-[#ECDDE2] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(226,110,147,0.12)] cursor-pointer`}>
-                <div className="w-12 h-16 mb-4 border border-[#D23669]/20 rounded-full flex items-center justify-center group-hover:border-[#D23669] transition-colors">
-                  <span className="text-[10px] font-black text-[#D23669] opacity-40 group-hover:opacity-100 uppercase">{shape.label[0]}</span>
+              { label: "Oval",     female: "/assets/oval.jpg.webp",     male: "/assets/ovalmen.jpg" },
+              { label: "Round",    female: "/assets/round.jpg.webp",    male: "/assets/roundmen.jpg" },
+              { label: "Square",   female: "/assets/square.jpg.webp",   male: "/assets/squaremen.jpg" },
+              { label: "Heart",    female: "/assets/heart.jpg.webp",    male: "/assets/heart.jpg.webp" },
+              { label: "Diamond",  female: "/assets/diamond.jpg.webp",  male: "/assets/diamondmen.jpg" },
+              { label: "Triangle", female: "/assets/triangle.jpg.webp", male: "/assets/trainglemen.jpg" },
+            ].map((shape, i) => {
+              const img = faceGender === "male" ? shape.male : shape.female;
+              return (
+              <div key={shape.label}
+                data-aos="fade-up" data-aos-delay={i * 60}
+                className="group relative snap-center w-[44vw] md:w-auto shrink-0 cursor-pointer">
+
+                {/* Image — tall portrait */}
+                <div className="relative aspect-[3/5] overflow-hidden bg-[#F0EDEA]">
+                  <img src={img} alt={shape.label}
+                    className="w-full h-full object-cover object-center scale-[1.3] group-hover:scale-[1.38] transition-transform duration-700 ease-out" />
+                  {/* Dark overlay on hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors duration-400" />
+                  {/* Number tag */}
+                  <span className="absolute top-4 left-4 text-[9px] tracking-[0.35em] text-white/40 font-[300] group-hover:text-white/70 transition-colors duration-400">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  {/* Label overlay — slides up on hover */}
+                  <div className="absolute inset-x-0 bottom-0 p-5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400">
+                    <p className="text-white text-[11px] font-[500] uppercase tracking-[0.25em]">{shape.label}</p>
+                  </div>
                 </div>
-                <h5 className="text-[11px] font-[900] text-[#4A4A4A] uppercase tracking-tighter mb-1">{shape.label}</h5>
-                <p className="text-[8px] font-black text-[#D23669]/40 uppercase tracking-widest">{shape.desc}</p>
+
+                {/* Label below image — always visible */}
+                <div className="py-3 px-2 border-t border-[#E8E0DC] group-hover:border-[#D23669] transition-colors duration-300">
+                  <p className="text-[10px] font-[500] text-[#1A1A1A] uppercase tracking-[0.2em] group-hover:text-[#D23669] transition-colors duration-300 text-center">
+                    {shape.label}
+                  </p>
+                </div>
               </div>
-            ))}
+            );})}
           </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12 mt-8 flex justify-end" data-aos="fade-up">
+          <button onClick={goAnalysis}
+            className="text-[10px] tracking-[0.2em] uppercase text-[#1A1A1A] border-b border-[#1A1A1A] pb-0.5 hover:text-[#D23669] hover:border-[#D23669] transition-colors">
+            Find My Shape →
+          </button>
         </div>
       </section>
 
-      {/* --- 4. PERSONAL COLOR (Balanced Palette Version) --- */}
-      <section
-        className="py-20 bg-[#FFF7FA] overflow-hidden cursor-pointer"
-        role="link"
-        tabIndex={0}
-        onClick={goAdvisor}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            goAdvisor();
-          }
-        }}
-      >
-        <div className="max-w-[1200px] mx-auto px-6 md:px-8">
-          <div className="mb-12 text-center">
-            <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-2">Color Harmony</span>
-            <h2 className="text-3xl md:text-4xl font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
-              Discover Your <span className="text-[#FF85A2]">Season</span>
+      {/* --- PERSONAL COLOR --- */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="border-t border-[#E8E0DC] pt-10 mb-12" data-aos="fade-up">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Color Harmony</p>
+            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
+              Discover Your<br /><span className="font-[700] italic">Season</span>
             </h2>
           </div>
 
-          <div className="flex flex-col md:flex-row h-[500px] gap-3 w-full items-stretch">
-            {personalColorData1.map((item, idx) => (
+          <div className="flex flex-col md:flex-row h-[500px] gap-px bg-[#E8E0DC] w-full">
+            {personalColorData1.map((item) => (
               <div
                 key={item.name}
-                className={`group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.35,1)] cursor-pointer overflow-hidden rounded-3xl ${item.color} shadow-sm border border-black/5`}
+                onClick={goAdvisor}
+                className="group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.35,1)] cursor-pointer overflow-hidden bg-white"
               >
                 <div className="absolute inset-0 p-8 flex flex-col z-20">
+                  <p className="text-[10px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">{item.id}</p>
+                  <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] uppercase mb-1">{item.name}</h4>
+                  <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-4">{item.tag}</p>
 
-                  {/* Top Section */}
-                  <div className="relative">
-                    <span className={`text-4xl font-[900] opacity-10 block transition-transform duration-700 group-hover:-translate-y-2 ${item.textColor}`}>
-                      {item.id}
-                    </span>
-
-                    <div className="mt-2 transform transition-all duration-500 group-hover:translate-x-1">
-                      <h4 className={`text-2xl font-[900] tracking-tighter uppercase leading-none mb-1 ${item.textColor}`}>
-                        {item.name}
-                      </h4>
-                      <p className={`text-[9px] font-black uppercase tracking-[0.2em] opacity-70 ${item.textColor}`}>
-                        {item.tag}
-                      </p>
+                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700">
+                    <div className="grid grid-cols-6 gap-1.5 w-full">
+                      {item.palette.map((color, pIdx) => (
+                        <div
+                          key={pIdx}
+                          className={`h-8 w-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'}`}
+                          style={{ backgroundColor: color, transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms' }}
+                        />
+                      ))}
                     </div>
                   </div>
 
-
-                  {/* Middle Section: Palette Chips (All Oval Version - Fixed Grid) */}
-                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700 h-[220px]"> {/* Lock Container height */}
-                    <div className="relative w-full">
-                      {/* Use Grid so every chip is exactly positioned */}
-                      <div className="grid grid-cols-6 gap-x-2 gap-y-2 transition-all duration-700 w-full">
-                        {item.palette.map((color, pIdx) => (
-                          <div
-                            key={pIdx}
-                            className={`
-            relative rounded-full border border-white/40 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23, 1, 0.32, 1)]
-            
-            /* Fixed oval shape */
-            h-10 w-full max-w-[30px] mx-auto
-
-            /* Default: show first 4 colors */
-            ${pIdx < 4
-                                ? 'opacity-100'
-                                : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'
-                              }
-            
-            /* Interaction: on hover over each oval chip */
-            hover:scale-125 hover:z-50 hover:shadow-lg hover:border-white
-          `}
-                            style={{
-                              backgroundColor: color,
-                              /* Stagger chips appearing one by one */
-                              transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms',
-                            }}
-                          >
-                            {/* Glass Reflection effect */}
-                            <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40 rounded-full" />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Footer Hint: fixed position */}
-                      <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 flex items-center gap-2">
-                        <div className={`h-[1px] w-6 ${item.textColor} opacity-30 bg-current`}></div>
-                        <p className={`text-[7px] font-black uppercase tracking-[0.2em] ${item.textColor}`}>
-                          24 Shades Palette
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Section */}
                   <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-300 transform translate-y-6 group-hover:translate-y-0">
-                    <p className="text-[12px] font-medium leading-relaxed text-gray-600 mb-5 max-w-[280px]">
-                      {item.desc}
-                    </p>
-
-                    <button className={`flex items-center gap-2 font-black text-[9px] uppercase tracking-[0.15em] py-3 px-6 rounded-full bg-white shadow-sm hover:shadow-md transition-all ${item.textColor}`}>
-                      Details
-                      <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-                    </button>
+                    <p className="text-xs font-[300] text-[#555] leading-relaxed mb-4 max-w-[280px]">{item.desc}</p>
+                    <div className="border border-[#1A1A1A] px-5 py-2 inline-block hover:bg-[#1A1A1A] hover:text-white transition-all duration-200">
+                      <span className="text-[9px] tracking-[0.25em] uppercase text-[#1A1A1A] font-[500] group-hover:text-white">Explore Season →</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Background Highlight */}
-                <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-                  <div className={`absolute -bottom-10 left-1/2 -translate-x-1/2 w-[120%] h-1/3 bg-white opacity-30 blur-[60px] rounded-[100%] transform translate-y-32 group-hover:translate-y-0 transition-all duration-1000`} />
-                </div>
+                <div className="absolute inset-0 bg-[#FAF7F5] opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none" />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- 4.4 FASHION RECOMMENDATION --- */}
-      <section className="py-24 bg-white">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div className="space-y-3">
-              <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Style Direction</span>
-              <h2 className="text-3xl md:text-4xl font-[900] tracking-tighter text-[#4A4A4A] uppercase">
-                Personal Color <span className="text-[#FF85A2]">Closet Edit</span>
+      {/* --- FASHION RECOMMENDATION ---
+      <section className="py-20 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12" data-aos="fade-up">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Style Direction</p>
+              <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
+                Color Closet<br /><span className="font-[700] italic">Edit</span>
               </h2>
             </div>
-            <button
-              onClick={() => navigate("/advisor")}
-              className="w-fit rounded-full border border-[#D23669]/25 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#D23669] hover:bg-[#D23669] hover:text-white transition-all"
-            >
-              Get Full Outfit Advice
+            <button onClick={() => navigate("/advisor")}
+              className="w-fit text-[10px] tracking-[0.2em] uppercase text-[#1A1A1A] border-b border-[#1A1A1A] pb-0.5 hover:text-[#888] hover:border-[#888] transition-colors">
+              Get Full Outfit Advice →
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
             {fashionBySeason.map((look, idx) => (
-              <article
-                key={look.season}
-                data-aos="fade-up"
-                data-aos-delay={idx * 80}
-                className={`rounded-3xl p-7 border border-[#EEDBE2] shadow-sm hover:shadow-[0_12px_30px_rgba(226,110,147,0.12)] hover:-translate-y-1 transition-all ${look.bg}`}
-              >
-                <div className="mb-6">
-                  <h3 className={`text-2xl font-[900] uppercase tracking-tight ${look.text}`}>{look.season}</h3>
-                  <p className={`text-[10px] mt-1 font-black uppercase tracking-[0.2em] opacity-80 ${look.text}`}>{look.mood}</p>
+              <article key={look.season} data-aos="fade-up" data-aos-delay={idx * 60}
+                className={`rounded-sm p-8 ${look.bg} hover:shadow-lg transition-all duration-300 group`}>
+                <div className="flex items-end justify-between mb-6">
+                  <div>
+                    <h3 className={`text-xl font-[300] uppercase tracking-[0.06em] ${look.text}`}>{look.season}</h3>
+                    <p className={`text-[9px] mt-1 font-[300] uppercase tracking-[0.2em] opacity-50 ${look.text}`}>{look.mood}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    {look.accents.slice(0, 3).map((color) => (
+                      <span key={`${look.season}-${color}`} className="h-4 w-4 rounded-full" style={{ backgroundColor: color }} />
+                    ))}
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2 mb-5">
-                  {look.accents.map((color) => (
-                    <span
-                      key={`${look.season}-${color}`}
-                      className="h-7 w-7 rounded-full border border-white/80 shadow-sm"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-
-                <ul className="space-y-2">
+                <ul className="space-y-2.5 border-t border-black/5 pt-5">
                   {look.items.map((item) => (
-                    <li key={`${look.season}-${item}`} className="text-[12px] font-semibold text-[#4A4A4A] flex items-start gap-2">
-                      <span className="text-[#D23669] leading-5">•</span>
+                    <li key={`${look.season}-${item}`} className="text-[12px] font-[300] text-[#605858] flex items-center gap-2.5">
+                      <span className="w-1 h-1 rounded-full bg-current opacity-30 shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -553,360 +510,307 @@ export default function AuramatchDailyDose() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
-      {/* --- 4.5 HORIZONTAL SCROLLER --- */}
-      <section className="min-h-screen bg-[#FFF2F6] flex flex-col justify-center">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
-            <div className="space-y-3">
-              <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669]">Aura Promo</span>
-              <h2 className="text-3xl md:text-4xl font-[900] tracking-tight text-[#4A4A4A] uppercase">
-                TOP <span className="text-[#FF85A2]">BEAUTY</span> BRANDS
+      {/* --- LAGLACE BRAND PROMO --- */}
+      <section className="py-20 bg-[#FAF7F5]">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10" data-aos="fade-up">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Partner Brand</p>
+              <h2 className="text-[2.8rem] md:text-[4.5rem] font-[200] tracking-[0.12em] text-[#1A1A1A] leading-[1] uppercase">
+                la<span className="font-[700]">glace</span>
               </h2>
+              <p className="text-[11px] tracking-[0.15em] text-[#888] font-[300] mt-2">
+                Beauty & Skincare · Curated for your aura
+              </p>
             </div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#C27C90] max-w-sm">
-              Swipe the full-width banners for limited drops and aura gifts.
-            </p>
+            <a href="https://shopee.co.th/La-glace-Airy-Skin-Concealer-(6g)-ลา-กลาส-แอรี่-สกิน-คอนซีลเลอร์-แพ็คเก็จใหม่-i.252082342.40620993259?extraParams=%7B%22display_model_id%22%3A149294860399%2C%22model_selection_logic%22%3A3%7D&sp_atk=425965d2-f613-46d7-b88b-0fe191bbacfc&xptdk=425965d2-f613-46d7-b88b-0fe191bbacfc" target="_blank" rel="noreferrer"
+              className="w-fit text-[10px] tracking-[0.2em] uppercase text-[#1A1A1A] border-b border-[#1A1A1A] pb-0.5 hover:text-[#D23669] hover:border-[#D23669] transition-colors self-start md:self-end">
+              View Collection →
+            </a>
           </div>
-        </div>
 
-        <div className="w-full">
-          <div className="overflow-x-auto snap-x snap-mandatory scroll-smooth">
-            <div className="flex min-w-max gap-8 px-8 md:px-10 pb-10">
-              {horizontalPicks.map((item, idx) => (
-                <div
-                  key={`${item.title}-${idx}`}
-                  className="snap-center w-[88vw] md:w-[82vw] lg:w-[78vw] h-[70vh] rounded-[2.5rem] overflow-hidden border-2 border-[#F0B2C6] bg-[#FFE9F0] shadow-[0_16px_40px_rgba(232,141,166,0.2)]"
-                >
-                  <div className="relative w-full h-full">
-                    <img
-                      src={item.img}
-                      alt={item.title}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
+          {/* Editorial grid — 1 large hero + 3 small top-right + strip below */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-aos="fade-up" data-aos-delay="60">
 
-                    <div className="relative z-10 h-full flex flex-col justify-center px-10 md:px-16 max-w-2xl">
-                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D23669] mb-4"></p>
-                      <h3 className="text-3xl md:text-5xl font-[900] uppercase tracking-tight text-[#4A4A4A] mb-6">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm md:text-base text-[#7C5A6A] font-semibold leading-relaxed mb-6">
-                        {item.tag} • {item.tone}
-                      </p>
-                      {/* <button className="w-fit rounded-full bg-[#D23669] text-white px-8 py-3 text-[10px] font-black uppercase tracking-[0.35em] hover:brightness-110 transition-all">
-                        Shop Now
-                      </button> */}
-                    </div>
-                  </div>
+            {/* Hero image — spans 2 rows + 2 cols */}
+            <div className="col-span-2 row-span-2 aspect-[3/4] md:aspect-auto relative overflow-hidden group bg-[#EDE9E5]">
+              <img src="/laglace/635564819_1348058370684889_7809297845143179916_n.jpg" alt="laglace"
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-400" />
+            </div>
+
+            {/* 2 stacked images right-top */}
+            <div className="col-span-1 aspect-square relative overflow-hidden group bg-[#EDE9E5]">
+              <img src="/laglace/637161433_1348087934015266_8360346401767790374_n.jpg" alt="laglace"
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" />
+            </div>
+            <div className="col-span-1 aspect-square relative overflow-hidden group bg-[#EDE9E5]">
+              <img src="/laglace/636853674_1348087937348599_2172886061156364859_n.jpg" alt="laglace"
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" />
+            </div>
+            <div className="col-span-1 aspect-square relative overflow-hidden group bg-[#EDE9E5]">
+              <img src="/laglace/637158364_1348087990681927_1157157987754645379_n.jpg" alt="laglace"
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" />
+            </div>
+            <div className="col-span-1 aspect-square relative overflow-hidden group bg-[#EDE9E5]">
+              <img src="/laglace/637106921_1348087997348593_8531354510830102200_n.jpg" alt="laglace"
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" />
+            </div>
+
+            {/* Bottom strip — remaining 3 images spanning full width */}
+            <div className="col-span-2 md:col-span-4 grid grid-cols-3 gap-3 mt-0">
+              {[
+                "/laglace/550516866_18498461620071143_8116843560440476767_n.jpg",
+                "/laglace/571158386_1249235203900540_3666898097132726363_n.jpg",
+                "/laglace/550973378_18498461854071143_2788784050822836877_n.jpg",
+              ].map((src, i) => (
+                <div key={i} className="aspect-[4/3] relative overflow-hidden group bg-[#EDE9E5]">
+                  <img src={src} alt="laglace" loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" />
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* --- 5. THE EDIT --- */}
-      <section className="py-28 bg-[#FFFCFD]">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="flex justify-between items-center mb-20">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#C27C90] mb-3">Featured Product</p>
-              <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter uppercase text-[#4A4A4A]">
-                The Best Sellers.
-              </h2>
-            </div>
-            <button className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669] border-b-2 border-[#D23669]/10 pb-1">View All</button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {bestSellers.slice(0, 3).map((p, i) => (
-              <div
-                key={p.product_id ?? i}
-                data-aos="fade-up"
-                className="group text-center cursor-pointer"
-                onClick={() => openProductModal(p)}
-              >
-                {/* Image container */}
-                <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-[#fefdfd] mb-8 group-hover:shadow-[0_14px_34px_rgba(226,110,147,0.18)] transition-all duration-500 border border-[#EEDDE4]">
-                  <img
-                    src={buildApiImage(p.image_url)}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-700"
-                    alt={p.name}
-                  />
-
-                  {/* --- Like button --- */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike(p.product_id);
-                    }}
-                    className="absolute top-6 right-6 z-20 p-3 rounded-full bg-white/95 backdrop-blur-md shadow transition-all active:scale-90 hover:bg-white"
-                  >
-                    <Heart
-                      size={20}
-                      className={`transition-colors duration-300 ${likedProducts[p.product_id] ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                    />
-                  </button>
-                  {/* ------------------------- */}
-                </div>
-                <h5 className="text-[13px] font-[900] uppercase tracking-wider text-[#4A4A4A] mb-2">{p.name}</h5>
-                <p className="text-sm font-black text-[#D23669]">฿{parseFloat(p.price || 0).toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- BEST SELLER PURCHASE MODAL --- */}
-      {isProductModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-8">
-          <div className="absolute inset-0 bg-black/65 backdrop-blur-md" onClick={closeProductModal} />
-          <div className="relative z-10 w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[3rem] bg-white shadow-2xl">
-            <button
-              onClick={closeProductModal}
-              className="absolute top-6 right-6 z-20 rounded-full bg-white/90 p-2 shadow-md hover:bg-black hover:text-white transition-all"
-              aria-label="Close"
-            >
-              <X size={18} />
+          {/* CTA strip */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#E8E0DC] pt-8" data-aos="fade-up">
+            <p className="text-[11px] tracking-[0.15em] text-[#888] font-[300] max-w-sm">
+              Discover beauty essentials curated to complement your personal color palette.
+            </p>
+            <button onClick={() => navigate("https://shopee.co.th/La-glace-Airy-Skin-Concealer-(6g)-%E0%B8%A5%E0%B8%B2-%E0%B8%81%E0%B8%A5%E0%B8%B2%E0%B8%AA-%E0%B9%81%E0%B8%AD%E0%B8%A3%E0%B8%B5%E0%B9%88-%E0%B8%AA%E0%B8%81%E0%B8%B4%E0%B8%99-%E0%B8%84%E0%B8%AD%E0%B8%99%E0%B8%8B%E0%B8%B5%E0%B8%A5%E0%B9%80%E0%B8%A5%E0%B8%AD%E0%B8%A3%E0%B9%8C-%E0%B9%81%E0%B8%9E%E0%B9%87%E0%B8%84%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%88%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88-i.252082342.40620993259?extraParams=%7B%22display_model_id%22%3A149294860399%2C%22model_selection_logic%22%3A3%7D&sp_atk=3bea7fc0-c74c-48e1-9f40-b980d06efa8c&xptdk=3bea7fc0-c74c-48e1-9f40-b980d06efa8c&is_from_login=true")}
+              className="shrink-0 bg-[#1A1A1A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] px-8 py-3.5 hover:bg-[#D23669] transition-colors duration-200">
+              Shop laglace
             </button>
+          </div>
+        </div>
+      </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-8 md:p-12">
-              <div>
-                <div className="aspect-[4/5] overflow-hidden rounded-[2rem] bg-[#F8F8F8] border border-gray-100">
-                  <img
-                    src={buildApiImage(selectedProduct.image_url)}
-                    alt={selectedProduct.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
 
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669]">
-                  Best Seller Pick
-                </span>
-                <h3 className="mt-3 text-3xl md:text-4xl font-[900] uppercase tracking-tighter text-[#4A4A4A] leading-tight">
-                  {selectedProduct.name}
-                </h3>
-                <div className="mt-5 flex items-center gap-3">
-                  <span className="text-3xl font-black text-[#111]">
-                    ฿{parseFloat(selectedProduct.price || 0).toLocaleString()}
+      {/* --- PRODUCT MODAL (VS style) --- */}
+      {isProductModalOpen && selectedProduct && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={closeProductModal} />
+          <div className="relative z-10 w-full max-w-4xl max-h-[95vh] overflow-hidden bg-white flex flex-col md:flex-row">
+            <button onClick={closeProductModal}
+              className="absolute top-5 right-5 z-20 w-9 h-9 flex items-center justify-center bg-black/30 hover:bg-black text-white transition-colors duration-200" aria-label="Close">
+              <X size={16} />
+            </button>
+            <div className="w-full md:w-[45%] aspect-[4/5] md:aspect-auto overflow-hidden bg-[#F5F3F0] shrink-0">
+              <img src={buildApiImage(selectedProduct.image_url)} alt={selectedProduct.name} className="w-full h-full object-contain p-8" />
+            </div>
+            <div className="flex flex-col p-8 md:p-12 overflow-y-auto custom-scrollbar">
+              <p className="text-[9px] tracking-[0.35em] uppercase text-[#aaa] font-[300] mb-4">Best Seller</p>
+              <h3 className="text-[1.8rem] md:text-[2.4rem] font-[300] tracking-[-0.01em] text-[#1A1A1A] leading-[1.05] mb-4">
+                {selectedProduct.name}
+              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl font-[400] text-[#1A1A1A]">฿{parseFloat(selectedProduct.price || 0).toLocaleString()}</span>
+                {selectedProduct.rating && (
+                  <span className="inline-flex items-center gap-1 border border-[#E8E0DC] px-3 py-1 text-[10px] text-[#888] font-[300]">
+                    <Star size={10} className="fill-yellow-400 text-yellow-400" />
+                    {selectedProduct.rating}
                   </span>
-                  {selectedProduct.rating && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#F6F6F6] px-3 py-1 text-xs font-bold text-gray-500">
-                      <Star size={12} className="fill-yellow-400 text-yellow-400" />
-                      {selectedProduct.rating}
-                    </span>
-                  )}
-                </div>
-
-                <p className="mt-6 text-sm leading-relaxed text-gray-500">
-                  Choose your preferred platform to purchase immediately.
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  <a
-                    href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name || "")}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-full items-center justify-center rounded-2xl bg-black py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all"
-                  >
-                    Buy on TikTok
-                  </a>
-                  <a
-                    href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name || "")}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-full items-center justify-center rounded-2xl bg-[#EE4D2D] py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all"
-                  >
-                    Buy on Shopee
-                  </a>
-                  <a
-                    href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name || "")}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-full items-center justify-center rounded-2xl bg-[#10078F] py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all"
-                  >
-                    Buy on Lazada
-                  </a>
-                </div>
+                )}
+              </div>
+              <p className="text-[13px] text-[#888] font-[300] leading-relaxed mb-8 border-l border-[#E8E0DC] pl-4">
+                Choose your preferred platform to purchase immediately.
+              </p>
+              <div className="mt-auto space-y-2">
+                <a href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name || "")}`} target="_blank" rel="noreferrer"
+                  className="flex w-full items-center justify-center bg-[#1A1A1A] py-3.5 text-[10px] font-[500] uppercase tracking-[0.2em] text-white hover:bg-black transition-colors">
+                  Buy on TikTok
+                </a>
+                <a href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name || "")}`} target="_blank" rel="noreferrer"
+                  className="flex w-full items-center justify-center bg-[#EE4D2D] py-3.5 text-[10px] font-[500] uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all">
+                  Buy on Shopee
+                </a>
+                <a href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name || "")}`} target="_blank" rel="noreferrer"
+                  className="flex w-full items-center justify-center bg-[#10078F] py-3.5 text-[10px] font-[500] uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all">
+                  Buy on Lazada
+                </a>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- 5.5 THE LOOKS ARCHIVE (fetched from backend) --- */}
-      <section className="py-28 bg-[#FFF7FA]">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
-            <div data-aos="fade-right" className="space-y-4">
-              <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669]">Curated Style</span>
-              <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none tracking-tighter text-[#4A4A4A] uppercase">
-                Makeup <span className="text-[#FF85A2]">Looks</span>
+      {/* --- LOOKS ARCHIVE --- */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12" data-aos="fade-up">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Curated Style</p>
+              <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
+                Makeup<br /><span className="font-[700] italic">Looks</span>
               </h2>
             </div>
-
-            {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-1">
               {["Spring", "Summer", "Autumn", "Winter"].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setActiveColor(c)}
-                  className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeColor === c ? "bg-[#D23669] text-white" : "bg-white text-gray-400 border border-gray-100"
-                    }`}
-                >
-                  {c}
-                </button>
+                <button key={c} onClick={() => setActiveColor(c)}
+                  className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase transition-all duration-200 rounded-full ${activeColor === c ? 'bg-[#1A1A1A] text-white' : 'text-[#888] hover:text-[#1A1A1A] border border-[#E8E0DC] hover:border-[#1A1A1A]'
+                    }`}>{c}</button>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {makeupLooks.length > 0 ? (
               makeupLooks.map((look, i) => (
-                <div
-                  key={look.look_id ?? i}
-                  data-aos="fade-up"
-                  data-aos-delay={i * 100}
-                  className="group relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_16px_36px_rgba(226,110,147,0.16)] transition-all duration-300 cursor-pointer border border-[#EEDDE4]"
-                  onClick={() => setSelectedLook(look)}
-                >
-                  <div className="aspect-[4/5] overflow-hidden">
-                    {/* In the THE LOOKS ARCHIVE section */}
-                    <img
-                      src={buildApiImage(look.image_url)}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                      alt={look.look_name}
-                    />
+                <div key={look.look_id ?? i} data-aos="fade-up" data-aos-delay={i * 60}
+                  className="group cursor-pointer rounded-sm overflow-hidden hover:shadow-xl transition-all duration-500"
+                  onClick={() => setSelectedLook(look)}>
+                  <div className="relative aspect-[3/4] overflow-hidden bg-[#F5F3F0]">
+                    <img src={buildApiImage(look.image_url)} loading="lazy" decoding="async"
+                      className="w-full h-full object-cover object-top group-hover:scale-[1.06] transition-transform duration-700" alt={look.look_name} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 flex items-end p-6">
+                      <div>
+                        <p className="text-[9px] tracking-[0.2em] uppercase text-white/60 mb-1">{look.personal_color}</p>
+                        <p className="text-[13px] font-[300] text-white tracking-wide">{look.look_name}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-10">
-                    <span className="text-[10px] text-[#FF85A2] font-black uppercase tracking-[0.3em] mb-2">
-                      {look.personal_color} Collection
-                    </span>
-                    <h4 className="text-2xl font-[900] text-white uppercase tracking-tighter mb-4">
-                      {look.look_name}
-                    </h4>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedLook(look);
-                      }}
-                      className="w-fit bg-white text-black px-6 py-3 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#D23669] hover:text-white transition-colors"
-                    >
-                      Explore Details
-                    </button>
+                  <div className="p-4 bg-white">
+                    <p className="text-[9px] tracking-[0.25em] uppercase text-[#aaa] font-[300] mb-0.5">{look.personal_color}</p>
+                    <h4 className="text-[13px] font-[500] text-[#1A1A1A] group-hover:text-[#D23669] transition-colors">{look.look_name}</h4>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300">No looks found for this season.</p>
+              <div className="col-span-full h-[300px] flex items-center justify-center">
+                <p className="text-[10px] tracking-[0.35em] uppercase text-[#ccc] font-[300]">No looks found for this season.</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* --- LOOK DETAIL MODAL --- */}
+      {/* --- LOOK DETAIL MODAL (VS style) --- */}
       {selectedLook && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-8">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setSelectedLook(null)}
-          />
-          <div className="relative z-10 w-full max-w-4xl overflow-hidden rounded-[2.5rem] bg-white shadow-2xl">
-            <button
-              onClick={() => setSelectedLook(null)}
-              className="absolute right-6 top-6 z-10 rounded-full bg-white/90 p-2 shadow-md hover:bg-black hover:text-white transition-all"
-              aria-label="Close"
-            >
-              <X size={18} />
+        <div className="fixed inset-0 z-[120] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedLook(null)} />
+          <div className="relative z-10 w-full max-w-4xl max-h-[95vh] overflow-hidden bg-white flex flex-col md:flex-row">
+            <button onClick={() => setSelectedLook(null)}
+              className="absolute right-5 top-5 z-20 w-9 h-9 flex items-center justify-center bg-black/30 hover:bg-black text-white transition-colors" aria-label="Close">
+              <X size={16} />
             </button>
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="aspect-[4/5] md:aspect-auto">
-                <img
-                  src={buildApiImage(selectedLook.image_url)}
-                  alt={selectedLook.look_name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="p-8 md:p-10 flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669]">
-                  {selectedLook.personal_color || activeColor} Collection
-                </span>
-                <h3 className="mt-3 text-3xl font-[900] uppercase tracking-tighter text-[#4A4A4A]">
-                  {selectedLook.look_name}
-                </h3>
-                <p className="mt-6 text-sm leading-relaxed text-gray-500">
-                  {selectedLook.description || "This look is designed to align with your personal color tone, emphasizing balanced skin, eye tone, and lip tone in a natural way."}
-                </p>
-                <div className="mt-auto pt-8">
-                  <button
-                    onClick={() => navigate("/advisor")}
-                    className="w-full rounded-full bg-[#D23669] py-4 text-[10px] font-black uppercase tracking-[0.3em] text-white hover:brightness-110 transition-all"
-                  >
-                    Get Advisor Guide
-                  </button>
-                </div>
+            <div className="w-full md:w-[45%] aspect-[3/4] md:aspect-auto overflow-hidden bg-[#F5F3F0] shrink-0">
+              <img src={buildApiImage(selectedLook.image_url)} alt={selectedLook.look_name} className="h-full w-full object-cover object-top" />
+            </div>
+            <div className="p-8 md:p-12 flex flex-col overflow-y-auto custom-scrollbar">
+              <p className="text-[9px] tracking-[0.35em] uppercase text-[#aaa] font-[300] mb-4">
+                {selectedLook.personal_color || activeColor} Collection
+              </p>
+              <h3 className="text-[1.8rem] md:text-[2.4rem] font-[300] tracking-[-0.01em] text-[#1A1A1A] leading-[1.05] mb-5">
+                {selectedLook.look_name}
+              </h3>
+              <p className="text-[13px] text-[#605858] font-[300] leading-relaxed border-l border-[#E8E0DC] pl-4 mb-8">
+                {selectedLook.description || "This look is designed to align with your personal color tone, emphasizing balanced skin, eye tone, and lip tone in a natural way."}
+              </p>
+              <div className="mt-auto pt-6 border-t border-[#E8E0DC]">
+                <button onClick={() => navigate("/advisor")}
+                  className="w-full bg-[#1A1A1A] py-3.5 text-[10px] font-[400] uppercase tracking-[0.2em] text-white hover:bg-[#D23669] transition-colors duration-200">
+                  Get Advisor Guide
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- 6. FILM ARCHIVE --- */}
-      <section className="py-24 bg-[#FFF1F6]">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="flex items-center gap-6 mb-16">
-            {/* Scaled to Match Hero */}
-            <h3 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none text-[#D23669] uppercase tracking-tighter">
-              Film Archive
-            </h3>
-            <div className="h-[2px] flex-grow bg-[#D23669]/10 mt-4" />
-            <PlayCircle size={40} className="text-[#D23669]/20" />
+      {/* --- BEST SELLERS --- */}
+      <section className="py-20 bg-[#FAFAFA]">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="flex justify-between items-end mb-12" data-aos="fade-up">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Featured</p>
+              <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
+                Best<br /><span className="font-[700] italic">Sellers</span>
+              </h2>
+            </div>
+            <Link to="/cosmetics" className="text-[10px] tracking-[0.2em] uppercase text-[#1A1A1A] border-b border-[#1A1A1A] pb-0.5 hover:text-[#888] hover:border-[#888] transition-colors">View All →</Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {Object.values(TUTORIAL_RESOURCES).slice(0, 4).map((video, idx) => (
-              <div key={idx} className="transform scale-[0.98] hover:scale-100 transition-all">
-                <PersonalColorTikTokCard video={video} onSelect={setSelectedVideo} />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {bestSellers.slice(0, 3).map((p, i) => (
+              <div key={p.product_id ?? i} data-aos="fade-up" data-aos-delay={i * 80}
+                className="group bg-white cursor-pointer rounded-sm overflow-hidden hover:shadow-xl transition-all duration-500"
+                onClick={() => openProductModal(p)}>
+                <div className="relative aspect-[3/4] overflow-hidden bg-[#F8F6F4]">
+                  <img src={buildApiImage(p.image_url)} loading="lazy" decoding="async"
+                    className="w-full h-full object-contain p-8 group-hover:scale-[1.05] transition-transform duration-700" alt={p.name} />
+                  <button onClick={e => { e.stopPropagation(); toggleLike(p.product_id); }}
+                    className="absolute top-5 right-5 z-20 w-9 h-9 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-full transition-all active:scale-90 hover:bg-white">
+                    <Heart size={15} className={likedProducts[p.product_id] ? 'fill-[#D23669] text-[#D23669]' : 'text-[#888] hover:text-[#D23669]'} />
+                  </button>
+                  {/* Hover CTA */}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-400 flex items-end p-6">
+                    <span className="text-[10px] tracking-[0.25em] uppercase text-white font-[300] border-b border-white/60 pb-0.5">View Details</span>
+                  </div>
+                </div>
+                <div className="p-5 border-t border-[#F0EAE8]">
+                  <h5 className="text-[12px] font-[500] text-[#1A1A1A] mb-1 leading-snug">{p.name}</h5>
+                  <p className="text-[12px] font-[300] text-[#888]">฿{parseFloat(p.price || 0).toLocaleString()}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- 7. FAQ --- */}
-      <section className="py-28 bg-[#FFFCFD]">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="max-w-4xl mx-auto">
-            {/* Scaled to Match Hero */}
-            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-[900] leading-none text-[#D23669] uppercase tracking-tighter text-center mb-20">
-              FAQ.
+      {/* --- FILM ARCHIVE --- */}
+      {/* <section className="py-20 bg-[#FAFAFA]">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="border-t border-[#E8E0DC] pt-10 pb-10 flex items-end justify-between gap-6" data-aos="fade-up">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Video</p>
+              <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
+                Film<br /><span className="font-[700] italic">Archive</span>
+              </h2>
+            </div>
+            <div className="h-px flex-grow bg-[#E8E0DC] mb-2" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.values(TUTORIAL_RESOURCES).slice(0, 4).map((video, idx) => (
+              <div key={idx} className="rounded-sm overflow-hidden hover:shadow-lg transition-all duration-300">
+                <PersonalColorTikTokCard video={video} onSelect={setSelectedVideo} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section> */}
+
+      {/* --- FAQ --- */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="border-t border-[#E8E0DC] pt-10 pb-10" data-aos="fade-up">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Questions</p>
+            <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1] mb-10">
+              <span className="font-[700] italic">FAQ</span>
             </h2>
-            <div className="space-y-4">
+            <div className="divide-y divide-[#E8E0DC]">
               {[
                 { q: "The art of processing?", a: "Our AI analyzes beauty structure at the Biometric Mapping level to find your most perfect features." },
-                { q: "Personalized exclusivity?", a: "Every result is your own exclusive beauty fingerprint. Data is stored privately for your security." }
+                { q: "Personalized exclusivity?", a: "Every result is your own exclusive beauty fingerprint. Data is stored privately for your security." },
+                { q: "Personalized exclusivity?", a: "Every result is your own exclusive beauty fingerprint. Data is stored privately for your security." },
               ].map((item, i) => (
-                <details key={i} className="group bg-white rounded-3xl px-8 md:px-10 py-7 cursor-pointer hover:bg-[#FFF7FA] hover:shadow-[0_10px_24px_rgba(226,110,147,0.12)] transition-all border border-[#EEDDE4]">
-                  <summary className="flex justify-between items-center list-none font-[900] text-xs uppercase tracking-[0.2em] text-[#4A4A4A]">
+                <details key={i} className="group py-5 cursor-pointer">
+                  <summary className="flex justify-between items-center list-none text-[11px] font-[400] uppercase tracking-[0.2em] text-[#1A1A1A]">
                     {item.q}
-                    <ArrowRight size={16} className="group-open:rotate-90 transition-all text-[#D23669]" />
+                    <ArrowRight size={14} className="group-open:rotate-90 transition-transform duration-200 text-[#888]" />
                   </summary>
-                  <p className="mt-6 text-[11px] font-bold uppercase tracking-widest leading-loose text-gray-400 border-t border-gray-100 pt-6">{item.a}</p>
+                  <p className="mt-4 text-[12px] font-[300] text-[#888] leading-relaxed pl-0">{item.a}</p>
                 </details>
               ))}
             </div>
           </div>
         </div>
       </section>
+
+      
 
       {/* --- 8. PRESTIGE CALL TO ACTION --- */}
       {/* <section className="py-20 bg-[#2B2629] text-white">
@@ -931,50 +835,51 @@ export default function AuramatchDailyDose() {
         </div>
       </section> */}
 
-      {/* --- 9. LUXURY FOOTER --- */}
-      <footer className="bg-white border-t border-gray-100 pt-16 pb-10">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-            <div className="col-span-1 md:col-span-2 space-y-6">
-              <h3 className="text-2xl font-[900] tracking-tighter uppercase">Aura<span className="text-[#D23669]">Match</span></h3>
-              <p className="text-[11px] font-bold text-gray-400 uppercase leading-loose max-w-sm">
-                Leading the intersection of biometric technology and premium beauty aesthetics.
-                Your personalized dose of confidence, delivered daily.
+      {/* --- FOOTER --- */}
+      {/* <footer className="bg-white border-t border-[#E8E0DC] pt-14 pb-8">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-14">
+            <div className="col-span-1 md:col-span-2 space-y-4">
+              <h3 className="text-lg font-[300] tracking-[0.06em] uppercase text-[#1A1A1A]">Aura<span className="font-[700]">Match</span></h3>
+              <p className="text-[11px] font-[300] text-[#888] tracking-[0.08em] leading-loose max-w-sm">
+                Biometric beauty analysis at the intersection of technology and personal color science.
               </p>
             </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest">Navigation</h4>
+            <div className="space-y-3">
+              <h4 className="text-[9px] font-[500] uppercase tracking-[0.3em] text-[#1A1A1A]">Navigation</h4>
               <ul className="space-y-2">
                 {navItems.map((item) => (
-                  <li key={item.to}><Link to={item.to} className="text-[10px] font-bold text-gray-400 hover:text-[#D23669] transition-colors uppercase">{item.label}</Link></li>
+                  <li key={item.to}><Link to={item.to} className="text-[11px] font-[300] text-[#888] hover:text-[#1A1A1A] transition-colors uppercase tracking-[0.05em]">{item.label}</Link></li>
                 ))}
               </ul>
             </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest">Connect</h4>
-              <div className="flex gap-4">
-                {/* Insert Social Icons here */}
-                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">INSTAGRAM</span>
-                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">TIKTOK</span>
+            <div className="space-y-3">
+              <h4 className="text-[9px] font-[500] uppercase tracking-[0.3em] text-[#1A1A1A]">Connect</h4>
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-[300] text-[#888] cursor-pointer hover:text-[#1A1A1A] uppercase tracking-[0.05em] transition-colors">Instagram</span>
+                <span className="text-[11px] font-[300] text-[#888] cursor-pointer hover:text-[#1A1A1A] uppercase tracking-[0.05em] transition-colors">TikTok</span>
               </div>
             </div>
           </div>
-          <div className="text-center pt-10 border-t border-gray-50">
-            <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em]">
-              © 2026 AURAMATCH BIOMETRIC BEAUTY LAB. ALL RIGHTS RESERVED.
+          <div className="border-t border-[#E8E0DC] pt-6">
+            <p className="text-[9px] font-[300] text-[#bbb] uppercase tracking-[0.25em]">
+              © 2026 AuraMatch. All rights reserved.
             </p>
           </div>
         </div>
-      </footer>
+      </footer> */}
 
       {selectedVideo && <TikTokModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />}
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .animate-marquee { animation: marquee 30s linear infinite; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #D23669; border-radius: 10px; }
-      `}</style >
+        .animate-marquee { display:flex; width:fit-content; animation: marquee 40s linear infinite; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E8E0DC; border-radius: 2px; }
+      `}</style>
     </div>
   );
 } 

@@ -1,47 +1,26 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../lib/firebase";
-import { getOrCreateWelcomeCoupon, notifyCouponChanged } from "../utils/coupon";
-import { Mail, Lock, Chrome, Facebook } from "lucide-react";
 
 function resolveApiBaseUrl() {
   const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
-  if (raw) {
-    return String(raw).replace(/\/+$/, "");
-  }
-
-  const isLocalhostHost =
-    typeof window !== "undefined" &&
-    ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  if (isLocalhostHost) return "http://127.0.0.1:5010";
-
+  if (raw) return String(raw).replace(/\/+$/, "");
+  if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname))
+    return "http://127.0.0.1:5010";
   return "";
 }
 
-// Try all endpoints simultaneously and use whichever responds first (timeout 8 seconds)
 async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {
   const candidates = [
-    { path: "/login", body: { email: emailNorm, password } },
+    { path: "/login",     body: { email: emailNorm, password } },
     { path: "/api/login", body: { email: emailNorm, password } },
-    { path: "/login", body: { username: emailNorm, password } },
   ];
-
-  // Filter out duplicates
-  const seen = new Set();
-  const unique = candidates.filter((c) => {
-    const key = `${c.path}:${JSON.stringify(c.body)}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 8000);
-
   try {
     const results = await Promise.allSettled(
-      unique.map((c) =>
+      candidates.map((c) =>
         fetch(`${apiBaseUrl}${c.path}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -54,13 +33,11 @@ async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {
         })
       )
     );
-
     for (const r of results) {
       if (r.status === "fulfilled") return { data: r.value, error: null };
     }
-
     const firstErr = results.find((r) => r.status === "rejected");
-    return { data: null, error: firstErr?.reason?.message || "AUTHENTICATION FAILED. PLEASE VERIFY." };
+    return { data: null, error: firstErr?.reason?.message || "Authentication failed" };
   } finally {
     clearTimeout(timeoutId);
   }
@@ -68,30 +45,19 @@ async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [err, setErr]           = useState("");
 
   const apiBaseUrl = resolveApiBaseUrl();
 
-  async function afterLoginGo(userlike) {
+  function afterLogin(userlike) {
     localStorage.setItem("auramatch:isLoggedIn", "true");
     localStorage.setItem("auramatch:user", JSON.stringify(userlike));
-
-    const adminFlag = userlike.role === "admin";
-    localStorage.setItem("auramatch:isAdmin", adminFlag ? "true" : "false");
-
-    await getOrCreateWelcomeCoupon({ uid: userlike.uid });
-
+    localStorage.setItem("auramatch:isAdmin", userlike.role === "admin" ? "true" : "false");
     window.dispatchEvent(new Event("auth:changed"));
-    notifyCouponChanged();
-
-    if (adminFlag) {
-      navigate("/admin/dashboard", { replace: true });
-    } else {
-      navigate("/", { replace: true });
-    }
+    navigate(userlike.role === "admin" ? "/admin/dashboard" : "/", { replace: true });
   }
 
   const handleLogin = async (e) => {
@@ -100,41 +66,23 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const emailNorm = email.trim().toLowerCase();
-      if (!emailNorm || !password) {
-        setErr("IDENTITY DETAILS REQUIRED");
-        return;
-      }
-      if (!apiBaseUrl && !["localhost", "127.0.0.1"].includes(window.location.hostname)) {
-        setErr("SERVER CONFIGURATION MISSING. CONTACT SUPPORT.");
-        return;
-      }
+      if (!emailNorm || !password) { setErr("Please fill in all fields"); return; }
 
       const { data, error } = await tryLoginEndpoints(apiBaseUrl, emailNorm, password);
+      if (!data) { setErr(error || "Authentication failed"); return; }
 
-      if (!data) {
-        setErr((error || "AUTHENTICATION FAILED. PLEASE VERIFY.").toUpperCase());
-        return;
-      }
-
-      const userPayload = data.user || data;
-      const userlike = {
-        uid: String(userPayload.user_id || ""),
-        email: userPayload.email || emailNorm,
-        name: userPayload.username || emailNorm.split("@")[0],
-        photoURL: userPayload.avatar || "",
-        role: userPayload.role || "user",
+      const u = data.user || data;
+      if (data.token) localStorage.setItem("auramatch:token", data.token);
+      afterLogin({
+        uid: String(u.user_id || ""),
+        email: u.email || emailNorm,
+        name: u.username || emailNorm.split("@")[0],
+        photoURL: u.avatar || "",
+        role: u.role || "user",
         provider: "password",
-      };
-      if (data.token) {
-        localStorage.setItem("auramatch:token", data.token);
-      }
-      await afterLoginGo(userlike);
+      });
     } catch (e) {
-      if (e?.name === "AbortError") {
-        setErr("REQUEST TIMEOUT. PLEASE TRY AGAIN.");
-        return;
-      }
-      setErr("NETWORK ERROR. CANNOT REACH AUTH SERVER.");
+      setErr(e?.name === "AbortError" ? "Request timeout. Please try again." : "Network error. Cannot reach server.");
     } finally {
       setLoading(false);
     }
@@ -146,140 +94,173 @@ export default function LoginPage() {
     try {
       const res = await signInWithPopup(auth, provider);
       const u = res.user;
+      const token = await u.getIdToken();
 
-      // Sync with backend to get a numeric user_id for saving analysis etc.
-      const syncRes = await fetch(`${API_BASE_URL}/api/firebase-sync`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: u.email, name: u.displayName, photo_url: u.photoURL || "" }),
-      });
-      const syncData = await syncRes.json();
-      const backendUser = syncData.user || {};
+      // Sync with backend
+      let backendUser = {};
+      let backendToken = token;
+      try {
+        const syncRes = await fetch(`${apiBaseUrl}/api/firebase-sync`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: u.email, name: u.displayName, photo_url: u.photoURL || "" }),
+        });
+        const syncData = await syncRes.json();
+        backendUser = syncData.user || {};
+        if (syncData.token) backendToken = syncData.token;
+      } catch {
+        // backend sync failed — use Firebase user data directly
+      }
 
-      localStorage.setItem("auramatch:token", syncData.token || "");
-      await afterLoginGo({
-        uid: String(backendUser.user_id || ""),
+      localStorage.setItem("auramatch:token", backendToken);
+      afterLogin({
+        uid: String(backendUser.user_id || u.uid || ""),
         email: backendUser.email || u.email,
         name: backendUser.username || u.displayName,
         photoURL: backendUser.avatar || u.photoURL || "",
-        provider: name,
         role: backendUser.role || "user",
+        provider: name,
       });
     } catch (e) {
-      setErr(`CONNECTION FAILED WITH ${name.toUpperCase()}`);
+      const code = e?.code || "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
+      if (code === "auth/account-exists-with-different-credential")
+        setErr("This email is already linked to another sign-in method.");
+      else
+        setErr(`${name} sign-in failed. Please try again.`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#F6F3F1] text-[#1A1A1A]">
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(/assets/home2.webp)` }} />
-      <div className="absolute inset-0 bg-white/55" />
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[#FDFCFB] mt-[60px] lg:mt-[180px]">
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1100px] items-center justify-center px-6 py-20">
-        <div className="w-full max-w-[460px] rounded-[22px] border border-[#E9E2E6] bg-white p-10 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-          <div className="mb-8 text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D23669]">Auramatch</p>
-            <h1 className="mt-3 text-3xl font-[900] tracking-tight">Login</h1>
-            <p className="mt-2 text-[12px] text-gray-500">Log in to access all of your services.</p>
+      {/* ── Left: brand panel ── */}
+      <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-[#1A1A1A] p-14">
+        <img src="/laglace/homee.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        <div className="relative z-10">
+          <p className="text-[9px] tracking-[0.5em] uppercase text-white/50 font-[300]">AuraMatch · Atelier</p>
+        </div>
+        <div className="relative z-10">
+          <h2 className="text-[3.5rem] font-[200] leading-[1] tracking-[0.04em] text-white uppercase mb-4">
+            Discover<br /><span className="font-[700] italic">Your Aura</span>
+          </h2>
+          <p className="text-xs font-[300] text-white/50 leading-relaxed max-w-[280px]">
+            AI-powered personal color analysis and beauty styling tailored to you.
+          </p>
+        </div>
+        <div className="relative z-10">
+          <p className="text-[8px] tracking-[0.4em] uppercase text-white/30 font-[300]">
+            © {new Date().getFullYear()} AuraMatch
+          </p>
+        </div>
+      </div>
+
+      {/* ── Right: form panel ── */}
+      <div className="flex flex-col justify-center px-8 md:px-16 py-16">
+
+        {/* Mobile logo */}
+        <p className="lg:hidden text-[9px] tracking-[0.5em] uppercase text-[#888] font-[300] mb-12">AuraMatch · Atelier</p>
+
+        <div className="max-w-[380px] w-full mx-auto">
+
+          {/* Heading */}
+          <div className="mb-10">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Welcome back</p>
+            <h1 className="text-[2.8rem] font-[200] leading-[1] text-[#1A1A1A] uppercase tracking-[0.02em]">
+              Sign in<br />
+            </h1>
           </div>
 
+          {/* Error */}
           {err && (
-            <div className="mb-6 rounded-[14px] border border-rose-100 bg-rose-50 px-4 py-3" role="alert">
-              <p className="text-[10px] font-black uppercase tracking-widest text-rose-500">{err}</p>
+            <div className="mb-6 border border-[#D23669]/30 bg-[#FFF5F8] px-4 py-3">
+              <p className="text-[10px] font-[500] text-[#D23669]">{err}</p>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                Email
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="you@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-[#E5DDE2] bg-[#FAF8F9] px-4 py-3 text-sm font-semibold text-[#1A1A1A] placeholder:text-gray-400 focus:border-[#D23669] focus:outline-none focus:ring-2 focus:ring-[#D23669]/15"
-                  autoComplete="email"
-                  required
-                />
-                <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-[#C7B9C1]" size={18} />
-              </div>
+              <label className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] block mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@email.com"
+                autoComplete="email"
+                required
+                className="w-full border border-[#E8E0DC] bg-white px-4 py-3 text-sm font-[300] text-[#1A1A1A] placeholder:text-[#C0B8B4] focus:border-[#1A1A1A] focus:outline-none transition-colors"
+              />
             </div>
-
             <div>
-              <label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                Password
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-[#E5DDE2] bg-[#FAF8F9] px-4 py-3 text-sm font-semibold text-[#1A1A1A] placeholder:text-gray-400 focus:border-[#D23669] focus:outline-none focus:ring-2 focus:ring-[#D23669]/15"
-                  autoComplete="current-password"
-                  required
-                />
-                <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-[#C7B9C1]" size={18} />
-              </div>
-              <div className="mt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="h-4 w-4 rounded border-[#D8C8D1] text-[#D23669] focus:ring-[#D23669]/20" />
-                  Remember me
-                </label>
-                <Link to="/forgot-password" className="hover:text-[#D23669]">
-                  Forgot password?
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Password</label>
+                <Link to="/forgot-password" className="text-[9px] tracking-[0.2em] uppercase text-[#888] hover:text-[#D23669] transition-colors">
+                  Forgot?
                 </Link>
               </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+                className="w-full border border-[#E8E0DC] bg-white px-4 py-3 text-sm font-[300] text-[#1A1A1A] placeholder:text-[#C0B8B4] focus:border-[#1A1A1A] focus:outline-none transition-colors"
+              />
             </div>
-
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-[#1A1A1A] py-3.5 text-[10px] font-black uppercase tracking-[0.35em] text-white transition-all hover:bg-[#D23669] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full bg-[#1A1A1A] text-white py-3.5 text-[10px] font-[600] uppercase tracking-[0.35em] hover:bg-[#D23669] transition-all duration-300 disabled:opacity-50"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
+          {/* Divider */}
           <div className="my-8 flex items-center gap-4">
-            <div className="h-px flex-1 bg-[#EAE2E6]" />
-            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Or continue</span>
-            <div className="h-px flex-1 bg-[#EAE2E6]" />
+            <div className="h-px flex-1 bg-[#E8E0DC]" />
+            <span className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300]">or</span>
+            <div className="h-px flex-1 bg-[#E8E0DC]" />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Social buttons */}
+          <div className="flex flex-col gap-3">
             <SocialBtn
               onClick={() => onSocialLogin(googleProvider, "Google")}
-              label="Google"
-              icon={<Chrome size={16} />}
               disabled={loading}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+              }
+              label="Continue with Google"
             />
             <SocialBtn
               onClick={() => onSocialLogin(facebookProvider, "Facebook")}
-              label="Facebook"
-              icon={<Facebook size={16} />}
               disabled={loading}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
+                  <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+                </svg>
+              }
+              label="Continue with Facebook"
             />
           </div>
 
-          <footer className="mt-8 text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-              No account?
-              <Link
-                to="/register"
-                className="ml-2 border-b-2 border-[#D23669] pb-0.5 text-[#D23669] transition-all hover:border-black hover:text-black"
-              >
-                Create one
-              </Link>
-            </p>
-          </footer>
+          {/* Register link */}
+          <p className="mt-10 text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] text-center">
+            No account?{" "}
+            <Link to="/register" className="text-[#1A1A1A] font-[500] hover:text-[#D23669] transition-colors border-b border-[#E8E0DC]">
+              Create one
+            </Link>
+          </p>
         </div>
       </div>
     </div>
@@ -289,12 +270,12 @@ export default function LoginPage() {
 function SocialBtn({ onClick, label, icon, disabled }) {
   return (
     <button
-      onClick={onClick}
       type="button"
+      onClick={onClick}
       disabled={disabled}
-      className="flex items-center justify-center gap-3 rounded-full border border-[#E6D9E1] bg-white py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1A1A] transition-all hover:border-[#D23669] hover:text-[#D23669] disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-full flex items-center gap-3 border border-[#E8E0DC] bg-white px-5 py-3 text-[10px] font-[400] text-[#1A1A1A] tracking-[0.15em] hover:border-[#1A1A1A] transition-colors duration-200 disabled:opacity-50"
     >
-      <span className="text-[#D23669]">{icon}</span>
+      {icon}
       <span>{label}</span>
     </button>
   );

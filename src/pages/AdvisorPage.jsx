@@ -132,12 +132,12 @@ export default function UltimateAcademy() {
   ];
 
   const faceShapes = [
-    { shape: "Oval", trait: "The Benchmark", desc: "The most balanced proportions — forehead slightly wider than chin, cheeks beautifully curved.", image: "/assets/oval.jpg" },
-    { shape: "Round", trait: "Circular Symmetry", desc: "Cheekbone width equals face length, with rounded jawline and no sharp angles.", image: "/assets/round.jpg" },
-    { shape: "Square", trait: "Angular Precision", desc: "Wide jawline parallel to forehead, creating a strong and powerful look.", image: "/assets/sqare.jpg" },
-    { shape: "Heart", trait: "Upper Dominance", desc: "Wide forehead with a center hairline peak and a tapered pointed chin like a heart symbol.", image: "/assets/heart.jpg" },
-    { shape: "Diamond", trait: "Cheekbone Focus", desc: "Cheekbones are the widest point, while forehead and jaw are narrow and defined.", image: "/assets/diamond.jpg" },
-    { shape: "Oblong", trait: "Vertical Depth", desc: "Face length noticeably greater than width, with a slim and elegant bone structure.", image: "/assets/rectangular.jpg" }
+    { shape: "Oval", trait: "The Benchmark", desc: "The most balanced proportions — forehead slightly wider than chin, cheeks beautifully curved.", image: "/assets/oval.jpg.webp" },
+    { shape: "Round", trait: "Circular Symmetry", desc: "Cheekbone width equals face length, with rounded jawline and no sharp angles.", image: "/assets/round.jpg.webp" },
+    { shape: "Square", trait: "Angular Precision", desc: "Wide jawline parallel to forehead, creating a strong and powerful look.", image: "/assets/square.jpg.webp" },
+    { shape: "Heart", trait: "Upper Dominance", desc: "Wide forehead with a center hairline peak and a tapered pointed chin like a heart symbol.", image: "/assets/heart.jpg.webp" },
+    { shape: "Diamond", trait: "Cheekbone Focus", desc: "Cheekbones are the widest point, while forehead and jaw are narrow and defined.", image: "/assets/diamond.jpg.webp" },
+    { shape: "Oblong", trait: "Vertical Depth", desc: "Face length noticeably greater than width, with a slim and elegant bone structure.", image: "/assets/triangle.jpg.webp" }
   ];
 
   const closetCards = [
@@ -165,32 +165,34 @@ export default function UltimateAcademy() {
   ];
 
   return (
-    <div className="bg-white text-[#4A4A4A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
-      
-      {/* --- 1. MODAL DETAIL --- */}
+    <div className="bg-white text-[#1A1A1A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
+
+      {/* ── MODAL ── */}
       {(selectedTopic || selectedSeason) && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => { setSelectedTopic(null); setSelectedSeason(null); }}></div>
-          <div className="relative bg-white w-full max-w-5xl rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-500">
-            <div className="w-full md:w-1/2 h-72 md:h-auto overflow-hidden bg-gray-100">
-              <img 
-                src={selectedTopic ? knowledgeBase[selectedTopic].image : resolveImageUrl(seasonalLooks[selectedSeason]?.image_url, "https://images.unsplash.com/photo-1550684848-fac1c5b4e853")} 
-                className="w-full h-full object-cover" 
-                alt="Detail" 
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-black/60" onClick={() => { setSelectedTopic(null); setSelectedSeason(null); }} />
+          <div className="relative bg-white w-full max-w-5xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+            <div className="w-full md:w-1/2 aspect-[4/3] md:aspect-auto overflow-hidden bg-[#F7F4F2]">
+              <img
+                src={selectedTopic ? knowledgeBase[selectedTopic].image : resolveImageUrl(seasonalLooks[selectedSeason]?.image_url, "https://images.unsplash.com/photo-1550684848-fac1c5b4e853")}
+                className="w-full h-full object-cover" alt="Detail"
               />
             </div>
-            <div className="w-full md:w-1/2 p-12 md:p-16 flex flex-col justify-center">
-              <button onClick={() => { setSelectedTopic(null); setSelectedSeason(null); }} className="absolute top-8 right-8 text-gray-400 hover:text-black transition-colors"><X size={24}/></button>
-              <span className="text-[10px] tracking-[0.4em] font-black uppercase text-[#D23669] mb-4">Aura Deep-Dive</span>
-              <h2 className="text-4xl md:text-5xl font-[900] tracking-tighter uppercase mb-6 leading-none">
+            <div className="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center relative">
+              <button onClick={() => { setSelectedTopic(null); setSelectedSeason(null); }}
+                className="absolute top-6 right-6 w-8 h-8 border border-[#E8E0DC] flex items-center justify-center text-[#888] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all">
+                <X size={14} />
+              </button>
+              <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Aura Deep-Dive</p>
+              <h2 className="text-3xl md:text-5xl font-[200] tracking-[0.02em] uppercase mb-6 leading-[1]">
                 {selectedTopic ? knowledgeBase[selectedTopic].title : seasonalData[selectedSeason].title}
               </h2>
-              <p className="text-[12px] font-bold text-gray-500 leading-relaxed uppercase tracking-wider mb-8 border-l-2 border-[#D23669] pl-6">
+              <p className="text-sm font-[300] text-[#555] leading-relaxed mb-8 border-l-2 border-[#1A1A1A] pl-5">
                 {selectedTopic ? knowledgeBase[selectedTopic].content : seasonalData[selectedSeason].vibe}
               </p>
-              <div className="bg-[#FFF5F8] p-8 rounded-[2.5rem] border border-[#EEDDE4]">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#D23669] mb-2">Technical Insight</p>
-                <p className="text-[11px] font-black uppercase text-[#4A4A4A] leading-relaxed italic">
+              <div className="border border-[#E8E0DC] p-6">
+                <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-2">Technical Insight</p>
+                <p className="text-xs font-[500] uppercase text-[#1A1A1A] leading-relaxed">
                   {selectedTopic ? knowledgeBase[selectedTopic].tips : `Key Palette: ${seasonalData[selectedSeason].best}`}
                 </p>
               </div>
@@ -199,106 +201,156 @@ export default function UltimateAcademy() {
         </div>
       )}
 
-      {/* --- 2. HERO --- */}
-            <header className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
-        <div className="absolute inset-0 z-0">
-          <picture>
-            <source srcSet="/assets/dior.jpeg" type="image/webp" />
-            <img
-              src="/assets/dior.jpeg"
-              alt=""
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          </picture>
-        </div>
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-10">
-          <div data-aos="fade-right" className="max-w-4xl space-y-6">
-            <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1 rounded-full border border-white/20 backdrop-blur-sm">
-              <Sparkles size={10} className="text-white" />
-              <span className="text-[8px] tracking-[0.2em] uppercase text-white font-black">Academy Session 2026</span>
-            </div>
-            <h1 className="text-[4rem] md:text-[6rem] lg:text-[7.5rem] font-[900] leading-[0.9] tracking-tighter text-white uppercase">
-              Visual <br /> <span className="text-[#FF85A2]">IQ</span> <span className="font-light italic text-white">Logic</span>
-            </h1>
-            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-white/85 max-w-md leading-relaxed">
-              Decoding the biometric science of beauty. Elevate your aesthetic intelligence through our advanced color theory.
-            </p>
-            <div className="pt-4">
-              <button
-                onClick={() => navigate("/analysis")}
-                className="group relative overflow-hidden bg-white text-black px-12 py-5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:pr-16"
-              >
-                <span className="relative z-10">Start Your Analysis</span>
-                <ArrowRight className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all" size={16} />
-              </button>
-            </div>
-          </div>
+      {/* ── HERO ── */}
+      <header className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden mt-[60px] lg:mt-[180px]">
+        <img src="/laglace/homee.webp" alt="" fetchpriority="high" decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 opacity-0"
+          onLoad={(e) => e.currentTarget.classList.replace("opacity-0", "opacity-100")} />
+        <div className="absolute inset-0 bg-black/40" />
+
+        <div className="relative z-10 flex flex-col items-center text-center px-6" data-aos="fade-up">
+          <p className="text-[10px] tracking-[0.5em] uppercase text-white font-[400] mb-6 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+            AuraMatch &nbsp;·&nbsp; Academy 2026
+          </p>
+
+          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[200] leading-[0.88] tracking-[0.08em] text-white uppercase mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            Visual
+          </h1>
+          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[800] leading-[0.88] tracking-[-0.01em] text-white uppercase italic mb-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            IQ Logic
+          </h1>
+
+          <div className="w-12 h-px bg-white/50 mb-6" />
+
+          <p className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-white font-[300] max-w-xs leading-loose mb-10 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+            Decoding the biometric science of beauty.<br />Elevate your aesthetic intelligence.
+          </p>
+
+          <button onClick={() => navigate("/analysis")}
+            className="bg-white text-[#1A1A1A] px-10 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] border border-white hover:bg-[#D23669] hover:text-white hover:border-[#D23669] transition-all duration-300">
+            Start Your Analysis
+          </button>
         </div>
       </header>
 
-      {/* --- 2. MARQUEE --- */}
-      <div className="bg-[#D23669] py-5 overflow-hidden border-y border-white/10 relative z-20">
+      {/* ── MARQUEE ── */}
+      {/* <div className="border-y border-[#E8E0DC] py-4 overflow-hidden bg-white">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...Array(10)].map((_, i) => (
-            <span key={i} className="text-white text-[10px] font-[900] tracking-[0.5em] uppercase mx-12">
-              • DISCOVER YOUR SHAPE • ANALYSE YOUR COLOR • BOOST YOUR AURA •
+            <span key={i} className="text-[#888] text-[9px] font-[300] tracking-[0.5em] uppercase mx-10">
+              · Discover Your Shape · Analyse Your Color · Boost Your Aura ·
             </span>
           ))}
         </div>
-      </div>
+      </div> */}
 
-      {/* --- 3. LESSON 01: COLOR TRINITY --- */}
-      <section className="py-32 bg-white">
-        <div className="max-w-[1400px] mx-auto px-10">
-          <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-4">Lesson 01</span>
-          <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter text-[#4A4A4A] uppercase mb-16">The Genetic <span className="text-[#FF85A2]">Color Trinity</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {Object.keys(knowledgeBase).map((key, i) => (
-              <div key={key} onClick={() => setSelectedTopic(key)} className={`group ${knowledgeBase[key].color} p-12 rounded-[3.5rem] h-[480px] flex flex-col justify-between transition-all hover:-translate-y-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-2xl`}>
-                <div className="absolute -right-4 -top-4 text-[10rem] font-[900] text-black/5 uppercase italic">0{i + 1}</div>
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"><Zap size={20} className="text-[#D23669]" /></div>
-                <div className="relative z-10">
-                  <h3 className="text-4xl font-[900] uppercase tracking-tighter mb-4">{key}</h3>
-                  <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest leading-loose">{knowledgeBase[key].content}</p>
+      {/* ── LESSON 01: COLOR TRINITY ── */}
+      {/* <section className="py-28 bg-[#F9E2E7]">
+        <div className="max-w-[1180px] mx-auto px-6 md:px-10">
+
+         
+          <div className="text-center mb-20" data-aos="fade-up">
+            <p className="text-[9px] tracking-[0.6em] uppercase text-[#4E3844] font-[400] mb-6">Lesson 01 &nbsp;·&nbsp; The Science</p>
+            <h2 className="text-[2.8rem] md:text-[5rem] font-[800] tracking-[0.08em] text-[#221D1D] uppercase leading-[0.92] mb-6">
+              The Genetic<br /><span className="font-[300] italic tracking-[0.12em] text-[#FF2D78]">Color Trinity</span>
+            </h2>
+            <div className="w-12 h-[3px] bg-[#FF2D78] mx-auto mb-8" />
+            <p className="text-[11px] font-[400] uppercase tracking-[0.25em] text-[#4E3844] max-w-sm mx-auto leading-loose">
+              Three genetic dimensions that determine which colors elevate your skin — and which ones flatten it.
+            </p>
+          </div>
+
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.keys(knowledgeBase).map((key, i) => {
+              const card = knowledgeBase[key];
+              const labels = { Hue: "Temperature", Value: "Depth", Chroma: "Clarity" };
+              return (
+                <div key={key} onClick={() => setSelectedTopic(key)}
+                  data-aos="fade-up" data-aos-delay={i * 100}
+                  className="group bg-white border-[3px] border-[#F9E2E7] hover:border-[#FF2D78] cursor-pointer transition-all duration-300 flex flex-col">
+
+                  
+                  <div className="h-0 group-hover:h-1 bg-[#FF2D78] transition-all duration-300" />
+
+                  <div className="p-10 md:p-12 flex flex-col flex-1">
+                    
+                    <p className="text-[9px] tracking-[0.5em] uppercase text-[#958F8F] font-[400] mb-10">0{i + 1}</p>
+
+                    
+                    <span className="text-[8px] tracking-[0.5em] uppercase text-[#FF2D78] font-[600] mb-4 self-start border-b border-[#FF2D78]/30 pb-1">
+                      {labels[key]}
+                    </span>
+
+                    
+                    <h3 className="text-[2.6rem] md:text-[3rem] font-[700] uppercase tracking-[0.04em] text-[#221D1D] leading-[0.9] mb-6">
+                      {key}
+                    </h3>
+
+                   
+                    <div className="w-8 h-px bg-[#F9E2E7] mb-6 group-hover:w-16 group-hover:bg-[#FF2D78] transition-all duration-500" />
+
+                   
+                    <p className="text-[12px] font-[400] text-[#605858] leading-relaxed flex-1">{card.content}</p>
+
+                    
+                    <div className="mt-8 pt-6 border-t border-[#F9E2E7] bg-[#FFF5F7] -mx-10 md:-mx-12 px-10 md:px-12 py-6 -mb-10 md:-mb-12">
+                      <p className="text-[8px] tracking-[0.5em] uppercase text-[#FF2D78] font-[600] mb-2">Pro Tip</p>
+                      <p className="text-[11px] font-[400] text-[#605858] leading-relaxed">{card.tips}</p>
+                    </div>
+                  </div>
+
+                  
+                  <div className="flex items-center gap-2 px-10 md:px-12 py-5 border-t border-[#F9E2E7] text-[9px] tracking-[0.4em] uppercase text-[#4E3844] font-[600] group-hover:text-[#FF2D78] group-hover:gap-4 transition-all duration-300">
+                    <span>Deep Dive</span>
+                    <ArrowRight size={11} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
-      </section>
+      </section> */}
 
-      {/* --- 4. LESSON 02: SEASONAL ARCHIVE --- */}
-      <section className="py-32 bg-[#F9F9F9]">
-        <div className="max-w-[1400px] mx-auto px-10">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-            <div data-aos="fade-right">
-              <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-4">Lesson 02</span>
-              <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter text-[#4A4A4A] uppercase">The Four <span className="text-[#FF85A2]">Aura Archetypes</span></h2>
+      {/* ── LESSON 02: SEASONAL ARCHIVE ── */}
+      <section className="py-24 bg-[#FAF7F5]">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+          <div className="border-t border-[#E8E0DC] pt-10 mb-16 flex flex-col md:flex-row justify-between items-end gap-8" data-aos="fade-up">
+            <div>
+              <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Lesson 02</p>
+              <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1]">
+                The Four<br /><span className="font-[700] italic">Aura Archetypes</span>
+              </h2>
             </div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest max-w-[300px] text-right">Analysis of the interaction between "skin pigments" and "external color values"</p>
+            <p className="text-[9px] font-[300] text-[#888] uppercase tracking-[0.2em] max-w-[280px] md:text-right leading-loose">
+              The interaction between skin pigments and external color values
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#E8E0DC]">
             {Object.keys(seasonalData).map((seasonKey, i) => {
               const look = seasonalLooks[seasonKey];
               return (
-                <div key={seasonKey} className="flex flex-col gap-6" data-aos="fade-up" data-aos-delay={i*100}>
-                  <div onClick={() => setSelectedSeason(seasonKey)} className="group relative aspect-[3/4] rounded-[3rem] overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-all cursor-pointer border border-gray-100">
+                <div key={seasonKey} data-aos="fade-up" data-aos-delay={i * 80}>
+                  <div onClick={() => setSelectedSeason(seasonKey)}
+                    className="group relative aspect-[3/4] overflow-hidden bg-white cursor-pointer">
                     {look ? (
-                      <img src={resolveImageUrl(look.image_url)} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" alt={seasonKey} />
+                      <img src={resolveImageUrl(look.image_url)}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        alt={seasonKey} />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-gray-300 font-black text-[10px] uppercase">Loading AI Data...</div>
+                      <div className="flex items-center justify-center h-full text-[#888] text-[9px] uppercase tracking-[0.2em] font-[300]">Loading...</div>
                     )}
-                    <div className="absolute top-8 left-8"><span className="bg-white/95 text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">{seasonKey}</span></div>
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-end p-10">
-                       <p className="text-white text-[10px] font-black uppercase leading-relaxed italic">"Brighten your skin with {seasonalData[seasonKey].best}"</p>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-white text-[9px] font-[300] uppercase tracking-[0.2em] leading-relaxed">
+                        {seasonalData[seasonKey].best}
+                      </p>
                     </div>
                   </div>
-                  <div className="px-4">
-                    <h6 className="text-[12px] font-black uppercase text-[#4A4A4A] mb-1">{seasonalData[seasonKey].sub}</h6>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{seasonalData[seasonKey].theory}</p>
+                  <div className="bg-white p-5 border-t border-[#E8E0DC]">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">{seasonKey}</p>
+                    <h6 className="text-sm font-[500] uppercase text-[#1A1A1A]">{seasonalData[seasonKey].sub}</h6>
+                    <p className="text-[9px] font-[300] text-[#888] mt-1 tracking-[0.15em] uppercase">{seasonalData[seasonKey].theory}</p>
                   </div>
                 </div>
               );
@@ -307,33 +359,29 @@ export default function UltimateAcademy() {
         </div>
       </section>
 
-      {/* --- 5. LESSON: SKIN UNDERTONE --- */}
-      <section className="py-28 bg-white">
-        <div className="max-w-[1400px] mx-auto px-10">
-          <div className="mb-14 text-center">
-            <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-4">Skin Undertone</span>
-            <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter text-[#4A4A4A] uppercase">
-              Cool <span className="text-[#FF85A2]">Warm</span> Neutral
+      {/* ── SKIN UNDERTONE ── */}
+      <section className="py-24 bg-white">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+          <div className="border-t border-[#E8E0DC] pt-10 mb-16 text-center" data-aos="fade-up">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Skin Undertone</p>
+            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1]">
+              Cool · Warm<br /><span className="font-[700] italic">Neutral</span>
             </h2>
-            <p className="mt-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+            <p className="mt-5 text-xs font-[300] text-[#888] uppercase tracking-[0.25em] max-w-lg mx-auto leading-loose">
               Use Undertone as your foundation before choosing hair color, outfit colors, and makeup.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#E8E0DC] mb-12">
             {undertoneData.map((item, idx) => (
-              <div
-                key={item.key}
-                data-aos="fade-up"
-                data-aos-delay={idx * 80}
-                className={`${item.bg} rounded-[3rem] p-10 border border-[#EEDDE4] shadow-sm hover:shadow-xl transition-all`}
-              >
-                <p className={`text-[10px] font-black uppercase tracking-[0.25em] ${item.accent} mb-3`}>{item.sub}</p>
-                <h3 className="text-3xl font-[900] tracking-tighter uppercase text-[#4A4A4A] mb-4">{item.title}</h3>
-                <p className="text-[11px] font-bold text-gray-500 leading-relaxed mb-7">{item.desc}</p>
+              <div key={item.key} data-aos="fade-up" data-aos-delay={idx * 80}
+                className="bg-white p-8 md:p-10">
+                <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">{item.sub}</p>
+                <h3 className="text-2xl font-[500] uppercase tracking-tight text-[#1A1A1A] mb-4">{item.title}</h3>
+                <p className="text-xs font-[300] text-[#555] leading-relaxed mb-6">{item.desc}</p>
                 <div className="flex flex-wrap gap-2">
                   {item.chips.map((chip) => (
-                    <span key={chip} className="px-4 py-2 rounded-full bg-white text-[10px] font-black uppercase tracking-wider text-gray-500 border border-[#EEDDE4]">
+                    <span key={chip} className="px-3 py-1 border border-[#E8E0DC] text-[9px] font-[400] uppercase tracking-[0.15em] text-[#555]">
                       {chip}
                     </span>
                   ))}
@@ -342,102 +390,84 @@ export default function UltimateAcademy() {
             ))}
           </div>
 
-          <div className="mt-14 bg-[#F9F9F9] rounded-[3rem] p-8 md:p-12 border border-[#EEDDE4]">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+          {/* Vein check */}
+          {/* <div className="border border-[#E8E0DC] p-8 md:p-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#D23669] mb-2">
-                  How To Check Your Undertone
-                </p>
-                <h3 className="text-2xl md:text-4xl font-[900] uppercase tracking-tighter text-[#4A4A4A]">
-                  Check From Vein Color
+                <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">How To Check</p>
+                <h3 className="text-2xl md:text-3xl font-[200] uppercase tracking-[0.02em] text-[#1A1A1A]">
+                  Check From<br /><span className="font-[700] italic">Vein Color</span>
                 </h3>
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                Natural daylight • inner wrist
-              </p>
+              <p className="text-[9px] font-[300] uppercase tracking-[0.2em] text-[#888]">Natural daylight · Inner wrist</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-[2rem] p-6 border border-[#EEDDE4]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 1</p>
-                <p className="text-[12px] font-bold text-gray-600">Hold your wrist up in natural daylight. Avoid yellow indoor lighting.</p>
-              </div>
-              <div className="bg-white rounded-[2rem] p-6 border border-[#EEDDE4]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 2</p>
-                <p className="text-[12px] font-bold text-gray-600">Look at the veins on the inside of your wrist — are they blue/purple or green?</p>
-              </div>
-              <div className="bg-white rounded-[2rem] p-6 border border-[#EEDDE4]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#D23669] mb-3">Step 3</p>
-                <p className="text-[12px] font-bold text-gray-600">Compare the result with the table below, then choose your color tone as recommended.</p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#E8E0DC] mb-4">
+              {["Hold your wrist up in natural daylight. Avoid yellow indoor lighting.", "Look at the veins on the inside of your wrist — are they blue/purple or green?", "Compare with the table below, then choose your color tone as recommended."].map((text, i) => (
+                <div key={i} className="bg-white p-6">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Step {String(i+1).padStart(2,"0")}</p>
+                  <p className="text-xs font-[300] text-[#555] leading-relaxed">{text}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-[2rem] p-6 bg-[#EEF4FF] border border-[#D7E4FF]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#5D78C8] mb-2">Veins: Blue / Purple</p>
-                <p className="text-[14px] font-[900] uppercase text-[#4A4A4A]">Cool Undertone</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#E8E0DC]">
+              <div className="bg-white p-5">
+                <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-1">Veins: Blue / Purple</p>
+                <p className="text-sm font-[600] uppercase text-[#1A1A1A]">Cool Undertone</p>
               </div>
-              <div className="rounded-[2rem] p-6 bg-[#FFF5EA] border border-[#FFE5C9]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#CC7B2C] mb-2">Veins: Green / Olive</p>
-                <p className="text-[14px] font-[900] uppercase text-[#4A4A4A]">Warm Undertone</p>
+              <div className="bg-white p-5">
+                <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-1">Veins: Green / Olive</p>
+                <p className="text-sm font-[600] uppercase text-[#1A1A1A]">Warm Undertone</p>
               </div>
-              <div className="rounded-[2rem] p-6 bg-[#F4F4F4] border border-[#E8E8E8]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#596273] mb-2">Veins: Mix / Hard to Tell</p>
-                <p className="text-[14px] font-[900] uppercase text-[#4A4A4A]">Neutral Undertone</p>
+              <div className="bg-white p-5">
+                <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-1">Veins: Mix / Hard to Tell</p>
+                <p className="text-sm font-[600] uppercase text-[#1A1A1A]">Neutral Undertone</p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
 
-      {/* --- 6. LESSON 03: FACE GEOMETRY (BALANCED - PASTEL VERSION) --- */}
-      <section className="py-32 bg-white">
-        <div className="max-w-[1400px] mx-auto px-10">
-          <div className="flex flex-col lg:flex-row gap-20">
-            <div className="w-full lg:w-[40%] lg:sticky lg:top-32 h-fit" data-aos="fade-right">
-              <span className="text-[11px] tracking-[0.4em] font-black uppercase text-[#D23669] block mb-6">Lesson 03</span>
-              <h2 className="text-4xl md:text-[5rem] lg:text-[6rem] font-[900] leading-[0.85] tracking-tighter text-[#4A4A4A] uppercase mb-8">
-                The Six <br /><span className="text-[#FF85A2]">Geometry</span> Archetypes
-              </h2>
-              <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] leading-loose border-l-4 border-[#D23669]/10 pl-8 mb-10">
-                Understanding your true face shape enables millimeter-precision Contour and Highlight placement, balancing bone structure against light reflection.
-              </p>
-              <button onClick={() => navigate('/analysis')} className="bg-[#D23669] hover:bg-[#FF85A2] text-white px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-[#D23669]/30 flex items-center gap-4 group">
-                Start Biometric Scan <ArrowUpRight size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </button>
+      {/* ── LESSON 03: FACE GEOMETRY ── */}
+      <section className="py-24 bg-[#FAF7F5]">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+          <div className="flex flex-col lg:flex-row gap-16">
+            <div className="w-full lg:w-[38%] lg:sticky lg:top-28 h-fit" data-aos="fade-right">
+              <div className="border-t border-[#E8E0DC] pt-10">
+                <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Lesson 03</p>
+                <h2 className="text-[3rem] md:text-[4rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1] mb-8">
+                  The Six<br /><span className="font-[700] italic">Geometry Archetypes</span>
+                </h2>
+                <p className="text-xs font-[300] text-[#555] leading-relaxed border-l-2 border-[#E8E0DC] pl-5 mb-10">
+                  Understanding your true face shape enables precise Contour and Highlight placement, balancing bone structure against light reflection.
+                </p>
+                <button onClick={() => navigate('/analysis')}
+                  className="bg-[#1A1A1A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] transition-all duration-300 flex items-center gap-3">
+                  Start Biometric Scan <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
-            
-            <div className="w-full lg:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="w-full lg:w-[62%] grid grid-cols-2 md:grid-cols-3 gap-px bg-[#E8E0DC]">
               {[
-                { shape: "Oval", trait: "Ideal Balance", desc: "The most balanced proportions — forehead and jaw beautifully rounded.", bg: "#F1F5F9", image: faceShapes[0].image }, // Blue-Gray Pastel
-                { shape: "Square", trait: "Strong Presence", desc: "Defined jawline, forehead and cheekbones at similar widths.", bg: "#FDF2F2", image: faceShapes[2].image }, // Red Pastel
-                { shape: "Round", trait: "Soft Contour", desc: "Face width and length are nearly equal, emphasizing softness.", bg: "#FFFBEB", image: faceShapes[1].image }, // Amber Pastel
-                { shape: "Heart", trait: "Delicate Point", desc: "Wide forehead that tapers gradually to a pointed chin.", bg: "#F5F3FF", image: faceShapes[3].image }, // Purple Pastel
-                { shape: "Diamond", trait: "Sharp Definition", desc: "Cheekbones are the widest point, with narrow forehead and jaw.", bg: "#ECFDF5", image: faceShapes[4].image }, // Emerald Pastel
-                { shape: "Long", trait: "Vertical Focus", desc: "Face length exceeds width — focus on horizontal balance.", bg: "#EFF6FF", image: faceShapes[5].image }  // Blue Pastel
+                { shape: "Oval", trait: "Ideal Balance", desc: "The most balanced proportions — forehead and jaw beautifully rounded.", image: faceShapes[0].image },
+                { shape: "Square", trait: "Strong Presence", desc: "Defined jawline, forehead and cheekbones at similar widths.", image: faceShapes[2].image },
+                { shape: "Round", trait: "Soft Contour", desc: "Face width and length are nearly equal, emphasizing softness.", image: faceShapes[1].image },
+                { shape: "Heart", trait: "Delicate Point", desc: "Wide forehead that tapers gradually to a pointed chin.", image: faceShapes[3].image },
+                { shape: "Diamond", trait: "Sharp Definition", desc: "Cheekbones are the widest point, with narrow forehead and jaw.", image: faceShapes[4].image },
+                { shape: "Long", trait: "Vertical Focus", desc: "Face length exceeds width — focus on horizontal balance.", image: faceShapes[5].image }
               ].map((item, i) => (
-                <div 
-                  key={item.shape} 
-                  style={{ '--pastel-bg': item.bg }} 
-                  className="p-10 rounded-[3.5rem] bg-[var(--pastel-bg)] hover:bg-[#D23669] group transition-all duration-700 min-h-[280px] flex flex-col justify-between cursor-default shadow-sm hover:shadow-2xl"
-                >
-                  <div>
-                    <div className="flex justify-between items-center mb-6">
-                      <span className="text-[10px] font-black text-[#D23669] group-hover:text-white/40 uppercase">0{i+1} / Shape</span>
-                      <div className="w-2 h-2 rounded-full bg-[#D23669] group-hover:bg-[#FF85A2] transition-colors"></div>
-                    </div>
-                    <h5 className="text-[20px] font-[900] uppercase text-[#4A4A4A] group-hover:text-white transition-colors">{item.shape}</h5>
-                    <p className="text-[9px] font-black text-[#D23669] group-hover:text-[#FF85A2] uppercase mt-2 tracking-widest">{item.trait}</p>
+                <div key={item.shape} className="group bg-white overflow-hidden hover:bg-[#EBC2C8] transition-all duration-500 cursor-default">
+                  <div className="aspect-square overflow-hidden bg-[#F7F4F2]">
+                    <img src={resolveImageUrl(item.image)} alt={item.shape}
+                      className="w-full h-full object-cover scale-[1.3] group-hover:scale-[1.35] transition-transform duration-500" loading="lazy" />
                   </div>
-                  <div className="h-44 rounded-[1.5rem] overflow-hidden mb-5 border border-white/70 shadow-sm bg-white">
-                    <img
-                      src={resolveImageUrl(item.image)}
-                      alt={item.shape}
-                      className="w-full h-full object-contain p-2"
-                      loading="lazy"
-                    />
+                  <div className="p-5 border-t border-[#E8E0DC] group-hover:border-[#333]">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1 group-hover:text-[#888]">0{i+1}</p>
+                    <h5 className="text-sm font-[600] uppercase text-[#1A1A1A] group-hover:text-white mb-1 transition-colors">{item.shape}</h5>
+                    <p className="text-[9px] font-[300] text-[#888] group-hover:text-white/60 uppercase tracking-[0.1em] transition-colors">{item.trait}</p>
                   </div>
-                  <p className="text-[11px] font-medium text-gray-400 group-hover:text-white/80 uppercase leading-loose tracking-tight transition-colors">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -445,90 +475,51 @@ export default function UltimateAcademy() {
         </div>
       </section>
 
-      {/* --- 7. LESSON 04: CLOSET LOGIC --- */}
-      <section className="py-32 bg-[#F9F9F9]">
-        <div className="max-w-[1400px] mx-auto px-10 text-center">
-          <span className="text-[11px] tracking-[0.5em] font-black uppercase text-[#D23669] block mb-4">Lesson 04</span>
-          <h2 className="text-4xl md:text-[3.5rem] font-[900] tracking-tighter uppercase mb-20 text-[#4A4A4A]">Closet <span className="text-[#FF85A2]">Logic</span></h2>
-          <div className="grid lg:grid-cols-3 gap-8">
+      {/* ── LESSON 04: CLOSET LOGIC ── */}
+      <section className="py-24 bg-white">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+          <div className="border-t border-[#E8E0DC] pt-10 mb-16 text-center" data-aos="fade-up">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Lesson 04</p>
+            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1]">
+              Closet<br /><span className="font-[700] italic">Logic</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#E8E0DC]">
             {closetCards.map((card, idx) => (
-              <div
-                key={card.title}
-                className={`${card.highlight ? "bg-[#D23669] text-white transform lg:-translate-y-8 shadow-xl" : "bg-white shadow-sm hover:shadow-xl"} p-10 rounded-[4rem] transition-all group`}
-                data-aos="fade-up"
-                data-aos-delay={idx * 100}
-              >
-                {/* <div className="h-44 rounded-[2rem] overflow-hidden mb-8 border border-white/20">
-                  <img src={card.image} alt={card.title} className="w-full h-full object-cover" loading="lazy" />
-                </div> */}
-                <span className={`text-6xl font-[900] ${card.highlight ? "text-white/20" : "text-[#D23669]/10 group-hover:text-[#D23669]/20"} transition-colors block mb-6`}>
+              <div key={card.title} data-aos="fade-up" data-aos-delay={idx * 100}
+                className={`p-10 md:p-12 flex flex-col justify-between min-h-[320px] transition-all ${card.highlight ? "bg-[#1A1A1A] text-white md:-translate-y-6 shadow-2xl" : "bg-white hover:bg-[#FAF7F5]"}`}>
+                <span className={`text-[5rem] font-[200] leading-none ${card.highlight ? "text-white/20" : "text-[#E8E0DC]"}`}>
                   {card.percent}
                 </span>
-                <h4 className="text-2xl font-[900] uppercase mb-4">{card.title}</h4>
-                <p className={`text-[11px] font-bold uppercase leading-loose tracking-wider ${card.highlight ? "text-white/70" : "text-gray-400"}`}>
-                  {card.desc}
-                </p>
+                <div>
+                  <h4 className={`text-xl font-[600] uppercase mb-3 ${card.highlight ? "text-white" : "text-[#1A1A1A]"}`}>{card.title}</h4>
+                  <p className={`text-xs font-[300] leading-relaxed uppercase tracking-[0.1em] ${card.highlight ? "text-white/60" : "text-[#888]"}`}>
+                    {card.desc}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
+
+          {/* CTA */}
+          {/* <div className="border-t border-[#E8E0DC] pt-12 mt-16 flex flex-col items-center text-center gap-6" data-aos="fade-up">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300]">Ready to start?</p>
+            <h3 className="text-[2.5rem] md:text-[4rem] font-[200] uppercase tracking-[0.02em] text-[#1A1A1A] leading-[1]">
+              Decode Your<br /><span className="font-[700] italic">Genetic Aura</span>
+            </h3>
+            <button onClick={() => navigate('/analysis')}
+              className="bg-[#1A1A1A] text-white px-12 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] hover:bg-[#D23669] transition-all duration-300 flex items-center gap-3">
+              Start Free Scan <ArrowRight size={14} />
+            </button>
+          </div> */}
         </div>
       </section>
-
-      {/* --- 8. PRESTIGE CTA --- */}
-      {/* <section className="py-24 bg-black text-white text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-[#D23669]/10 animate-pulse"></div>
-        <div className="relative z-10 max-w-[1400px] mx-auto px-10" data-aos="zoom-in">
-          <h2 className="text-[3.5rem] md:text-[5.5rem] font-[900] tracking-tighter uppercase leading-[1] mb-12">Decode Your <br /> <span className="text-[#FF85A2]">Genetic Aura</span> Today.</h2>
-          <button onClick={() => navigate('/analysis')} className="mx-auto flex items-center gap-6 bg-white text-black px-12 py-6 rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-[#FF85A2] hover:text-white transition-all duration-500 shadow-2xl">
-            Start Your Free Scan <ArrowRight size={18} />
-          </button>
-        </div>
-      </section> */}
-
-      {/* --- 9. LUXURY FOOTER --- */}
-      {/* <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
-        <div className="max-w-[1400px] mx-auto px-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-            <div className="col-span-1 md:col-span-2 space-y-6">
-              <h3 className="text-2xl font-[900] tracking-tighter uppercase">Aura<span className="text-[#D23669]">Match</span></h3>
-              <p className="text-[11px] font-bold text-gray-400 uppercase leading-loose max-w-sm">
-                Leading the intersection of biometric technology and premium beauty aesthetics.
-                Your personalized dose of confidence, delivered daily.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest">Navigation</h4>
-              <ul className="space-y-2">
-                {navItems.map((item, i) => (
-                  <li key={i}>
-                    <Link to={item.to} className="text-[10px] font-bold text-gray-400 hover:text-[#D23669] transition-colors uppercase">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest">Connect</h4>
-              <div className="flex gap-4">
-                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">INSTAGRAM</span>
-                <span className="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-[#D23669]">TIKTOK</span>
-              </div>
-            </div>
-          </div>
-          <div className="text-center pt-10 border-t border-gray-50">
-            <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em]">
-              © 2026 AURAMATCH BIOMETRIC BEAUTY LAB. ALL RIGHTS RESERVED.
-            </p>
-          </div>
-        </div>
-      </footer> */}
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .animate-marquee { animation: marquee 30s linear infinite; }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #D23669; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #1A1A1A; border-radius: 0; }
       `}</style>
     </div>
   );

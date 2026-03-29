@@ -65,7 +65,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light flex items-center justify-center px-6 pt-20 selection:bg-[#C5A358]/20">
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light flex items-center justify-center px-6 pt-[80px] lg:pt-[220px] selection:bg-[#C5A358]/20">
       
       {/* Background Decor */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">

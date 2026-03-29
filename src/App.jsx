@@ -4,7 +4,6 @@ import { Suspense, lazy } from "react";
 // Layout pieces
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import DiscountBanner from "./components/DiscountBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./lib/i18n";
 
@@ -53,7 +52,6 @@ function ChromeWrapper({ children }) {
     <div className="min-h-screen flex flex-col bg-[#FDFCFB]">
       {!hideChrome && <Navbar />}
       <main className="flex-grow flex flex-col">
-        {!hideChrome && <DiscountBanner />}
         <Suspense fallback={<LoadingUI />}>
           {children}
         </Suspense>

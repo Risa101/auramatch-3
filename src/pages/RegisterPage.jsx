@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getOrCreateWelcomeCoupon, notifyCouponChanged } from "../utils/coupon";
 
 
 function resolveApiBaseUrl() {
@@ -108,8 +107,6 @@ export default function RegisterPage() {
       const adminFlag = userlike.role === "admin";
       localStorage.setItem("auramatch:isAdmin", adminFlag ? "true" : "false");
 
-      await getOrCreateWelcomeCoupon({ uid: userlike.uid });
-      notifyCouponChanged();
       window.dispatchEvent(new Event("auth:changed"));
 
       navigate(adminFlag ? "/admin/dashboard" : "/", { replace: true });
@@ -121,7 +118,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light flex items-center justify-center px-6 pt-28 pb-12 selection:bg-[#C5A358]/20">
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light flex items-center justify-center px-6 pt-[60px] lg:pt-[180px] pb-12 selection:bg-[#C5A358]/20">
       
       {/* Background Decor */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">

@@ -32,7 +32,7 @@ export default function AboutUs() {
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] overflow-x-hidden selection:bg-[#D4AF37]/20">
       
       {/* 1. HERO: THE MANIFESTO */}
-      <section className="relative min-h-screen flex items-center justify-center px-10 pt-20 overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center px-10 pt-[80px] lg:pt-[200px] overflow-hidden">
         {/* Decorative Background Text */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
           <span className="text-[35vw] font-serif italic text-black/[0.02] select-none uppercase leading-none tracking-tighter">

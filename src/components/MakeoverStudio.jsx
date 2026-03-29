@@ -1,14 +1,11 @@
 // src/components/MakeoverStudio.jsx
 import React, { useState } from "react";
-import MagneticButton from "./MagneticButton.jsx";
-import SectionHeader from "./SectionHeader.jsx";
 import "./MakeoverStudio.css";
 
 import { imgUrl } from "../utils/imgUrl.js";
 const assetPath = (p) => imgUrl(`/${String(p).replace(/^\/+/, "")}`);
 
 /* ---------- DATA ---------- */
-// 🎨 คิ้ว
 const BROWS = [
     { key: "none", name: "None", img: "" },
     { key: "soft", name: "Soft Arch", img: assetPath("overlays/hair/brow-soft.jpg") },
@@ -18,7 +15,6 @@ const BROWS = [
     { key: "curve", name: "Curve", img: assetPath("overlays/hair/curve.jpg") },
 ];
 
-// 👀 ตา
 const EYES = [
     { key: "none", name: "None", img: "" },
     { key: "natural", name: "Natural", img: assetPath("overlays/hair/eye-natural.jpg") },
@@ -26,7 +22,6 @@ const EYES = [
     { key: "dolly", name: "Dolly", img: assetPath("overlays/hair/eye-dolly.jpg") },
 ];
 
-// 💇‍♀️ ผม
 const HAIRSTYLES = [
     { key: "none", name: "None", img: "" },
     { key: "long", name: "Long Layer", img: assetPath("overlays/hair/hair-long.png") },
@@ -34,7 +29,6 @@ const HAIRSTYLES = [
     { key: "bangs", name: "Airy Bangs", img: assetPath("overlays/hair/hair-bangs.png") },
 ];
 
-// 👄 ปาก
 const LIPS = [
     { key: "none", name: "None", img: "" },
     { key: "red", name: "Red Lip", img: assetPath("overlays/hair/lip1.png") },
@@ -42,7 +36,6 @@ const LIPS = [
     { key: "nude", name: "Nude Matte", img: assetPath("overlays/hair/lip3.png") },
 ];
 
-// 🎨 สีผม
 const HAIR_COLORS = [
     { key: "none", name: "None", filter: "none" },
     { key: "brown", name: "Brown", filter: "brightness(0.95) sepia(0.25) saturate(1.2)" },
@@ -50,43 +43,7 @@ const HAIR_COLORS = [
     { key: "black", name: "Black", filter: "brightness(0.7) saturate(0.8)" },
 ];
 
-/* ---------- SMALL UI ---------- */
-function Tab({ active, children, onClick }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={`rounded-xl px-3 py-1.5 text-sm font-medium border transition ${active ? "bg-[#75464A] text-white" : "bg-white text-[#75464A]"
-                }`}
-        >
-            {children}
-        </button>
-    );
-}
-
-function Option({ label, img, active, onClick }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={`rounded-xl border p-2 overflow-hidden text-xs transition h-full flex flex-col items-center justify-center gap-2 ${active ? "ring-2 ring-[#75464A]" : ""
-                }`}
-            title={label}
-        >
-            {img ? (
-                <img
-                    src={img}
-                    alt={label}
-                    className="object-contain h-16"
-                    onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-            ) : (
-                <div className="h-16 grid place-items-center text-[11px] text-[#75464A]/60">None</div>
-            )}
-            <div className="text-center">{label}</div>
-        </button>
-    );
-}
+const TABS = ["Brows", "Eyes", "Lips", "Hairstyle", "HairColor"];
 
 /* ---------- MAIN ---------- */
 export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG"), onProductSelect, onSave }) {
@@ -129,16 +86,13 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
         setHairColor(HAIR_COLORS[0]);
     };
 
-    return (
-        <section className="rounded-3xl border bg-white/70 p-5 shadow-sm mt-8">
-            <SectionHeader
-                title="Makeover Studio"
-                meta={<span className="text-xs text-[#75464A]/60">เลือกคิ้ว–ตา–ปาก–ทรงผม–สีผม</span>}
-            />
+    const currentItems = { Brows: BROWS, Eyes: EYES, Lips: LIPS, Hairstyle: HAIRSTYLES }[tab];
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    return (
+        <div className="bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#E8E0DC]">
                 {/* LEFT: PREVIEW */}
-                <div className="relative aspect-[4/5] rounded-2xl border overflow-hidden bg-white">
+                <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F4F2]">
                     <img src={base} alt="base face" className="absolute inset-0 w-full h-full object-cover" />
                     {brow?.img && <img src={brow.img} alt={brow.name} className="absolute inset-0 w-full h-full object-contain" />}
                     {eye?.img && <img src={eye.img} alt={eye.name} className="absolute inset-0 w-full h-full object-contain" />}
@@ -154,94 +108,91 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                 </div>
 
                 {/* RIGHT: CONTROL PANEL */}
-                <div>
-                    <div className="flex gap-2 mb-4 flex-wrap">
-                        {["Brows", "Eyes", "Lips", "Hairstyle", "HairColor"].map((t) => (
-                            <Tab key={t} active={tab === t} onClick={() => setTab(t)}>
+                <div className="bg-white p-6 flex flex-col gap-5">
+                    {/* Tab bar */}
+                    <div className="flex flex-wrap gap-px border border-[#E8E0DC]">
+                        {TABS.map((t) => (
+                            <button
+                                key={t}
+                                type="button"
+                                onClick={() => setTab(t)}
+                                className={`flex-1 py-2 text-[9px] font-[500] uppercase tracking-[0.2em] transition-all ${
+                                    tab === t
+                                        ? "bg-[#1A1A1A] text-white"
+                                        : "bg-white text-[#888] hover:text-[#1A1A1A]"
+                                }`}
+                            >
                                 {t}
-                            </Tab>
+                            </button>
                         ))}
                     </div>
 
-                    {tab === "Brows" && (
-                        <div className="grid grid-cols-3 gap-2">
-                            {BROWS.map((b) => (
-                                <Option
-                                    key={b.key}
-                                    label={b.name}
-                                    img={b.img}
-                                    active={brow?.key === b.key}
-                                    onClick={() => {
-                                        setBrow(b);
-                                        emitSelectedProduct(BROW_PRODUCTS[b.key]);
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {tab === "Eyes" && (
-                        <div className="grid grid-cols-3 gap-2">
-                            {EYES.map((e) => (
-                                <Option
-                                    key={e.key}
-                                    label={e.name}
-                                    img={e.img}
-                                    active={eye?.key === e.key}
-                                    onClick={() => {
-                                        setEye(e);
-                                        emitSelectedProduct(EYE_PRODUCTS[e.key]);
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {tab === "Lips" && (
-                        <div className="grid grid-cols-3 gap-2">
-                            {LIPS.map((l) => (
-                                <Option
-                                    key={l.key}
-                                    label={l.name}
-                                    img={l.img}
-                                    active={lips?.key === l.key}
-                                    onClick={() => {
-                                        setLips(l);
-                                        emitSelectedProduct(LIP_PRODUCTS[l.key]);
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {tab === "Hairstyle" && (
-                        <div className="grid grid-cols-3 gap-2">
-                            {HAIRSTYLES.map((h) => (
-                                <Option key={h.key} label={h.name} img={h.img} active={hair?.key === h.key} onClick={() => setHair(h)} />
-                            ))}
-                        </div>
-                    )}
-
-                    {tab === "HairColor" && (
-                        <div className="grid grid-cols-3 gap-2">
+                    {/* Options grid */}
+                    {tab === "HairColor" ? (
+                        <div className="grid grid-cols-4 gap-px bg-[#E8E0DC]">
                             {HAIR_COLORS.map((c) => (
                                 <button
                                     key={c.key}
                                     onClick={() => setHairColor(c)}
-                                    className={`h-16 rounded-xl border flex items-center justify-center text-sm ${hairColor?.key === c.key ? "ring-2 ring-[#75464A]" : ""
-                                        }`}
-                                    title={c.name}
+                                    className={`bg-white py-4 text-[10px] font-[400] uppercase tracking-[0.15em] transition-all ${
+                                        hairColor?.key === c.key
+                                            ? "bg-[#1A1A1A] text-white"
+                                            : "text-[#888] hover:text-[#1A1A1A]"
+                                    }`}
                                 >
                                     {c.name}
                                 </button>
                             ))}
                         </div>
+                    ) : (
+                        <div className="grid grid-cols-3 gap-px bg-[#E8E0DC]">
+                            {(currentItems || []).map((item) => {
+                                const isActive =
+                                    (tab === "Brows" && brow?.key === item.key) ||
+                                    (tab === "Eyes" && eye?.key === item.key) ||
+                                    (tab === "Lips" && lips?.key === item.key) ||
+                                    (tab === "Hairstyle" && hair?.key === item.key);
+                                return (
+                                    <button
+                                        key={item.key}
+                                        type="button"
+                                        title={item.name}
+                                        onClick={() => {
+                                            if (tab === "Brows") { setBrow(item); emitSelectedProduct(BROW_PRODUCTS[item.key]); }
+                                            if (tab === "Eyes") { setEye(item); emitSelectedProduct(EYE_PRODUCTS[item.key]); }
+                                            if (tab === "Lips") { setLips(item); emitSelectedProduct(LIP_PRODUCTS[item.key]); }
+                                            if (tab === "Hairstyle") setHair(item);
+                                        }}
+                                        className={`bg-white overflow-hidden flex flex-col items-center gap-2 p-3 transition-all ${
+                                            isActive ? "outline outline-2 outline-[#1A1A1A] outline-offset-[-2px]" : ""
+                                        }`}
+                                    >
+                                        {item.img ? (
+                                            <img
+                                                src={item.img}
+                                                alt={item.name}
+                                                className="h-14 w-full object-contain"
+                                                onError={(e) => (e.currentTarget.style.display = "none")}
+                                            />
+                                        ) : (
+                                            <div className="h-14 w-full grid place-items-center text-[10px] text-[#aaa]">—</div>
+                                        )}
+                                        <span className="text-[9px] uppercase tracking-[0.15em] text-[#555] font-[400]">{item.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     )}
 
-                    <div className="mt-6 flex items-center gap-2">
-                        <MagneticButton onClick={resetAll}>รีเซ็ต</MagneticButton>
-                        <MagneticButton
-                            style={{ background: "#fff", color: "#75464A", border: "1px solid #E6DCEB", boxShadow: "0 4px 12px rgba(0,0,0,.06)" }}
+                    {/* Actions */}
+                    <div className="flex gap-3 border-t border-[#E8E0DC] pt-5">
+                        <button
+                            onClick={resetAll}
+                            className="flex-1 border border-[#E8E0DC] text-[#888] py-2.5 text-[10px] font-[500] uppercase tracking-[0.2em] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all"
+                        >
+                            Reset
+                        </button>
+                        <button
                             onClick={() => {
                                 const state = { brow, eye, lips, hair, hairColor };
                                 if (onSave) onSave(state);
@@ -249,12 +200,13 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                                 setSavedMsg(true);
                                 setTimeout(() => setSavedMsg(false), 2000);
                             }}
+                            className="flex-1 bg-[#1A1A1A] text-white py-2.5 text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#D23669] transition-all"
                         >
-                            {savedMsg ? "บันทึกแล้ว ✓" : "บันทึกผลลัพธ์"}
-                        </MagneticButton>
+                            {savedMsg ? "Saved" : "Save Look"}
+                        </button>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     );
 }

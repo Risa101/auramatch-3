@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import i18n from "../lib/i18n";
 import { useTranslation } from "react-i18next";
 import { imgUrl } from "../utils/imgUrl";
-import { ShoppingBag, Menu, X, History, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, History, User, LogOut, ShoppingBag } from "lucide-react";
 
 export default function NavbarDailyDose() {
   const { t } = useTranslation();
@@ -11,7 +11,7 @@ export default function NavbarDailyDose() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [acctOpen, setAcctOpen] = useState(false); // ควบคุม Dropdown
+  const [acctOpen, setAcctOpen] = useState(false);
   const [me, setMe] = useState(null);
 
   const syncUser = useCallback(() => {
@@ -27,7 +27,7 @@ export default function NavbarDailyDose() {
   useEffect(() => {
     syncUser();
     window.addEventListener("auth:changed", syncUser);
-    window.addEventListener("storage", syncUser); // ตรวจจับการเปลี่ยนแปลงข้าม Tab
+    window.addEventListener("storage", syncUser);
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -37,7 +37,6 @@ export default function NavbarDailyDose() {
     };
   }, [syncUser]);
 
-  // ปิดเมนูเมื่อเปลี่ยนหน้า
   useEffect(() => {
     setMobileOpen(false);
     setAcctOpen(false);
@@ -53,171 +52,225 @@ export default function NavbarDailyDose() {
     navigate("/login");
   };
 
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
   const navItems = [
-    { label: t("nav.home"), to: "/" },
-    { label: t("nav.analysis"), to: "/analysis" },
-    { label: t("nav.advisor"), to: "/advisor" },
-    { label: t("nav.look"), to: "/looks" },
-    { label: t("nav.cosmetics"), to: "/cosmetics" },
+    { label: t("nav.home") || "Home", to: "/" },
+    { label: t("nav.analysis") || "Analysis", to: "/analysis" },
+    { label: t("nav.advisor") || "Advisor", to: "/advisor" },
+    { label: t("nav.look") || "Looks", to: "/looks" },
+    { label: t("nav.cosmetics") || "Shop", to: "/cosmetics" },
     { label: t("coupon") || "Coupons", to: "/coupons" },
   ];
 
   return (
-    <header
-      className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
-        isScrolled 
-          ? "py-3 bg-white/95 backdrop-blur-md shadow-md" 
-          : "py-6 bg-[#FFEBF0]/50"
-      }`}
-    >
-      <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between relative">
-        
-        {/* LEFT: BRAND LOGO */}
-        <div className="flex-none z-10">
-          <Link to="/" className="group block">
-            <h1 className="text-2xl font-[900] tracking-tighter text-[#D23669] leading-none transition-transform group-hover:scale-105">
-              aura<br/>
-              <span className="font-light italic text-[#FF85A2] -mt-1 block">match</span>
-            </h1>
-          </Link>
+    <>
+      {/* ══════════════════════════════════════════
+          DESKTOP HEADER — 3 strips
+      ══════════════════════════════════════════ */}
+      <header className="fixed top-0 w-full z-[100] bg-white hidden lg:block">
+
+        {/* Strip 1 — Announcement (dark, thin) */}
+        <div className="bg-[#EBC2C8] text-center py-3">
+          <p className="text-[9px] tracking-[0.5em] uppercase text-black/60 font-[400]">
+            Discover Your Personal Color &nbsp;·&nbsp;
+            <button onClick={() => navigate("/analysis")}
+              className="text-[#FF2D78] underline underline-offset-2 hover:text-white transition-colors duration-200 ml-1">
+              Start Free Analysis
+            </button>
+          </p>
         </div>
 
-        {/* CENTER: ALL DESKTOP LINKS */}
-        <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `
-                text-[10px] font-black uppercase tracking-widest transition-all px-2 py-1 rounded-lg
-                ${isActive ? "text-[#D23669] bg-[#FFEBF0]" : "text-gray-400 hover:text-[#D23669]"}
-              `}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        {/* Strip 2 — Logo row: lang left | logo center | icons right */}
+        <div className={`border-b border-[#E0DAD5] transition-all duration-300 ${isScrolled ? "py-4" : "py-6"}`}>
+          <div className="max-w-[1180px] mx-auto px-10 grid grid-cols-3 items-center">
 
-        {/* RIGHT: PROFILE + LANG + SHOPPING */}
-        <div className="flex items-center gap-4 z-10">
-          {/* Lang Switcher */}
-          <div className="hidden md:flex bg-white rounded-full p-1 border border-[#FFD1DC] shadow-sm">
-            {['TH', 'EN'].map((l) => (
-              <button
-                key={l}
-                onClick={() => i18n.changeLanguage(l.toLowerCase())}
-                className={`px-3 py-1 text-[9px] font-black rounded-full transition-all ${
-                  i18n.language.toUpperCase() === l ? "bg-[#D23669] text-white" : "text-gray-300 hover:text-[#D23669]"
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-
-          {/* Account/Login Section */}
-          {!me ? (
-            <Link to="/login" className="p-2 text-[#D23669] hover:scale-110 transition-transform bg-white rounded-full border border-[#FFD1DC] shadow-sm">
-              <ShoppingBag size={20} strokeWidth={2.5} />
-            </Link>
-          ) : (
-            <div className="relative">
-              {/* Backdrop — คลิกข้างนอกปิด */}
-              {acctOpen && (
-                <div className="fixed inset-0 z-10" onClick={() => setAcctOpen(false)} />
-              )}
-
-              <button
-                onClick={() => setAcctOpen(v => !v)}
-                className="relative z-20 flex items-center gap-2 p-1 pr-3 rounded-full border-2 border-[#FFD1DC] hover:border-[#D23669] transition-all bg-white"
-              >
-                <div className="w-8 h-8 rounded-full overflow-hidden shadow-inner">
-                  <img
-                    src={imgUrl(me.photoURL || "") || `https://ui-avatars.com/api/?name=${encodeURIComponent(me.name || "U")}&background=D23669&color=fff`}
-                    className="w-full h-full object-cover"
-                    alt="Profile"
-                  />
-                </div>
-                <ChevronDown size={14} className={`text-[#D23669] transition-transform duration-300 ${acctOpen ? "rotate-180" : ""}`} />
-              </button>
-
-              {/* DROPDOWN MENU */}
-              {acctOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white border-2 border-black rounded-[24px] p-2 shadow-[8px_8px_0px_0px_rgba(210,54,105,0.2)] z-20">
-                  <div className="px-4 py-3 border-b border-gray-100 mb-1">
-                    <p className="text-[10px] font-black text-[#D23669] uppercase truncate">{me.name}</p>
-                    <p className="text-[8px] font-bold text-gray-400 truncate">{me.email}</p>
-                  </div>
-
-                  <Link to="/account" onClick={() => setAcctOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
-                    <User size={16} className="text-[#D23669]" /> Profile
-                  </Link>
-                  <Link to="/history" onClick={() => setAcctOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase text-gray-600 hover:bg-[#FFEBF0] rounded-xl transition-colors">
-                    <History size={16} className="text-[#D23669]" /> History
-                  </Link>
-
-                  <div className="h-px bg-gray-100 my-1 mx-2" />
-
+            {/* Left: Lang switcher */}
+            <div className="flex items-center gap-2">
+              <span className="text-base">🇹🇭</span>
+              <span className="text-[#E0DAD5] text-xs">|</span>
+              {['EN', 'TH'].map((l, i) => (
+                <span key={l} className="flex items-center gap-2">
                   <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                    onClick={() => i18n.changeLanguage(l.toLowerCase())}
+                    className={`text-[9px] font-[600] uppercase tracking-[0.35em] transition-colors duration-200 ${
+                      i18n.language.toUpperCase() === l ? "text-[#221D1D]" : "text-[#958F8F] hover:text-[#221D1D]"
+                    }`}
                   >
-                    <LogOut size={16} /> Logout
+                    {l}
                   </button>
+                  {i === 0 && <span className="text-[#E0DAD5] text-xs">|</span>}
+                </span>
+              ))}
+            </div>
+
+            {/* Center: Logo */}
+            <div className="text-center">
+              <Link to="/" onClick={scrollTop} className="group inline-block">
+                <h1 className="vs-logo text-[2.6rem] tracking-[0.22em] text-[#221D1D] group-hover:text-[#4E3844] transition-colors duration-300 leading-none">
+                  AuraMatch
+                </h1>
+              </Link>
+            </div>
+
+            {/* Right: Account + bag */}
+            <div className="flex items-center justify-end gap-5">
+              {!me ? (
+                <>
+                  <Link to="/login" className="text-[10px] font-[600] uppercase tracking-[0.4em] text-[#958F8F] hover:text-[#221D1D] transition-colors">
+                    Sign In
+                  </Link>
+                  <Link to="/login" className="text-[#221D1D] hover:text-[#FF2D78] transition-colors">
+                    <ShoppingBag size={18} strokeWidth={1.5} />
+                  </Link>
+                </>
+              ) : (
+                <div className="relative flex items-center gap-4">
+                  {acctOpen && <div className="fixed inset-0 z-10" onClick={() => setAcctOpen(false)} />}
+
+                  <button onClick={() => setAcctOpen(v => !v)}
+                    className="relative z-20 text-[#221D1D] hover:text-[#FF2D78] transition-colors">
+                    <User size={18} strokeWidth={1.5} />
+                  </button>
+
+                  <Link to="/cosmetics" className="text-[#221D1D] hover:text-[#FF2D78] transition-colors">
+                    <ShoppingBag size={18} strokeWidth={1.5} />
+                  </Link>
+
+                  {/* Dropdown */}
+                  {acctOpen && (
+                    <div className="absolute right-0 top-full mt-4 w-52 bg-white border border-[#E0DAD5] shadow-lg z-20">
+                      <div className="h-0.5 bg-[#FF2D78] w-full" />
+                      <div className="px-5 py-4 border-b border-[#E0DAD5]">
+                        <p className="text-[9px] font-[700] uppercase tracking-[0.4em] text-[#221D1D] truncate">{me.name}</p>
+                        <p className="text-[8px] font-[400] text-[#958F8F] truncate mt-0.5">{me.email}</p>
+                      </div>
+                      <div className="py-1">
+                        <Link to="/account" onClick={() => setAcctOpen(false)}
+                          className="flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#605858] hover:bg-[#F9E2E7] hover:text-[#FF2D78] transition-colors">
+                          <User size={12} /> Profile
+                        </Link>
+                        <Link to="/history" onClick={() => setAcctOpen(false)}
+                          className="flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#605858] hover:bg-[#F9E2E7] hover:text-[#FF2D78] transition-colors">
+                          <History size={12} /> History
+                        </Link>
+                        <div className="h-px bg-[#E0DAD5] mx-4 my-1" />
+                        <button onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#4E3844] hover:bg-[#F9E2E7] hover:text-[#FF2D78] transition-colors">
+                          <LogOut size={12} /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+          </div>
+        </div>
 
-          {/* Mobile Toggle */}
-          <button 
-            onClick={() => setMobileOpen(!mobileOpen)} 
-            className="lg:hidden text-[#D23669] p-1 hover:bg-[#FFEBF0] rounded-full transition-colors"
-          >
-            {mobileOpen ? <X size={28} /> : <Menu size={28} />}
+        {/* Strip 3 — Navigation links */}
+        <div className="border-b border-[#E0DAD5]">
+          <nav className="max-w-[1180px] mx-auto px-10 flex items-center justify-center gap-10 py-3.5">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={scrollTop}
+                className={({ isActive }) =>
+                  `relative text-[10px] font-[600] uppercase tracking-[0.3em] transition-colors duration-200 pb-2 group
+                  ${isActive ? "text-[#221D1D]" : "text-[#958F8F] hover:text-[#221D1D]"}`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {item.label}
+                    <span className={`absolute bottom-0 left-0 h-[2px] bg-[#4E3844] transition-all duration-300
+                      ${isActive ? "w-full" : "w-0 group-hover:w-full"}`} />
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      {/* ══════════════════════════════════════════
+          MOBILE HEADER — single strip
+      ══════════════════════════════════════════ */}
+      <header className="fixed top-0 w-full z-[100] bg-white border-b border-[#E0DAD5] lg:hidden">
+        <div className="px-5 h-[60px] flex items-center justify-between">
+          <Link to="/" onClick={scrollTop} className="vs-logo text-[1.1rem] tracking-[0.2em] text-[#221D1D]">
+            AuraMatch
+          </Link>
+          <button onClick={() => setMobileOpen(!mobileOpen)}
+            className="text-[#221D1D] hover:text-[#FF2D78] transition-colors p-1">
+            {mobileOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* MOBILE MENU */}
-      <div className={`fixed inset-0 bg-[#FFEBF0] z-[99] pt-32 px-10 transition-all duration-500 ease-in-out lg:hidden ${mobileOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
-        <nav className="flex flex-col gap-4 text-center">
+      {/* ── MOBILE FULL-SCREEN OVERLAY ── */}
+      <div className={`fixed inset-0 z-[99] bg-[#221D1D] flex flex-col lg:hidden transition-all duration-500
+        ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+
+        {/* Close */}
+        <button onClick={() => setMobileOpen(false)}
+          className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors">
+          <X size={22} strokeWidth={1.5} />
+        </button>
+
+        {/* Logo */}
+        <div className="pt-16 px-8 pb-8 border-b border-white/10">
+          <p className="vs-logo text-[1.6rem] tracking-[0.22em] text-white">AuraMatch</p>
+          <div className="w-8 h-[2px] bg-[#FF2D78] mt-3" />
+        </div>
+
+        {/* Nav links */}
+        <nav className="flex flex-col flex-1 justify-center px-8 gap-1">
           {navItems.map((item, idx) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`text-4xl font-[900] uppercase tracking-tighter text-[#D23669] hover:scale-105 transition-all ${mobileOpen ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
-              style={{ transitionDelay: `${idx * 50}ms` }}
-              onClick={() => setMobileOpen(false)}
-            >
+            <Link key={item.to} to={item.to} onClick={() => { setMobileOpen(false); scrollTop(); }}
+              className={`text-[2.5rem] font-[800] uppercase tracking-[0.04em] leading-tight py-1
+                transition-all duration-300
+                ${pathname === item.to ? "text-[#FF2D78]" : "text-white/60 hover:text-white"}`}
+              style={{ transitionDelay: mobileOpen ? `${idx * 40}ms` : "0ms" }}>
               {item.label}
             </Link>
           ))}
-          
-          <div className="h-[2px] bg-[#D23669]/10 my-6" />
-          
+        </nav>
+
+        {/* Bottom */}
+        <div className="px-8 py-8 border-t border-white/10 flex items-center justify-between">
           {!me ? (
-            <button 
-              onClick={() => { navigate("/login"); setMobileOpen(false); }}
-              className="bg-[#D23669] text-white py-4 rounded-full font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(210,54,105,0.4)]"
-            >
+            <button onClick={() => { navigate("/login"); setMobileOpen(false); }}
+              className="text-[9px] font-[600] uppercase tracking-[0.45em] text-white border border-[#FF2D78] px-6 py-3 hover:bg-[#FF2D78] transition-colors">
               Sign In
             </button>
           ) : (
-            <div className="flex flex-col gap-3">
-              <Link to="/account" onClick={() => setMobileOpen(false)} className="text-[#D23669] font-black uppercase tracking-widest">My Account</Link>
-              <button onClick={handleLogout} className="text-red-500 font-black uppercase tracking-widest">Sign Out</button>
+            <div className="flex flex-col gap-2">
+              <p className="text-[9px] tracking-[0.4em] uppercase text-[#958F8F]">{me.name}</p>
+              <div className="flex gap-5">
+                <Link to="/account" onClick={() => setMobileOpen(false)}
+                  className="text-[9px] font-[600] uppercase tracking-[0.4em] text-white/60">Profile</Link>
+                <button onClick={handleLogout}
+                  className="text-[9px] font-[600] uppercase tracking-[0.4em] text-[#FF2D78]">Sign Out</button>
+              </div>
             </div>
           )}
-        </nav>
+          <div className="flex gap-3">
+            {['EN', 'TH'].map(l => (
+              <button key={l} onClick={() => i18n.changeLanguage(l.toLowerCase())}
+                className={`text-[9px] font-[600] uppercase tracking-[0.3em] ${
+                  i18n.language.toUpperCase() === l ? "text-[#FF2D78]" : "text-white/30"}`}>{l}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
-        header { font-family: 'Montserrat', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@400;600;700;800;900&display=swap');
+        .vs-logo { font-family: 'Cormorant Garamond', serif; font-variant-caps: small-caps; font-weight: 500; }
+        header nav, header div { font-family: 'Montserrat', sans-serif; }
       `}</style>
-    </header>
+    </>
   );
 }
