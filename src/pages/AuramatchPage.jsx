@@ -265,9 +265,6 @@ export default function AuramatchDailyDose() {
   useEffect(() => {
     fetchData();
     AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, [fetchData]);
 
   if (isLoading) return (

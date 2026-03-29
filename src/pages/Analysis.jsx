@@ -526,7 +526,10 @@ async function saveAnalysisToBackend(userId, entry) {
 async function fetchLatestAnalysis(userId) {
   if (!userId) return null;
   try {
-    const res = await fetch(`${API_BASE_URL}/api/analysis-history/${userId}`);
+    const token = localStorage.getItem("auramatch:token") || "";
+    const res = await fetch(`${API_BASE_URL}/api/analysis-history/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const data = await res.json().catch(() => []);
     if (!res.ok || !Array.isArray(data) || data.length === 0) return null;
     const latest = data[0];
@@ -552,7 +555,10 @@ async function fetchLatestAnalysis(userId) {
 async function fetchAnalysisHistory(userId) {
   if (!userId) return [];
   try {
-    const res = await fetch(`${API_BASE_URL}/api/analysis-history/${userId}`);
+    const token = localStorage.getItem("auramatch:token") || "";
+    const res = await fetch(`${API_BASE_URL}/api/analysis-history/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const data = await res.json().catch(() => []);
     if (!res.ok || !Array.isArray(data)) return [];
     return data;
