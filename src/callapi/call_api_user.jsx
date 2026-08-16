@@ -55,6 +55,26 @@ export const analyzeFaceApi = async (file) => {
   return response.data;
 };
 
+// วิเคราะห์ Seasonal Color ด้วย RandomForest model ที่เทรนเอง (ไม่ใช้ Gemini)
+export const analyzeSeasonML = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await apiClient.post("/api/ml/analyze-season", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+// วิเคราะห์ Seasonal Color ด้วย color engine ของ auramatchgenz (MediaPipe + CIELAB)
+export const analyzeColorEngine = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await apiClient.post("/api/color-engine/analyze", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
 export const generateGeminiImage = async ({ file, prompt }) => {
   try {
     const formData = new FormData();

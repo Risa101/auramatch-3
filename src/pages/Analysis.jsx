@@ -3,7 +3,9 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Analysis.css";
 import MakeoverStudio from "../components/MakeoverStudio.jsx";
-import { saveAnalysisHistory, generateGeminiImage, analyzeFaceApi } from "../callapi/call_api_user";
+import { saveAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzeSeasonML, analyzeColorEngine } from "../callapi/call_api_user";
+import { detectFaceShape, loadFaceModels } from "../utils/faceShapeDetector";
+import { logAiCall } from "../utils/aiLogger";
 
 /* ✅ persist realtime */
 import { auth } from "../lib/firebase";
@@ -656,6 +658,17 @@ function fileToDataURL(file) {
   });
 }
 
+// แปลง File → HTMLImageElement (สำหรับ face-api.js)
+function fileToImgElement(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 /* ===== History + Profile helpers (inline) ===== */
 function readHistory() {
   try {
@@ -847,6 +860,8 @@ export default function Analysis() {
       setStatus("analyzing");
       let data;
       if (pickedFile && pickedFile.size > 0) {
+        // ── Gemini: วิเคราะห์ season + สีผิว ──
+        const geminiStart = Date.now();
         try {
           const res = await analyzeFaceApi(pickedFile);
           data = {
@@ -856,10 +871,120 @@ export default function Analysis() {
             hairLength: pick(["Short", "Medium", "Long"]),
             hairTexture: pick(["Straight", "Wavy", "Curly"]),
           };
+          logAiCall({
+            modelUsed: "Gemini",
+            task: "seasonal_color",
+            input: { fileName: pickedFile.name, fileSize: pickedFile.size },
+            output: { season: res.season, faceShape: res.faceShape },
+            processingMs: Date.now() - geminiStart,
+            success: true,
+            userId: auth.currentUser?.uid || null,
+          });
         } catch (apiErr) {
           console.warn("Gemini analyze-face failed, falling back to mock:", apiErr);
+          logAiCall({
+            modelUsed: "Gemini",
+            task: "seasonal_color",
+            input: { fileName: pickedFile.name },
+            output: null,
+            processingMs: Date.now() - geminiStart,
+            success: false,
+            errorMessage: apiErr?.message || "unknown error",
+            userId: auth.currentUser?.uid || null,
+          });
           data = await analyzeImageMock(pickedFile);
         }
+
+        // ── RandomForest ML: วิเคราะห์ season จาก skin tone ──
+        try {
+          const mlStart = Date.now();
+          const mlResult = await analyzeSeasonML(pickedFile);
+          if (mlResult?.season) {
+            console.log("[RandomForest] season:", mlResult.season, "confidence:", mlResult.confidence);
+            data.season = mlResult.season;
+            data.seasonConfidence = mlResult.confidence;
+            data.skinRgb = mlResult.skin_rgb;
+            logAiCall({
+              modelUsed: "RandomForest",
+              task: "seasonal_color",
+              input: mlResult.skin_rgb,
+              output: mlResult.season,
+              confidence: mlResult.confidence,
+              processingMs: Date.now() - mlStart,
+              success: true,
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        } catch (mlErr) {
+          console.warn("[RandomForest] season prediction failed:", mlErr);
+        }
+        // ──────────────────────────────────────────────────────
+
+        // ── Color Engine (auramatchgenz): MediaPipe + CIELAB, ละเอียดสุด ──
+        // ถ้า service ไม่รัน (เช่นตอน production ที่ยังไม่ได้ host) จะ 503
+        // แล้ว fallback ไปใช้ค่าจาก RandomForest/Gemini ที่ตั้งไว้ก่อนหน้าโดยอัตโนมัติ
+        try {
+          const colorEngineStart = Date.now();
+          const ceResult = await analyzeColorEngine(pickedFile);
+          if (ceResult?.valid && ceResult?.season) {
+            console.log("[ColorEngine] season:", ceResult.season, "subTone:", ceResult.sub_tone, "confidence:", ceResult.confidence);
+            data.season = ceResult.season;
+            data.seasonConfidence = ceResult.confidence;
+            data.subTone = ceResult.sub_tone;
+            data.warmCool = ceResult.warm_cool;
+            data.skinLab = ceResult.skin_lab;
+            logAiCall({
+              modelUsed: "ColorEngine",
+              task: "seasonal_color",
+              input: ceResult.skin_lab,
+              output: ceResult.season,
+              confidence: ceResult.confidence,
+              processingMs: Date.now() - colorEngineStart,
+              success: true,
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        } catch (ceErr) {
+          console.warn("[ColorEngine] analysis failed, keeping previous season estimate:", ceErr);
+        }
+        // ──────────────────────────────────────────────────────
+
+        // ── face-api.js: detect face shape จาก landmark เอง ──
+        const faceStart = Date.now();
+        try {
+          await loadFaceModels();
+          const imgEl = await fileToImgElement(pickedFile);
+          const faceResult = await detectFaceShape(imgEl);
+          if (faceResult.shape) {
+            console.log("[face-api.js] detected shape:", faceResult.shape, "ratios:", faceResult.ratios);
+            data.faceShape = faceResult.shape;
+            data.faceShapeConfidence = faceResult.confidence;
+            data.faceShapeRatios = faceResult.ratios;
+            logAiCall({
+              modelUsed: "face-api.js",
+              task: "face_shape",
+              input: faceResult.ratios,
+              output: faceResult.shape,
+              confidence: faceResult.confidence,
+              processingMs: Date.now() - faceStart,
+              success: true,
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        } catch (faceErr) {
+          console.warn("[face-api.js] face shape detection failed:", faceErr);
+          logAiCall({
+            modelUsed: "face-api.js",
+            task: "face_shape",
+            input: {},
+            output: null,
+            processingMs: Date.now() - faceStart,
+            success: false,
+            errorMessage: faceErr?.message || "unknown error",
+            userId: auth.currentUser?.uid || null,
+          });
+        }
+        // ──────────────────────────────────────────────────────
       } else {
         data = await analyzeImageMock(pickedFile || {});
       }
@@ -911,6 +1036,7 @@ export default function Analysis() {
       setGeminiError("Please upload an image first.");
       return;
     }
+    const geminiImgStart = Date.now();
     try {
       setGeminiError("");
       setGeminiStatus("loading");
@@ -925,6 +1051,15 @@ export default function Analysis() {
       const res = await generateGeminiImage({ file: imageFile, prompt: GEMINI_PROMPT });
       setGeminiImage(res?.image || res?.data_url || "");
       setGeminiStatus("done");
+      logAiCall({
+        modelUsed: "Gemini",
+        task: "makeup_generation",
+        input: { promptLength: GEMINI_PROMPT.length },
+        output: "image_generated",
+        processingMs: Date.now() - geminiImgStart,
+        success: true,
+        userId: auth.currentUser?.uid || null,
+      });
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.error || err?.message || "";
@@ -934,6 +1069,16 @@ export default function Analysis() {
         setGeminiError("Image generation failed. Please try again.");
       }
       setGeminiStatus("error");
+      logAiCall({
+        modelUsed: "Gemini",
+        task: "makeup_generation",
+        input: { promptLength: GEMINI_PROMPT.length },
+        output: null,
+        processingMs: Date.now() - geminiImgStart,
+        success: false,
+        errorMessage: msg || "unknown error",
+        userId: auth.currentUser?.uid || null,
+      });
     }
   }
 
