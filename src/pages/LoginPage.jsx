@@ -134,56 +134,58 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[#FDFCFB] mt-[60px] lg:mt-[180px]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-[#FFF7F9] via-white to-[#FDEEF2] mt-[60px] lg:mt-[180px]">
 
       {/* ── Left: brand panel ── */}
-      <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-[#1A1A1A] p-14">
-        <img src="/laglace/homee.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+      <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#D23669] via-[#C2255A] to-[#4A1A2A] p-14">
+        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-[#FBD4DE]/20 blur-3xl" />
+        <img src="/laglace/homee.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-overlay" />
         <div className="relative z-10">
-          <p className="text-[9px] tracking-[0.5em] uppercase text-white/50 font-[300]">AuraMatch · Atelier</p>
+          <p className="text-[9px] tracking-[0.5em] uppercase text-white/60 font-[300]">AuraMatch · Atelier</p>
         </div>
         <div className="relative z-10">
-          <h2 className="text-[3.5rem] font-[200] leading-[1] tracking-[0.04em] text-white uppercase mb-4">
-            Discover<br /><span className="font-[700] italic">Your Aura</span>
+          <h2 className="font-['Cormorant_Garamond',serif] text-[3.6rem] font-[500] italic leading-[1.05] text-white mb-5">
+            Discover<br />Your Aura
           </h2>
-          <p className="text-xs font-[300] text-white/50 leading-relaxed max-w-[280px]">
+          <p className="text-xs font-[300] text-white/70 leading-relaxed max-w-[280px]">
             AI-powered personal color analysis and beauty styling tailored to you.
           </p>
         </div>
         <div className="relative z-10">
-          <p className="text-[8px] tracking-[0.4em] uppercase text-white/30 font-[300]">
+          <p className="text-[8px] tracking-[0.4em] uppercase text-white/40 font-[300]">
             © {new Date().getFullYear()} AuraMatch
           </p>
         </div>
       </div>
 
       {/* ── Right: form panel ── */}
-      <div className="flex flex-col justify-center px-8 md:px-16 py-16">
+      <div className="flex flex-col justify-center px-6 md:px-16 py-16">
 
         {/* Mobile logo */}
-        <p className="lg:hidden text-[9px] tracking-[0.5em] uppercase text-[#888] font-[300] mb-12">AuraMatch · Atelier</p>
+        <p className="lg:hidden text-[9px] tracking-[0.5em] uppercase text-[#B08B95] font-[300] mb-8 text-center">AuraMatch · Atelier</p>
 
-        <div className="max-w-[380px] w-full mx-auto">
+        <div className="max-w-[400px] w-full mx-auto bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(210,54,105,0.18)] border border-[#F7E4EA] p-8 md:p-11">
 
           {/* Heading */}
-          <div className="mb-10">
-            <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Welcome back</p>
-            <h1 className="text-[2.8rem] font-[200] leading-[1] text-[#1A1A1A] uppercase tracking-[0.02em]">
-              Sign in<br />
+          <div className="mb-9">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[#C58A9A] font-[500] mb-3">Welcome back</p>
+            <h1 className="font-['Cormorant_Garamond',serif] text-[2.8rem] font-[600] italic leading-[1] text-[#2B2226]">
+              Sign in
             </h1>
           </div>
 
           {/* Error */}
           {err && (
-            <div className="mb-6 border border-[#D23669]/30 bg-[#FFF5F8] px-4 py-3">
-              <p className="text-[10px] font-[500] text-[#D23669]">{err}</p>
+            <div className="mb-6 rounded-xl border border-[#D23669]/25 bg-[#FFF1F5] px-4 py-3">
+              <p className="text-[11px] font-[500] text-[#D23669]">{err}</p>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] block mb-2">Email</label>
+              <label className="text-[9px] tracking-[0.35em] uppercase text-[#8A7A80] font-[500] block mb-2">Email</label>
               <input
                 type="email"
                 value={email}
@@ -191,13 +193,13 @@ export default function LoginPage() {
                 placeholder="you@email.com"
                 autoComplete="email"
                 required
-                className="w-full border border-[#E8E0DC] bg-white px-4 py-3 text-sm font-[300] text-[#1A1A1A] placeholder:text-[#C0B8B4] focus:border-[#1A1A1A] focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-[#F0DEE3] bg-[#FFFBFC] px-4 py-3.5 text-sm font-[400] text-[#2B2226] placeholder:text-[#C7B7BC] focus:border-[#D23669] focus:ring-4 focus:ring-[#D23669]/10 focus:outline-none transition-all"
               />
             </div>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Password</label>
-                <Link to="/forgot-password" className="text-[9px] tracking-[0.2em] uppercase text-[#888] hover:text-[#D23669] transition-colors">
+                <label className="text-[9px] tracking-[0.35em] uppercase text-[#8A7A80] font-[500]">Password</label>
+                <Link to="/forgot-password" className="text-[9px] tracking-[0.15em] uppercase text-[#B08B95] hover:text-[#D23669] transition-colors">
                   Forgot?
                 </Link>
               </div>
@@ -208,23 +210,23 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
-                className="w-full border border-[#E8E0DC] bg-white px-4 py-3 text-sm font-[300] text-[#1A1A1A] placeholder:text-[#C0B8B4] focus:border-[#1A1A1A] focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-[#F0DEE3] bg-[#FFFBFC] px-4 py-3.5 text-sm font-[400] text-[#2B2226] placeholder:text-[#C7B7BC] focus:border-[#D23669] focus:ring-4 focus:ring-[#D23669]/10 focus:outline-none transition-all"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1A1A1A] text-white py-3.5 text-[10px] font-[600] uppercase tracking-[0.35em] hover:bg-[#D23669] transition-all duration-300 disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3.5 text-[10px] font-[600] uppercase tracking-[0.35em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="my-8 flex items-center gap-4">
-            <div className="h-px flex-1 bg-[#E8E0DC]" />
-            <span className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300]">or</span>
-            <div className="h-px flex-1 bg-[#E8E0DC]" />
+          <div className="my-7 flex items-center gap-4">
+            <div className="h-px flex-1 bg-[#F0DEE3]" />
+            <span className="text-[9px] tracking-[0.3em] uppercase text-[#B08B95] font-[300]">or</span>
+            <div className="h-px flex-1 bg-[#F0DEE3]" />
           </div>
 
           {/* Social buttons */}
@@ -255,9 +257,9 @@ export default function LoginPage() {
           </div>
 
           {/* Register link */}
-          <p className="mt-10 text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] text-center">
+          <p className="mt-8 text-[9px] tracking-[0.3em] uppercase text-[#8A7A80] font-[300] text-center">
             No account?{" "}
-            <Link to="/register" className="text-[#1A1A1A] font-[500] hover:text-[#D23669] transition-colors border-b border-[#E8E0DC]">
+            <Link to="/register" className="text-[#D23669] font-[600] hover:text-[#C2255A] transition-colors border-b border-[#D23669]/30">
               Create one
             </Link>
           </p>
@@ -273,7 +275,7 @@ function SocialBtn({ onClick, label, icon, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full flex items-center gap-3 border border-[#E8E0DC] bg-white px-5 py-3 text-[10px] font-[400] text-[#1A1A1A] tracking-[0.15em] hover:border-[#1A1A1A] transition-colors duration-200 disabled:opacity-50"
+      className="w-full flex items-center justify-center gap-3 rounded-xl border border-[#F0DEE3] bg-white px-5 py-3 text-[10px] font-[500] text-[#2B2226] tracking-[0.1em] hover:border-[#D23669]/40 hover:bg-[#FFF7F9] transition-all duration-200 disabled:opacity-50"
     >
       {icon}
       <span>{label}</span>

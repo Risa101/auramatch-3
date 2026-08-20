@@ -14,6 +14,7 @@ const resources = {
       "nav.analysis": "ANALYSIS",
       "nav.advisor": "ADVISOR",
       "nav.coupons": "COUPONS",
+      "coupon": "COUPONS",
       "nav.about": "ABOUT US",
       "nav.look": "LOOK",
       "nav.cosmetics": "COSMETICS",
@@ -341,12 +342,13 @@ const resources = {
   th: {
     translation: {
       /* NAVBAR */
-      "nav.home": "หน้าแรก",
-      "nav.analysis": "วิเคราะห์ผิว",
-      "nav.advisor": "ที่ปรึกษา",
+      "nav.home": "หน้าหลัก",
+      "nav.analysis": "วิเคราะห์",
+      "nav.advisor": "คำแนะนำ",
       "nav.coupons": "คูปอง",
+      "coupon": "คูปอง",
       "nav.about": "เกี่ยวกับเรา",
-      "nav.look": "ลุคแต่งหน้า",
+      "nav.look": "ลุคของฉัน",
       "nav.cosmetics": "เครื่องสำอาง",
       "nav.tagline": "ผู้ช่วยด้านความงามด้วย AI",
       "nav.login": "เข้าสู่ระบบ",

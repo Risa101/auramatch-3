@@ -75,6 +75,17 @@ export const analyzeColorEngine = async (file) => {
   return response.data;
 };
 
+// วิเคราะห์ Skin Undertone (cool/warm/neutral) + แนะนำโทนสีบลัชออน
+// พอร์ตมาจาก detection_skin_for_cream(2).ipynb (classical CV, ไม่ใช่ ML model)
+export const analyzeUndertone = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await apiClient.post("/api/undertone/analyze", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
 export const generateGeminiImage = async ({ file, prompt }) => {
   try {
     const formData = new FormData();

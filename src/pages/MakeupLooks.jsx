@@ -173,7 +173,7 @@ const SeasonalGallery = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#FFFAFB] to-white overflow-x-hidden font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
 
       {/* --- HERO (Victoria's Secret editorial style) --- */}
       <header className="relative h-screen min-h-[600px] max-h-[900px] flex flex-col justify-end overflow-hidden mt-[60px] lg:mt-[180px]">
@@ -275,7 +275,7 @@ const SeasonalGallery = () => {
           return (
             <div className="mb-28">
               {/* VS-style section header — no pills, just editorial text */}
-              <div className="border-t border-[#E8E0DC] pt-10 pb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6" data-aos="fade-up">
+              <div className="border-t border-[#F5E3E8] pt-10 pb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6" data-aos="fade-up">
                 <div>
                   <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[400] mb-3">
                     Spring / Summer 2026
@@ -296,14 +296,14 @@ const SeasonalGallery = () => {
                 </div>
               </div>
 
-              {/* Trend grid — VS editorial: 2-col on tablet, 3-col on desktop, no rounded corners */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[#E8E0DC]">
+              {/* Trend grid — luxury cards: rounded corners, soft rose shadow */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {TRENDS.map((trend, i) => {
                   const trendProducts = getProductsForTrend(trend.cats);
                   return (
                     <div key={trend.num} data-aos="fade-up" data-aos-delay={i * 40}
                       onClick={() => setSelectedTrend({ ...trend, trendProducts: getProductsForTrend(trend.cats) })}
-                      className="group bg-white flex flex-col cursor-pointer hover:bg-[#FAFAFA] transition-colors duration-300">
+                      className="group bg-white flex flex-col cursor-pointer rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_4px_20px_rgba(210,54,105,0.06)] hover:shadow-[0_14px_36px_rgba(210,54,105,0.16)] hover:-translate-y-1 transition-all duration-300">
 
                       {/* Image */}
                       <div className="relative overflow-hidden aspect-[3/4] bg-[#F5F3F0]">
@@ -350,13 +350,13 @@ const SeasonalGallery = () => {
                         <p className="text-[13px] text-[#605858] font-[300] leading-relaxed mb-5">{trend.desc}</p>
 
                         {/* Shop */}
-                        <div className="mt-auto border-t border-[#F0EAE8] pt-4 space-y-3">
-                          <p className="text-[9px] tracking-[0.3em] uppercase text-[#aaa] font-[400]">Shop This Trend</p>
+                        <div className="mt-auto border-t border-[#F5E3E8] pt-4 space-y-3">
+                          <p className="text-[9px] tracking-[0.3em] uppercase text-[#C58A9A] font-[400]">Shop This Trend</p>
                           {trendProducts.map(p => (
                             <Link key={p.product_id} to="/cosmetics" state={{ openProductId: p.product_id }}
                               onClick={e => e.stopPropagation()}
                               className="flex items-center gap-3 group/prod">
-                              <div className="w-11 h-11 overflow-hidden bg-[#F5F3F0] shrink-0">
+                              <div className="w-11 h-11 overflow-hidden rounded-xl bg-[#F5F3F0] shrink-0">
                                 <img src={imgSrc(p)} alt={p.name} className="w-full h-full object-cover group-hover/prod:scale-105 transition-transform duration-300" onError={e => { e.target.src = '/assets/home2.webp'; }} />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -389,7 +389,7 @@ const SeasonalGallery = () => {
         })()}
 
         {/* --- MARQUEE DIVIDER --- */}
-        {/* <div className="mb-24 overflow-hidden border-y border-[#E8E0DC] py-4">
+        {/* <div className="mb-24 overflow-hidden border-y border-[#F5E3E8] py-4">
           <div className="flex animate-marquee whitespace-nowrap">
             {[...Array(10)].map((_, i) => (
               <div key={i} className="flex items-center gap-10 px-10">
@@ -405,7 +405,7 @@ const SeasonalGallery = () => {
         </div> */}
 
         {/* --- LOOK GALLERY HEADER --- */}
-        <div className="border-t border-[#E8E0DC] pt-10 pb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-aos="fade-up">
+        <div className="border-t border-[#F5E3E8] pt-10 pb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-aos="fade-up">
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[400] mb-3">
               {activeSeason} Collection
@@ -415,14 +415,14 @@ const SeasonalGallery = () => {
             </h2>
           </div>
           {/* Season tabs */}
-          <div className="flex items-center gap-0 border border-[#E8E0DC]">
+          <div className="flex items-center gap-0 rounded-full border border-[#F5E3E8] overflow-hidden">
             {Object.keys(seasonTheme).map((s, i) => (
               <button key={s}
                 onClick={() => setActiveSeason(s)}
-                className={`px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase transition-all duration-200 border-r border-[#E8E0DC] last:border-r-0 ${
+                className={`px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase transition-all duration-200 border-r border-[#F5E3E8] last:border-r-0 ${
                   activeSeason === s
-                    ? 'bg-[#1A1A1A] text-white'
-                    : 'text-[#888] hover:text-[#1A1A1A] bg-white'
+                    ? 'bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white'
+                    : 'text-[#8A7A80] hover:text-[#D23669] bg-white'
                 }`}>
                 {s}
               </button>
@@ -433,15 +433,15 @@ const SeasonalGallery = () => {
         {/* --- LOOK GRID --- */}
         {loading ? (
           <div className="h-[400px] flex flex-col items-center justify-center gap-4">
-            <Loader2 className="animate-spin text-[#888]" size={28} />
+            <Loader2 className="animate-spin text-[#D23669]" size={28} />
             <p className="text-[10px] tracking-[0.4em] uppercase text-[#bbb] font-[300]">Loading</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-[#E8E0DC] mb-28">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-28">
             {currentLooks.length > 0 ? (
               currentLooks.map((item, i) => (
                 <div key={i} data-aos="fade-up" data-aos-delay={i * 40}
-                  className="group cursor-pointer bg-white relative overflow-hidden"
+                  className="group cursor-pointer bg-white relative overflow-hidden rounded-2xl border border-[#F5E3E8] shadow-[0_4px_20px_rgba(210,54,105,0.06)] hover:shadow-[0_14px_36px_rgba(210,54,105,0.16)] hover:-translate-y-1 transition-all duration-300"
                   onClick={() => setSelectedLook(item)}
                 >
                   {/* Image */}
@@ -474,13 +474,13 @@ const SeasonalGallery = () => {
 
                   {/* Label below */}
                   <div className="p-4">
-                    <p className="text-[9px] tracking-[0.25em] uppercase text-[#aaa] font-[300] mb-1">{seasonTheme[activeSeason].text}</p>
+                    <p className="text-[9px] tracking-[0.25em] uppercase text-[#C58A9A] font-[300] mb-1">{seasonTheme[activeSeason].text}</p>
                     <h3 className="text-sm font-[500] text-[#1A1A1A] tracking-[0.02em] leading-snug group-hover:text-[#D23669] transition-colors duration-300">{item.name}</h3>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-full h-[300px] flex flex-col items-center justify-center bg-white">
+              <div className="col-span-full h-[300px] flex flex-col items-center justify-center bg-white rounded-2xl border border-[#F5E3E8]">
                 <p className="text-[10px] tracking-[0.35em] uppercase text-[#ccc] font-[300]">No looks found</p>
               </div>
             )}
@@ -492,11 +492,11 @@ const SeasonalGallery = () => {
       {selectedTrend && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedTrend(null)} />
-          <div className="relative bg-white w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col md:flex-row animate-in fade-in duration-300">
+          <div className="relative bg-white w-full max-w-5xl max-h-[95vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row animate-in fade-in duration-300">
 
             {/* Close */}
             <button onClick={() => setSelectedTrend(null)}
-              className="absolute top-5 right-5 z-50 w-9 h-9 flex items-center justify-center text-white bg-black/40 hover:bg-black transition-colors duration-200">
+              className="absolute top-5 right-5 z-50 w-9 h-9 flex items-center justify-center rounded-full text-white bg-black/40 hover:bg-black transition-colors duration-200">
               <X size={16} />
             </button>
 
@@ -520,14 +520,14 @@ const SeasonalGallery = () => {
                 </h2>
 
                 {/* Description */}
-                <p className="text-[13px] text-[#605858] font-[300] leading-relaxed mb-6 border-l border-[#E8E0DC] pl-4">
+                <p className="text-[13px] text-[#605858] font-[300] leading-relaxed mb-6 border-l border-[#F5E3E8] pl-4">
                   {selectedTrend.desc}
                 </p>
 
                 {/* Palette */}
                 <div className="flex items-center gap-2 mb-6">
                   {selectedTrend.colors.map((c, ci) => (
-                    <div key={ci} className="w-6 h-6 border border-[#E8E0DC]" style={{ backgroundColor: c }} />
+                    <div key={ci} className="w-6 h-6 rounded-full border border-[#F5E3E8]" style={{ backgroundColor: c }} />
                   ))}
                   <span className="text-[9px] tracking-[0.25em] uppercase text-[#bbb] font-[300] ml-2">Palette</span>
                 </div>
@@ -536,7 +536,7 @@ const SeasonalGallery = () => {
                 <div className="flex flex-wrap gap-2 mb-6">
                   {selectedTrend.seasons.map(s => (
                     <button key={s} onClick={() => { setActiveSeason(s); setSelectedTrend(null); }}
-                      className="text-[9px] tracking-[0.2em] uppercase text-[#605858] border border-[#E8E0DC] px-3 py-1.5 hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all duration-200">
+                      className="text-[9px] tracking-[0.2em] uppercase text-[#605858] rounded-full border border-[#F0DEE3] px-3 py-1.5 hover:bg-[#D23669] hover:text-white hover:border-[#D23669] transition-all duration-200">
                       {s}
                     </button>
                   ))}
@@ -544,14 +544,14 @@ const SeasonalGallery = () => {
 
                 {/* Shop */}
                 {selectedTrend.trendProducts?.length > 0 && (
-                  <div className="border-t border-[#E8E0DC] pt-5 mb-6">
-                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#aaa] font-[300] mb-4">Shop This Trend</p>
+                  <div className="border-t border-[#F5E3E8] pt-5 mb-6">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#C58A9A] font-[300] mb-4">Shop This Trend</p>
                     <div className="space-y-4">
                       {selectedTrend.trendProducts.map(p => (
                         <Link key={p.product_id} to="/cosmetics" state={{ openProductId: p.product_id }}
                           onClick={() => setSelectedTrend(null)}
                           className="flex items-center gap-4 group/prod">
-                          <div className="w-14 h-14 overflow-hidden bg-[#F5F3F0] shrink-0">
+                          <div className="w-14 h-14 overflow-hidden rounded-xl bg-[#F5F3F0] shrink-0">
                             <img src={p.image_url?.startsWith('http') ? p.image_url : `${API_BASE_URL}${p.image_url?.startsWith('/') ? '' : '/'}${p.image_url}`}
                               alt={p.name} className="w-full h-full object-cover group-hover/prod:scale-105 transition-transform duration-300" onError={e => { e.target.src = '/assets/home2.webp'; }} />
                           </div>
@@ -571,7 +571,7 @@ const SeasonalGallery = () => {
 
                 {/* Try-On result */}
                 {trendTryOnStatus === 'done' && trendTryOnImage && (
-                  <div className="mb-6 border-t border-[#E8E0DC] pt-5">
+                  <div className="mb-6 border-t border-[#F5E3E8] pt-5">
                     <p className="text-[9px] tracking-[0.3em] uppercase text-[#aaa] font-[300] mb-4">Before / After</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
@@ -596,20 +596,20 @@ const SeasonalGallery = () => {
                 )}
 
                 {/* Actions */}
-                <div className="mt-auto pt-6 border-t border-[#E8E0DC] flex gap-3">
+                <div className="mt-auto pt-6 border-t border-[#F5E3E8] flex gap-3">
                   <button
                     onClick={() => toggleLike({ id: `trend_${selectedTrend.num}`, title: selectedTrend.name, img: selectedTrend.img, type: 'trend' })}
-                    className={`w-11 h-11 flex items-center justify-center border transition-all duration-200 ${likedIds.includes(`trend_${selectedTrend.num}`) ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white' : 'border-[#E8E0DC] text-[#888] hover:border-[#1A1A1A] hover:text-[#1A1A1A]'}`}>
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200 ${likedIds.includes(`trend_${selectedTrend.num}`) ? 'bg-gradient-to-r from-[#D23669] to-[#C2255A] border-[#D23669] text-white' : 'border-[#F0DEE3] text-[#8A7A80] hover:border-[#D23669] hover:text-[#D23669]'}`}>
                     <Heart size={14} className={likedIds.includes(`trend_${selectedTrend.num}`) ? 'fill-white' : ''} />
                   </button>
                   {!getUserFacePhoto() ? (
-                    <button disabled className="flex-1 py-3 border border-[#E8E0DC] text-[#bbb] text-[10px] tracking-[0.25em] uppercase font-[400] cursor-not-allowed">
+                    <button disabled className="flex-1 py-3 rounded-xl border border-[#F0DEE3] text-[#bbb] text-[10px] tracking-[0.25em] uppercase font-[400] cursor-not-allowed">
                       Analyze Face First
                     </button>
                   ) : (
                     <button onClick={() => handleTryOnTrend(selectedTrend)}
                       disabled={trendTryOnStatus === 'loading'}
-                      className="flex-1 py-3 bg-[#1A1A1A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] hover:bg-[#D23669] transition-colors duration-200 disabled:opacity-40 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-200 disabled:opacity-40 flex items-center justify-center gap-2">
                       {trendTryOnStatus === 'loading'
                         ? <><Loader2 size={12} className="animate-spin" /> Styling</>
                         : trendTryOnStatus === 'done'
@@ -628,11 +628,11 @@ const SeasonalGallery = () => {
       {selectedLook && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedLook(null)} />
-          <div className="relative bg-white w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col md:flex-row animate-in fade-in duration-300">
+          <div className="relative bg-white w-full max-w-5xl max-h-[95vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row animate-in fade-in duration-300">
 
             {/* Close */}
             <button onClick={() => setSelectedLook(null)}
-              className="absolute top-5 right-5 z-50 w-9 h-9 flex items-center justify-center text-white bg-black/40 hover:bg-black transition-colors duration-200">
+              className="absolute top-5 right-5 z-50 w-9 h-9 flex items-center justify-center rounded-full text-white bg-black/40 hover:bg-black transition-colors duration-200">
               <X size={16} />
             </button>
 
@@ -654,19 +654,19 @@ const SeasonalGallery = () => {
                   {selectedLook.name}
                 </h2>
 
-                <p className="text-[13px] text-[#605858] font-[300] leading-relaxed mb-6 border-l border-[#E8E0DC] pl-4">
+                <p className="text-[13px] text-[#605858] font-[300] leading-relaxed mb-6 border-l border-[#F5E3E8] pl-4">
                   {selectedLook.description || "A curated aesthetic designed to harmonize with your personal color palette."}
                 </p>
 
                 {/* Palette insight */}
-                <div className="border border-[#E8E0DC] p-5 mb-6">
-                  <p className="text-[9px] tracking-[0.3em] uppercase text-[#aaa] font-[300] mb-2">Palette Insight</p>
+                <div className="rounded-2xl border border-[#F5E3E8] bg-[#FFFAFB] p-5 mb-6">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-[#C58A9A] font-[300] mb-2">Palette Insight</p>
                   <p className="text-[13px] text-[#605858] font-[300] leading-relaxed">{seasonTheme[activeSeason].details}</p>
                 </div>
 
                 {/* Try-On result */}
                 {tryOnStatus === 'done' && tryOnImage && (
-                  <div className="mb-6 border-t border-[#E8E0DC] pt-5">
+                  <div className="mb-6 border-t border-[#F5E3E8] pt-5">
                     <p className="text-[9px] tracking-[0.3em] uppercase text-[#aaa] font-[300] mb-4">Before / After</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
@@ -691,26 +691,26 @@ const SeasonalGallery = () => {
                 )}
 
                 {/* Actions */}
-                <div className="mt-auto pt-6 border-t border-[#E8E0DC] flex gap-3">
+                <div className="mt-auto pt-6 border-t border-[#F5E3E8] flex gap-3">
                   <button
                     onClick={() => {
                       const lookId = `look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`;
                       toggleLike({ id: lookId, title: selectedLook.name, img: selectedLook.image_url || selectedLook.image, season: activeSeason, type: "look" });
                     }}
-                    className={`w-11 h-11 flex items-center justify-center border transition-all duration-200 ${
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200 ${
                       likedIds.includes(`look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`)
-                        ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
-                        : 'border-[#E8E0DC] text-[#888] hover:border-[#1A1A1A] hover:text-[#1A1A1A]'
+                        ? 'bg-gradient-to-r from-[#D23669] to-[#C2255A] border-[#D23669] text-white'
+                        : 'border-[#F0DEE3] text-[#8A7A80] hover:border-[#D23669] hover:text-[#D23669]'
                     }`}>
                     <Heart size={14} className={likedIds.includes(`look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`) ? 'fill-white' : ''} />
                   </button>
                   {!getUserFacePhoto() ? (
-                    <button disabled className="flex-1 py-3 border border-[#E8E0DC] text-[#bbb] text-[10px] tracking-[0.25em] uppercase font-[400] cursor-not-allowed">
+                    <button disabled className="flex-1 py-3 rounded-xl border border-[#F0DEE3] text-[#bbb] text-[10px] tracking-[0.25em] uppercase font-[400] cursor-not-allowed">
                       Analyze Face First
                     </button>
                   ) : (
                     <button onClick={handleTryOnLook} disabled={tryOnStatus === 'loading'}
-                      className="flex-1 py-3 bg-[#1A1A1A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] hover:bg-[#D23669] transition-colors duration-200 disabled:opacity-40 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-200 disabled:opacity-40 flex items-center justify-center gap-2">
                       {tryOnStatus === 'loading'
                         ? <><Loader2 size={12} className="animate-spin" /> Styling</>
                         : tryOnStatus === 'done' ? 'Try Again' : 'Try This Look'}

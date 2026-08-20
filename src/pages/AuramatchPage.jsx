@@ -425,31 +425,31 @@ export default function AuramatchDailyDose() {
             </h2>
           </div>
 
-          <div className="flex flex-col md:flex-row h-[500px] gap-px bg-[#E8E0DC] w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row md:h-[500px] gap-px bg-[#E8E0DC] w-full">
             {personalColorData1.map((item) => (
               <div
                 key={item.name}
                 onClick={goAdvisor}
-                className="group relative flex-[1] hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.35,1)] cursor-pointer overflow-hidden bg-white"
+                className="group relative flex-[1] md:hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.35,1)] cursor-pointer overflow-hidden bg-white"
               >
-                <div className="absolute inset-0 p-8 flex flex-col z-20">
+                <div className="relative md:absolute md:inset-0 p-6 md:p-8 flex flex-col z-20">
                   <p className="text-[10px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">{item.id}</p>
                   <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] uppercase mb-1">{item.name}</h4>
                   <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-4">{item.tag}</p>
 
-                  <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700">
+                  <div className="flex-grow flex items-start mt-2 md:items-center md:mt-0 md:group-hover:items-start md:group-hover:mt-4 transition-all duration-700">
                     <div className="grid grid-cols-6 gap-1.5 w-full">
                       {item.palette.map((color, pIdx) => (
                         <div
                           key={pIdx}
-                          className={`h-8 w-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'}`}
+                          className={`h-8 w-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:scale-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:scale-100 md:group-hover:pointer-events-auto'}`}
                           style={{ backgroundColor: color, transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms' }}
                         />
                       ))}
                     </div>
                   </div>
 
-                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-300 transform translate-y-6 group-hover:translate-y-0">
+                  <div className="mt-4 md:mt-0 opacity-100 translate-y-0 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 md:delay-300 transform md:translate-y-6 md:group-hover:translate-y-0">
                     <p className="text-xs font-[300] text-[#555] leading-relaxed mb-4 max-w-[280px]">{item.desc}</p>
                     <div className="border border-[#1A1A1A] px-5 py-2 inline-block hover:bg-[#1A1A1A] hover:text-white transition-all duration-200">
                       <span className="text-[9px] tracking-[0.25em] uppercase text-[#1A1A1A] font-[500] group-hover:text-white">Explore Season →</span>

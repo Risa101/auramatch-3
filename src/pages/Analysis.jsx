@@ -3,9 +3,10 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Analysis.css";
 import MakeoverStudio from "../components/MakeoverStudio.jsx";
-import { saveAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzeSeasonML, analyzeColorEngine } from "../callapi/call_api_user";
+import { saveAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzeSeasonML, analyzeColorEngine, analyzeUndertone } from "../callapi/call_api_user";
 import { detectFaceShape, loadFaceModels } from "../utils/faceShapeDetector";
 import { logAiCall } from "../utils/aiLogger";
+import { imgUrl } from "../utils/imgUrl";
 
 /* ✅ persist realtime */
 import { auth } from "../lib/firebase";
@@ -34,18 +35,26 @@ const assetPath = (p) => `${BASE_PATH}${String(p).replace(/^\/+/, "")}`;
 const SEASONS = ["Spring", "Summer", "Autumn", "Winter"];
 const FACE_TYPES = ["Oval", "Round", "Square", "Heart", "Diamond", "Rectangle"];
 const SEASON_META = {
-  Spring: { tone: "Warm • Bright", note: "Bright and vibrant, warm tone", glow: "from-[#FFF1D8] to-[#FFDDE7]" },
-  Summer: { tone: "Cool • Soft", note: "Soft and gentle, cool tone", glow: "from-[#EAF2FF] to-[#F1E8FF]" },
-  Autumn: { tone: "Warm • Deep", note: "Deep and warm, rich dimension", glow: "from-[#F8E8D6] to-[#F6E1CF]" },
-  Winter: { tone: "Cool • Vivid", note: "Sharp and vivid, high contrast", glow: "from-[#ECECFF] to-[#E9EEF9]" },
+  Spring: { tone: "อบอุ่น • สดใส", note: "โทนอบอุ่น สดใส และอ่อนโยน", glow: "from-[#FFF1D8] to-[#FFDDE7]" },
+  Summer: { tone: "เย็น • นุ่มนวล", note: "โทนเย็น นุ่มนวล และละมุน", glow: "from-[#EAF2FF] to-[#F1E8FF]" },
+  Autumn: { tone: "อบอุ่น • เข้ม", note: "โทนอุ่น เข้ม และมีความเป็นธรรมชาติ", glow: "from-[#F8E8D6] to-[#F6E1CF]" },
+  Winter: { tone: "เย็น • คมชัด", note: "โทนเย็น เข้ม ชัด และโดดเด่น", glow: "from-[#ECECFF] to-[#E9EEF9]" },
 };
+// Display labels for SEASONS/FACE_TYPES — those arrays stay English since their
+// values double as lookup keys (SEASON_META[season], PRODUCTS[season], etc.)
+const SEASON_LABELS_TH = { Spring: "ฤดูใบไม้ผลิ", Summer: "ฤดูร้อน", Autumn: "ฤดูใบไม้ร่วง", Winter: "ฤดูหนาว" };
+const FACE_TYPE_LABELS_TH = { Oval: "รูปไข่", Round: "กลม", Square: "เหลี่ยม", Heart: "หัวใจ", Diamond: "เพชร", Rectangle: "ยาว" };
+// Display labels for the `category` tag MakeoverStudio attaches to each cart
+// item (Foundation/Lips/Eyes/Blush/Brows/Contour) — stays English at the
+// source since it's also half of the cart item's dedupe key (cartKey()).
+const CATEGORY_LABELS_TH = { Foundation: "รองพื้น", Lips: "ลิป", Eyes: "ดวงตา", Blush: "บลัชออน", Brows: "คิ้ว", Contour: "คอนทัวร์" };
 const FACE_META = {
-  Oval: "Balanced and soft, versatile with many styles",
-  Round: "Soft and youthful, great for adding dimension",
-  Square: "Strong jaw definition, looks bold and confident",
-  Heart: "Prominent forehead, tapered chin, looks sweet",
-  Diamond: "Defined cheekbones, sharp and charming",
-  Rectangle: "Elegantly elongated, clear bone structure",
+  Oval: "สมส่วนและนุ่มนวล เข้ากับสไตล์ได้หลากหลาย",
+  Round: "อ่อนโยนและดูเด็ก เพิ่มมิติให้ใบหน้าได้ง่าย",
+  Square: "กรามชัดเจน ดูมั่นใจและโดดเด่น",
+  Heart: "หน้าผากเด่น คางเรียว ดูน่ารักสดใส",
+  Diamond: "โหนกแก้มชัด คมและมีเสน่ห์",
+  Rectangle: "ใบหน้าเรียวยาวสง่างาม โครงหน้าชัดเจน",
 };
 
 /* ---------------- Palettes ---------------- */
@@ -81,34 +90,69 @@ const HAIR_COLORS = {
 };
 
 /* ---------------- Face feature recs ---------------- */
+// Values are display labels (also used as SHAPE_RECS_EXPLAIN lookup keys below) —
+// the outer/inner KEYS (brows/eyes/nose/lips, softArch/straight/arched, ...) stay
+// English since they're driven by the ML/API response shape, not display text.
 const SHAPE_RECS = {
-  brows: { softArch: "Soft Arch", straight: "Straight", arched: "High Arch" },
-  eyes: { natural: "Natural Gradient", cat: "Cat-Eye Lift", dolly: "Dolly Eye" },
-  nose: { softContour: "Soft Contour", definedContour: "Defined Contour", natural: "Natural" },
-  lips: { gradient: "Gradient Lip", full: "Full Bold Lip", soft: "Soft Blur Lip" },
+  brows: { softArch: "คิ้วโค้งอ่อน", straight: "คิ้วตรง", arched: "คิ้วโก่งสูง" },
+  eyes: { natural: "อายไล่สีธรรมชาติ", cat: "อายไลเนอร์ยกหางตา", dolly: "ตาโตกลมหวาน" },
+  nose: { softContour: "คอนทัวร์นุ่มนวล", definedContour: "คอนทัวร์คมชัด", natural: "ธรรมชาติ" },
+  lips: { gradient: "ลิปไล่สี", full: "ลิปเต็มปากสีเข้ม", soft: "ลิปเบลอนุ่มนวล" },
 };
+
+// คำอธิบายภาษาไทยแบบเข้าใจง่าย สำหรับผู้ใช้ที่ไม่เชี่ยวชาญด้านการแต่งหน้า
+const SHAPE_RECS_EXPLAIN = {
+  "คิ้วโค้งอ่อน": "คิ้วโค้งมนนุ่มนวล ไม่หักมุม ดูเป็นธรรมชาติ",
+  "คิ้วตรง": "คิ้วเส้นตรง ไม่มีส่วนโค้ง ดูทันสมัยและคม",
+  "คิ้วโก่งสูง": "คิ้วโค้งสูงชัดเจน ช่วยให้ใบหน้าดูมีมิติ",
+  "อายไล่สีธรรมชาติ": "แต่งตาไล่สีอ่อนไปเข้มแบบธรรมชาติ",
+  "อายไลเนอร์ยกหางตา": "เขียนอายไลเนอร์ยกหางตา ให้ดวงตาดูเรียวยาว",
+  "ตาโตกลมหวาน": "แต่งตาโตกลม ให้ดวงตาดูใสและเด่น",
+  "คอนทัวร์นุ่มนวล": "คอนทัวร์จมูกเบาๆ ไม่ชัดมาก ดูเป็นธรรมชาติ",
+  "คอนทัวร์คมชัด": "คอนทัวร์จมูกชัดเจน ช่วยให้จมูกดูโด่งขึ้น",
+  "ธรรมชาติ": "ไม่ต้องคอนทัวร์ เน้นความเป็นธรรมชาติ",
+  "ลิปไล่สี": "ทาปากไล่สี เข้มตรงกลาง อ่อนที่ขอบปาก",
+  "ลิปเต็มปากสีเข้ม": "ทาปากเต็มทั้งปาก สีเข้มชัดเจน",
+  "ลิปเบลอนุ่มนวล": "ทาปากแบบเบลอขอบ ให้ดูฟุ้งนุ่มนวล",
+};
+
+// Committee feedback: the Gemini-generated portrait doesn't look natural yet
+// (too red / not presentation-ready) — hidden until the prompt/pipeline is
+// improved. Flip back to true to bring it back.
+const SHOW_GEMINI_MAKEOVER = false;
+
+// Hairstyle recommendation cards, hidden per request. Flip back to true to bring it back.
+const SHOW_HAIRSTYLES = false;
 
 /* ---------------- Products (sample) ---------------- */
 const PRODUCTS = {
   Spring: [
-    { name: "Peach Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=peach%20blush" },
-    { name: "Coral Tint Balm", price: "219", img: assetPath("product/brush2.jpg"), shopUrl: "https://shopee.co.th/search?keyword=coral%20tint%20balm" },
-    { name: "Glow Cushion", price: "299", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=glow%20cushion" },
+    { name: "บลัชออนพีช", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=peach%20blush" },
+    { name: "ทินท์บาล์มคอรัล", price: "219", img: assetPath("product/brush2.jpg"), shopUrl: "https://shopee.co.th/search?keyword=coral%20tint%20balm" },
+    { name: "คุชชั่นเปล่งประกาย", price: "299", img: assetPath("product/cushion.png"), shopUrl: "https://shopee.co.th/search?keyword=glow%20cushion" },
+    { name: "ลิปออยล์แอปริคอต", price: "259", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=apricot%20lip%20oil" },
+    { name: "บรอนเซอร์ซันคิสท์", price: "279", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=sunkissed%20bronzer" },
   ],
   Summer: [
-    { name: "Mauve Cream Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=mauve%20cream%20blush" },
-    { name: "Cool Pink Lip Oil", price: "199", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=lip%20oil%20cool%20pink" },
-    { name: "Sheer Highlighter", price: "259", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=sheer%20highlighter" },
+    { name: "บลัชออนครีมม่วงอมชมพู", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=mauve%20cream%20blush" },
+    { name: "ลิปออยล์ชมพูโทนเย็น", price: "199", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=lip%20oil%20cool%20pink" },
+    { name: "ไฮไลท์เตอร์เนื้อบาง", price: "259", img: assetPath("product/jovinafd.jpg"), shopUrl: "https://shopee.co.th/search?keyword=sheer%20highlighter" },
+    { name: "คุชชั่นโรสมิสต์", price: "299", img: assetPath("product/cushion.png"), shopUrl: "https://shopee.co.th/search?keyword=rose%20cushion" },
+    { name: "ลิปทินท์เบอร์รี่อ่อน", price: "229", img: assetPath("product/cathydolllip.webp"), shopUrl: "https://shopee.co.th/search?keyword=berry%20lip%20tint" },
   ],
   Autumn: [
-    { name: "Terracotta Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=terracotta%20blush" },
-    { name: "Honey Bronze", price: "349", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=honey%20bronzer" },
-    { name: "Matte Caramel Lip", price: "229", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=matte%20caramel%20lip" },
+    { name: "บลัชออนเทอร์ราคอตตา", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=terracotta%20blush" },
+    { name: "บรอนเซอร์น้ำผึ้ง", price: "349", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=honey%20bronzer" },
+    { name: "ลิปแมตต์คาราเมล", price: "229", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=matte%20caramel%20lip" },
+    { name: "รองพื้นคุชชั่นสีอำพัน", price: "319", img: assetPath("product/cushion.png"), shopUrl: "https://shopee.co.th/search?keyword=amber%20cushion" },
+    { name: "ลิปออยล์กลิ่นสไปซ์", price: "259", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=spice%20lip%20oil" },
   ],
   Winter: [
-    { name: "Berry Lip", price: "249", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=berry%20lipstick" },
-    { name: "Plum Glow Blush", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=plum%20blush" },
-    { name: "Cool Contour Stick", price: "299", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=cool%20contour%20stick" },
+    { name: "ลิปสติกเบอร์รี่", price: "249", img: assetPath("product/lip.png"), shopUrl: "https://shopee.co.th/search?keyword=berry%20lipstick" },
+    { name: "บลัชออนพลัมโกลว์", price: "289", img: assetPath("product/brush1.jpg"), shopUrl: "https://shopee.co.th/search?keyword=plum%20blush" },
+    { name: "แท่งคอนทัวร์โทนเย็น", price: "299", img: assetPath("product/contour.png"), shopUrl: "https://shopee.co.th/search?keyword=cool%20contour%20stick" },
+    { name: "คุชชั่นสีพอร์ซเลน", price: "319", img: assetPath("product/cushion.png"), shopUrl: "https://shopee.co.th/search?keyword=porcelain%20cushion" },
+    { name: "ลิปออยล์ไวน์", price: "259", img: assetPath("product/lipoil.png"), shopUrl: "https://shopee.co.th/search?keyword=wine%20lip%20oil" },
   ],
 };
 
@@ -190,6 +234,19 @@ const BROW_QUERY = {
   straight: "straight korean brow",
   arched: "high arch brow tutorial",
 };
+// Thai versions for on-screen display only — the English strings above stay
+// as-is since they're used to build the actual YouTube search query and to
+// match a curated video id in resolveVideoId() (English keyword matching).
+const EYE_QUERY_TH = {
+  natural: "แต่งตาไล่สีธรรมชาติ",
+  cat: "อายไลเนอร์ยกหางตาแบบแคทอาย",
+  dolly: "แต่งตาโตกลมหวาน",
+};
+const BROW_QUERY_TH = {
+  softArch: "สอนเขียนคิ้วโค้งอ่อน",
+  straight: "คิ้วทรงตรงสไตล์เกาหลี",
+  arched: "สอนเขียนคิ้วโก่งสูง",
+};
 const buildYT = (q) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 function buildYouTubeLinks(result) {
@@ -198,30 +255,37 @@ function buildYouTubeLinks(result) {
   const { season, faceShape, face } = result;
   if (season) {
     const th = SEASON_TH[season] || season;
+    const seasonTh = SEASON_LABELS_TH[season] || season;
     links.push({
       title: `Makeup for ${th} tone (Personal Color)`,
+      titleTh: `เมกอัพสำหรับโทนสี ${seasonTh} (Personal Color)`,
       url: buildYT(`makeup ${season} personal color tutorial`),
     });
     links.push({
       title: `Lip & Blush colors for ${th} tone`,
+      titleTh: `สีลิปและบลัชออนสำหรับโทน ${seasonTh}`,
       url: buildYT(`lip blush ${season} personal color`),
     });
   }
   if (faceShape) {
     const th = FACE_SHAPE_TH[faceShape] || faceShape;
+    const faceTh = FACE_TYPE_LABELS_TH[faceShape] || faceShape;
     links.push({
       title: `Contour for ${th} face shape`,
+      titleTh: `คอนทัวร์สำหรับรูปหน้า${faceTh}`,
       url: buildYT(`contour face shape ${th} how to`),
     });
   }
   if (face?.eyes)
     links.push({
       title: `Eye technique: ${EYE_QUERY[face.eyes] || "eye makeup"}`,
+      titleTh: `เทคนิคแต่งตา: ${EYE_QUERY_TH[face.eyes] || "แต่งตา"}`,
       url: buildYT(EYE_QUERY[face.eyes] || "eye makeup tutorial"),
     });
   if (face?.brows)
     links.push({
       title: `Brow tutorial: ${BROW_QUERY[face.brows] || "brow shape for face"}`,
+      titleTh: `สอนแต่งคิ้ว: ${BROW_QUERY_TH[face.brows] || "ทรงคิ้วที่เหมาะกับใบหน้า"}`,
       url: buildYT(
         BROW_QUERY[face.brows] || "brow shaping tutorial face shape"
       ),
@@ -319,7 +383,7 @@ function SelectedProductCard({ product, season }) {
   };
 
   return (
-    <article className="border border-[#E8E0DC] bg-white overflow-hidden">
+    <article className="rounded-2xl border border-[#F5E3E8] bg-white overflow-hidden shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
       {/* Image */}
       <div className="relative aspect-square w-full overflow-hidden bg-[#F7F4F2]">
         <img
@@ -329,33 +393,33 @@ function SelectedProductCard({ product, season }) {
         />
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-3">
           <span className="text-[8px] tracking-[0.4em] uppercase text-white/80 font-[300] bg-black/30 px-2 py-1 backdrop-blur-sm">
-            Selected
+            เลือกแล้ว
           </span>
           <span className="text-[8px] tracking-[0.3em] uppercase text-white/70 font-[300] bg-black/20 px-2 py-1 backdrop-blur-sm">
-            {season}
+            {SEASON_LABELS_TH[season] || season}
           </span>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-5 border-t border-[#E8E0DC]">
+      <div className="p-5 border-t border-[#F5E3E8]">
         <p className="text-[9px] tracking-[0.4em] uppercase text-[#D23669] font-[300] mb-2">
-          Match for {season || "Your Tone"}
+          เหมาะสำหรับ {SEASON_LABELS_TH[season] || season || "สีประจำตัวของคุณ"}
         </p>
         <h4 className="text-lg font-[500] tracking-[0.02em] text-[#1A1A1A] mb-1">{product.name}</h4>
-        <div className="w-full h-px bg-[#E8E0DC] my-3" />
-        <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">Estimated price</p>
+        <div className="w-full h-px bg-[#F5E3E8] my-3" />
+        <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">ราคาโดยประมาณ</p>
         <p className="text-2xl font-[200] tracking-[0.03em] text-[#1A1A1A] mb-3">
-          THB <span className="font-[600]">{product.price}</span>
+          ฿<span className="font-[600]">{product.price}</span>
         </p>
-        <p className="text-[11px] font-[300] text-[#888] leading-relaxed mb-4">
-          Selected from your makeover studio. Purchase from an online store.
+        <p className="text-xs font-[300] text-[#888] leading-relaxed mb-4">
+          เลือกจากสตูดิโอแต่งหน้าของคุณ สั่งซื้อได้จากร้านค้าออนไลน์
         </p>
         <button
           onClick={openShop}
-          className="w-full bg-[#1A1A1A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.3em] hover:bg-[#D23669] transition-all duration-300"
+          className="w-full rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-300"
         >
-          Buy This Look
+          ซื้อลุคนี้เลย
         </button>
       </div>
     </article>
@@ -389,37 +453,27 @@ function YouTubeReels({ result }) {
   const items = useMemo(() => buildYouTubeLinks(result), [result]);
   if (!items.length) return null;
 
-  const trackRef = useRef(null);
-  const scrollBy = (dx) => trackRef.current?.scrollBy({ left: dx, behavior: "smooth" });
+  // Show just the single most relevant clip instead of a scrollable row.
+  const it = items[0];
+  const vid = resolveVideoId(it.title);
+  const src = vid ? ytEmbedById(vid) : ytSearchEmbedUrl(it.title);
 
   return (
     <section>
-      <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">Tutorials</p>
-      <h3 className="text-[2rem] md:text-[2.8rem] font-[200] leading-[1] text-[#1A1A1A] uppercase mb-8">
-        YouTube<br /><span className="font-[700] italic">Tutorials</span>
+      <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">บทเรียน</p>
+      <h3 className="text-2xl md:text-3xl font-[200] leading-[1] text-[#1A1A1A] uppercase mb-8">
+        วิดีโอ<br /><span className="font-[700] italic">สอนแต่งหน้า</span>
       </h3>
-      <div className="reels">
-        <button aria-label="prev" className="reel-nav reel-nav--left" onClick={() => scrollBy(-360)}>❮</button>
-        <div ref={trackRef} className="reel-track">
-          {items.map((it, i) => {
-            const vid = resolveVideoId(it.title);
-            const src = vid ? ytEmbedById(vid) : ytSearchEmbedUrl(it.title);
-            return (
-              <div key={i} className="reel-card">
-                <iframe
-                  title={it.title}
-                  className="reel-iframe"
-                  src={src}
-                  loading="lazy"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-                <div className="reel-caption"><span className="line-clamp-1">{it.title}</span></div>
-              </div>
-            );
-          })}
-        </div>
-        <button aria-label="next" className="reel-nav reel-nav--right" onClick={() => scrollBy(360)}>❯</button>
+      <div className="reel-card w-full">
+        <iframe
+          title={it.titleTh || it.title}
+          className="reel-iframe w-full h-[70vh] md:h-[720px]"
+          src={src}
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+        <div className="reel-caption"><span className="line-clamp-1">{it.titleTh || it.title}</span></div>
       </div>
     </section>
   );
@@ -778,7 +832,11 @@ export default function Analysis() {
   const [result, setResult] = useState(null); // { season, face, faceShape, hairLength, hairTexture }
   const [, setHistory] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [selectedStudioProduct, setSelectedStudioProduct] = useState(null);
+  const [selectedStudioProducts, setSelectedStudioProducts] = useState([]);
+  // ── "Your Selected Products" cart (built on top of selectedStudioProducts,
+  // which the Makeover Studio keeps in sync with every shade/Look pick) ──
+  const [cartQty, setCartQty] = useState({}); // { [cartKey]: qty }
+  const [removedCartKeys, setRemovedCartKeys] = useState(() => new Set());
   const [currentStep, setCurrentStep] = useState(1);
   const inputRef = useRef(null);
   const saveRequestedRef = useRef(false);
@@ -822,12 +880,12 @@ export default function Analysis() {
     const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
     const MAX_SIZE_MB = 10;
     if (!ALLOWED_TYPES.includes(f.type)) {
-      setError("Please upload an image file (JPG, PNG, WEBP) only.");
+      setError("กรุณาอัปโหลดไฟล์รูปภาพ (JPG, PNG, WEBP) เท่านั้น");
       e.target.value = "";
       return;
     }
     if (f.size > MAX_SIZE_MB * 1024 * 1024) {
-      setError(`File size must not exceed ${MAX_SIZE_MB} MB.`);
+      setError(`ขนาดไฟล์ต้องไม่เกิน ${MAX_SIZE_MB} MB`);
       e.target.value = "";
       return;
     }
@@ -843,13 +901,13 @@ export default function Analysis() {
       setError("");
       await runAnalysis({ pickedFile: f, previewSrc: dataUrl, autoMode: true });
     } catch {
-      setError("Unable to read the file. Please try again.");
+      setError("ไม่สามารถอ่านไฟล์ได้ กรุณาลองใหม่อีกครั้ง");
     }
   }
 
   async function runAnalysis({ pickedFile = file, previewSrc = preview, autoMode = false } = {}) {
     if (!pickedFile && !previewSrc) {
-      setError("Please upload an image first.");
+      setError("กรุณาอัปโหลดรูปภาพก่อน");
       return;
     }
     try {
@@ -949,6 +1007,32 @@ export default function Analysis() {
         }
         // ──────────────────────────────────────────────────────
 
+        // ── Skin Undertone (classical CV, พอร์ตจาก detection_skin_for_cream(2).ipynb
+        // — ไม่ใช่ ML model) + สินค้าบลัชออนจริงจาก DB ที่ตรงกับ undertone นั้น ──
+        try {
+          const undertoneStart = Date.now();
+          const utResult = await analyzeUndertone(pickedFile);
+          if (utResult?.success) {
+            console.log("[Undertone] tone:", utResult.undertone, "ITA:", utResult.ita, "L*:", utResult.l_star);
+            data.skinUndertone = utResult.undertone;
+            data.skinUndertoneIta = utResult.ita;
+            data.skinUndertoneLstar = utResult.l_star;
+            data.blushProducts = utResult.recommended_products || [];
+            logAiCall({
+              modelUsed: "UndertoneCV",
+              task: "skin_undertone",
+              input: { skin_pixel_count: utResult.skin_pixel_count },
+              output: utResult.undertone,
+              processingMs: Date.now() - undertoneStart,
+              success: true,
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        } catch (utErr) {
+          console.warn("[Undertone] analysis failed:", utErr);
+        }
+        // ──────────────────────────────────────────────────────
+
         // ── face-api.js: detect face shape จาก landmark เอง ──
         const faceStart = Date.now();
         try {
@@ -1018,7 +1102,7 @@ export default function Analysis() {
       setSaving(false);
     } catch (err) {
       console.error(err);
-      setError("An error occurred during analysis. Please try again.");
+      setError("เกิดข้อผิดพลาดระหว่างการวิเคราะห์ กรุณาลองใหม่อีกครั้ง");
       setStatus("error");
       setSaving(false);
       if (autoMode) setCurrentStep(1);
@@ -1033,7 +1117,7 @@ export default function Analysis() {
     const targetFile = passedFile || file;
     const targetPreview = passedPreview || preview;
     if (!targetFile && !targetPreview) {
-      setGeminiError("Please upload an image first.");
+      setGeminiError("กรุณาอัปโหลดรูปภาพก่อน");
       return;
     }
     const geminiImgStart = Date.now();
@@ -1064,9 +1148,9 @@ export default function Analysis() {
       console.error(err);
       const msg = err?.response?.data?.error || err?.message || "";
       if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
-        setGeminiError("Gemini API quota exceeded. Please wait a moment and try again.");
+        setGeminiError("การใช้งาน Gemini API เกินโควตา กรุณารอสักครู่แล้วลองใหม่อีกครั้ง");
       } else {
-        setGeminiError("Image generation failed. Please try again.");
+        setGeminiError("สร้างภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
       }
       setGeminiStatus("error");
       logAiCall({
@@ -1103,18 +1187,99 @@ export default function Analysis() {
     (currentStep === 2);
 
   const nextStep = () => {
-    if (currentStep === 1 && !preview) return setError("Please upload a photo first.");
+    if (currentStep === 1 && !preview) return setError("กรุณาอัปโหลดรูปภาพก่อน");
     setCurrentStep((s) => Math.min(2, s + 1));
   };
 
   const prevStep = () => setCurrentStep((s) => Math.max(1, s - 1));
 
+  // ── "Your Selected Products" cart — derived from selectedStudioProducts
+  // (live picker state from Makeover Studio) + local qty/remove overrides.
+  // Keyed by category+name so re-picking a shade in the same category
+  // replaces it instead of duplicating, matching how the studio itself works.
+  const cartKey = (p) => `${p.category || "Item"}::${p.name}`;
+  const cartItems = selectedStudioProducts
+    .map((p) => {
+      const key = cartKey(p);
+      return { ...p, key, qty: cartQty[key] ?? 1 };
+    })
+    .filter((item) => !removedCartKeys.has(item.key));
+  // Brow SHAPE entries (isShapeOnly) are part of the Look but not a purchasable
+  // product — a style pick, not a shade — so they're excluded from item count/total.
+  const cartCount = cartItems.filter((item) => !item.isShapeOnly).reduce((sum, item) => sum + item.qty, 0);
+  const cartTotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * item.qty, 0);
+
+  const changeCartQty = (key, delta) => {
+    setCartQty((prev) => ({ ...prev, [key]: Math.max(1, (prev[key] ?? 1) + delta) }));
+  };
+  const removeFromCart = (key) => {
+    setRemovedCartKeys((prev) => new Set(prev).add(key));
+  };
+  const buyAllInCart = () => {
+    cartItems.forEach((item) => {
+      if (item.shopUrl) window.open(item.shopUrl, "_blank", "noopener,noreferrer");
+    });
+  };
+
+  // Shared between the (currently hidden) Gemini grid and the standalone
+  // fallback below — the season-matched product list itself isn't affected
+  // by the Gemini portrait quality issue, so it stays visible either way.
+  const ProductPicksPanel = () => (
+    <>
+      <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-1">แนะนำสำหรับ{SEASON_LABELS_TH[result?.season] || result?.season}</p>
+      <h4 className="text-xl md:text-2xl font-[200] text-[#1A1A1A] uppercase tracking-[0.02em] mb-1">
+        เครื่องสำอาง<br /><span className="font-[600] italic">สำหรับออร่าคุณ</span>
+      </h4>
+      <div className="w-8 h-px bg-[#D23669] mb-8 mt-3" />
+
+      {/* Same card language as the Cosmetics catalog page — image, match badge, name + price + shop link */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+        {(PRODUCTS[result?.season] || []).map((p, idx) => (
+          <a
+            key={idx}
+            href={p.shopUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group bg-white block"
+          >
+            <div className="relative aspect-square overflow-hidden bg-[#F7F4F2]">
+              <img
+                src={p.img}
+                alt={p.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                onError={(e) => { e.target.src = assetPath("assets/home2.webp"); }}
+              />
+              <div className="absolute top-2 left-2 bg-[#D23669] text-white text-[7px] font-[600] px-1.5 py-0.5 uppercase tracking-[0.1em]">
+                {SEASON_LABELS_TH[result?.season] || result?.season}
+              </div>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+            </div>
+            <div className="p-2.5 border-t border-[#F5E3E8]">
+              <h3 className="text-[10px] font-[500] text-[#1A1A1A] leading-snug mb-1.5 line-clamp-1 uppercase tracking-[0.03em]">{p.name}</h3>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-[600] text-[#1A1A1A]">฿{p.price}</span>
+                <span className="text-[8px] font-[600] uppercase tracking-[0.15em] text-[#D23669] group-hover:text-[#1A1A1A] transition-colors">
+                  ช้อปเลย →
+                </span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <button onClick={() => navigate("/cosmetics")}
+        className="mt-8 w-full rounded-xl border border-[#D23669] text-[#D23669] py-2.5 text-[9px] font-[600] uppercase tracking-[0.3em] hover:bg-gradient-to-r hover:from-[#D23669] hover:to-[#C2255A] hover:text-white hover:border-transparent transition-all duration-300">
+        ดูสินค้าทั้งหมด
+      </button>
+    </>
+  );
+
   return (
-    <div className="bg-white text-[#1A1A1A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
+    <div className="bg-gradient-to-b from-white via-[#FFFAFB] to-white text-[#1A1A1A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
       <main className="mx-auto max-w-[1400px] px-6 md:px-10 pt-[60px] lg:pt-[180px] pb-32">
 
         {/* ── STEP INDICATOR ── */}
-        <div className="flex border border-[#E8E0DC] mb-14 overflow-hidden">
+        <div className="flex rounded-2xl border border-[#F5E3E8] mb-14 overflow-hidden shadow-[0_8px_30px_-12px_rgba(210,54,105,0.12)]">
           {/* Step 1 */}
           <button
             onClick={() => setCurrentStep(1)}
@@ -1127,8 +1292,8 @@ export default function Analysis() {
 
             <span className={`text-4xl font-[200] leading-none transition-colors ${currentStep === 1 ? "text-[#D23669]" : "text-[#C0B8B4]"}`}>01</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[8px] tracking-[0.5em] uppercase font-[300] text-[#888] mb-0.5">Step One</p>
-              <p className={`text-sm font-[600] uppercase tracking-[0.05em] transition-colors ${currentStep === 1 ? "text-[#1A1A1A]" : "text-[#888]"}`}>Upload Photo</p>
+              <p className="text-[8px] tracking-[0.5em] uppercase font-[300] text-[#888] mb-0.5">ขั้นตอนที่ 1</p>
+              <p className={`text-sm font-[600] uppercase tracking-[0.05em] transition-colors ${currentStep === 1 ? "text-[#1A1A1A]" : "text-[#888]"}`}>อัปโหลดรูปภาพ</p>
             </div>
             {stepDone[1] && (
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -1139,7 +1304,7 @@ export default function Analysis() {
           </button>
 
           {/* Divider */}
-          <div className="w-px bg-[#E8E0DC] shrink-0" />
+          <div className="w-px bg-[#F5E3E8] shrink-0" />
 
           {/* Step 2 */}
           <button
@@ -1152,8 +1317,8 @@ export default function Analysis() {
 
             <span className={`text-4xl font-[200] leading-none transition-colors ${currentStep === 2 ? "text-[#D23669]" : "text-[#C0B8B4]"}`}>02</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[8px] tracking-[0.5em] uppercase font-[300] text-[#888] mb-0.5">Step Two</p>
-              <p className={`text-sm font-[600] uppercase tracking-[0.05em] transition-colors ${currentStep === 2 ? "text-[#1A1A1A]" : "text-[#888]"}`}>Results & Styling</p>
+              <p className="text-[8px] tracking-[0.5em] uppercase font-[300] text-[#888] mb-0.5">ขั้นตอนที่ 2</p>
+              <p className={`text-sm font-[600] uppercase tracking-[0.05em] transition-colors ${currentStep === 2 ? "text-[#1A1A1A]" : "text-[#888]"}`}>ผลลัพธ์และการแต่งหน้า</p>
             </div>
             {stepDone[2] && (
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -1167,17 +1332,17 @@ export default function Analysis() {
         {/* ── STEP 1: UPLOAD ── */}
         {currentStep === 1 && (
           <div>
-            <div className="border-t border-[#E8E0DC] pt-10 mb-12" data-aos="fade-up">
-              <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Step 01</p>
-              <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
-                Upload<br />
-                <span className="font-[700] italic">Your Photo</span>
+            <div className="border-t border-[#F5E3E8] pt-8 mb-8" data-aos="fade-up">
+              <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">ขั้นตอนที่ 01</p>
+              <h2 className="text-3xl md:text-5xl font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
+                อัปโหลด<br />
+                <span className="font-[700] italic">รูปภาพของคุณ</span>
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
               {/* Photo preview */}
-              <div className="overflow-hidden bg-[#F7F4F2]" style={{ aspectRatio: "4/5" }}>
+              <div className="overflow-hidden rounded-3xl border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.15)] bg-[#F7F4F2]" style={{ aspectRatio: "4/5" }}>
                 {preview ? (
                   <img src={preview} alt="preview" className="h-full w-full object-cover" />
                 ) : (
@@ -1192,10 +1357,10 @@ export default function Analysis() {
                       <path d="M180 200 L180 250 L140 250" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.3"/>
                       <ellipse cx="100" cy="118" rx="64" ry="82" stroke="#1A1A1A" strokeWidth="1.5" strokeDasharray="8 5" opacity="0.25"/>
                     </svg>
-                    <p className="mt-6 text-[10px] tracking-[0.35em] uppercase text-[#888] font-[300]">Align face within guide</p>
-                    <p className="mt-2 text-[9px] text-[#aaa] tracking-wide">Face · Shoulders · Straight-on</p>
-                    <div className="mt-6 border border-[#1A1A1A] px-6 py-2">
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-[#1A1A1A] font-[500]">Tap to upload</p>
+                    <p className="mt-6 text-xs tracking-[0.2em] uppercase text-[#888] font-[300]">จัดใบหน้าให้อยู่ในกรอบ</p>
+                    <p className="mt-2 text-xs text-[#aaa] tracking-wide">ใบหน้า · ไหล่ · หันหน้าตรง</p>
+                    <div className="mt-6 rounded-xl border border-[#D23669] px-6 py-2">
+                      <p className="text-xs tracking-[0.2em] uppercase text-[#1A1A1A] font-[500]">แตะเพื่ออัปโหลด</p>
                     </div>
                   </div>
                 )}
@@ -1203,56 +1368,56 @@ export default function Analysis() {
 
               {/* Right: instructions + status */}
               <div className="space-y-8 pt-2">
-                <div className="border-t border-[#E8E0DC] pt-6">
-                  <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-5">Quick Start</p>
+                <div className="border-t border-[#F5E3E8] pt-6">
+                  <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-5">เริ่มต้นใช้งาน</p>
                   <p className="text-sm text-[#555] font-[300] leading-relaxed mb-6">
-                    Upload your face photo and the system will analyze it automatically — no need to press anything else.
+                    อัปโหลดรูปใบหน้าของคุณ ระบบจะวิเคราะห์ให้อัตโนมัติ ไม่ต้องกดอะไรเพิ่ม
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => inputRef.current?.click()}
-                      className="bg-[#1A1A1A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] transition-all duration-300"
+                      className="rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-300"
                     >
-                      Choose Photo
+                      เลือกรูปภาพ
                     </button>
                     <button
                       onClick={fillDemo}
-                      className="border border-[#E8E0DC] text-[#1A1A1A] px-8 py-3 text-[10px] font-[500] uppercase tracking-[0.25em] hover:border-[#1A1A1A] transition-all duration-300"
+                      className="rounded-xl border border-[#F0DEE3] text-[#1A1A1A] px-8 py-3 text-[10px] font-[500] uppercase tracking-[0.25em] hover:border-[#D23669] hover:text-[#D23669] transition-all duration-300"
                     >
-                      Demo
+                      รูปตัวอย่าง
                     </button>
                   </div>
                   <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPick} />
                 </div>
 
                 {(status === "uploading" || status === "analyzing") && (
-                  <div className="border-t border-[#E8E0DC] pt-6">
-                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">Status</p>
+                  <div className="border-t border-[#F5E3E8] pt-6">
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">สถานะ</p>
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
                       <span className="text-xs font-[300] text-[#555] tracking-wide">
-                        {status === "uploading" ? "Uploading image..." : "AI is analyzing your face..."}
+                        {status === "uploading" ? "กำลังอัปโหลดรูปภาพ..." : "AI กำลังวิเคราะห์ใบหน้าของคุณ..."}
                       </span>
                     </div>
                   </div>
                 )}
                 {stepDone[1] && status !== "uploading" && status !== "analyzing" && (
-                  <div className="border-t border-[#E8E0DC] pt-6">
-                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-2">Status</p>
-                    <p className="text-xs font-[300] text-[#1A1A1A]">Photo uploaded — analysis complete</p>
+                  <div className="border-t border-[#F5E3E8] pt-6">
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-2">สถานะ</p>
+                    <p className="text-xs font-[300] text-[#1A1A1A]">อัปโหลดรูปแล้ว — วิเคราะห์เสร็จสมบูรณ์</p>
                   </div>
                 )}
                 {error && (
                   <div className="border-l-2 border-[#D23669] pl-4 text-xs text-[#D23669] font-[300]">{error}</div>
                 )}
 
-                <div className="border-t border-[#E8E0DC] pt-6 space-y-3">
-                  <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-4">For Best Results</p>
+                <div className="border-t border-[#F5E3E8] pt-6 space-y-3">
+                  <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-4">เพื่อผลลัพธ์ที่ดีที่สุด</p>
                   {[
-                    "Face directly toward the camera",
-                    "Use natural or white light",
-                    "Pull hair back to expose your face",
-                    "Avoid filters and angled shots",
+                    "หันหน้าตรงเข้าหากล้อง",
+                    "ใช้แสงธรรมชาติหรือแสงขาว",
+                    "รวบผมให้เห็นใบหน้าชัดเจน",
+                    "หลีกเลี่ยงฟิลเตอร์และมุมเอียง",
                   ].map((tip, i) => (
                     <div key={i} className="flex items-start gap-3 text-xs font-[300] text-[#555]">
                       <span className="text-[10px] font-[500] text-[#aaa] shrink-0">{String(i + 1).padStart(2, "0")}</span>
@@ -1268,45 +1433,45 @@ export default function Analysis() {
         {/* ── STEP 2: RESULTS ── */}
         {currentStep === 2 && (
           <div>
-            <div className="border-t border-[#E8E0DC] pt-10 mb-12 flex flex-wrap items-end justify-between gap-4" data-aos="fade-up">
+            <div className="border-t border-[#F5E3E8] pt-6 mb-6 flex flex-wrap items-end justify-between gap-4" data-aos="fade-up">
               <div>
-                <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Step 02</p>
-                <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
-                  Your<br />
-                  <span className="font-[700] italic">Results</span>
+                <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">ขั้นตอนที่ 02</p>
+                <h2 className="text-2xl md:text-4xl font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
+                  ผลลัพธ์<br />
+                  <span className="font-[700] italic">ของคุณ</span>
                 </h2>
               </div>
               <button
                 onClick={analyzeImage}
-                className="border border-[#E8E0DC] text-[#888] px-5 py-2 text-[10px] font-[500] uppercase tracking-[0.2em] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all"
+                className="rounded-xl border border-[#F0DEE3] text-[#8A7A80] px-5 py-2 text-[10px] font-[500] uppercase tracking-[0.2em] hover:border-[#D23669] hover:text-[#D23669] transition-all"
               >
-                Re-Analyze
+                วิเคราะห์ใหม่
               </button>
             </div>
 
             {result ? (
               <div>
                 {/* ── RESULT HERO: Photo + Season + Face Shape ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-px bg-[#E8E0DC]" data-aos="fade-up">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.15)]" data-aos="fade-up">
 
                   {/* Left: uploaded photo */}
                   <div className="relative overflow-hidden bg-[#F7F4F2] aspect-[3/4] lg:aspect-auto">
                     <img src={preview} alt="Your photo" className="w-full h-full object-cover object-top" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 p-6">
-                      <p className="text-[8px] tracking-[0.45em] uppercase text-white/60 font-[300] mb-1">Your Photo</p>
-                      <p className="text-white text-sm font-[500] uppercase tracking-[0.2em]">{result.faceShape} Face</p>
+                      <p className="text-[8px] tracking-[0.45em] uppercase text-white/60 font-[300] mb-1">รูปภาพของคุณ</p>
+                      <p className="text-white text-sm font-[500] uppercase tracking-[0.2em]">ใบหน้าทรง{FACE_TYPE_LABELS_TH[result.faceShape] || result.faceShape}</p>
                     </div>
                   </div>
 
                   {/* Right: Season + Face Shape stacked */}
-                  <div className="flex flex-col gap-px bg-[#E8E0DC]">
+                  <div className="flex flex-col gap-px bg-[#F5E3E8]">
 
                     {/* Season card */}
-                    <div className={`bg-gradient-to-br ${SEASON_META[result.season]?.glow || "from-[#FFF0F5] to-white"} p-8 md:p-10 flex-1`}>
-                      <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Personal Color Season</p>
-                      <h3 className="text-[3rem] md:text-[4rem] font-[200] tracking-[0.04em] text-[#1A1A1A] leading-[1] uppercase mb-1">
-                        {result.season || "—"}
+                    <div className={`bg-gradient-to-br ${SEASON_META[result.season]?.glow || "from-[#FFF0F5] to-white"} p-5 md:p-6 flex-1`}>
+                      <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">ฤดูสีประจำตัว (Personal Color)</p>
+                      <h3 className="text-2xl md:text-3xl font-[200] tracking-[0.04em] text-[#1A1A1A] leading-[1] uppercase mb-1">
+                        {SEASON_LABELS_TH[result.season] || result.season || "—"}
                       </h3>
                       <p className="text-[10px] tracking-[0.3em] uppercase text-[#D23669] font-[500] mb-6">
                         {SEASON_META[result.season]?.tone || ""}
@@ -1325,7 +1490,7 @@ export default function Analysis() {
 
                     {/* Face Shape card with image */}
                     <div className="bg-white p-0 flex-1 overflow-hidden">
-                      <div className="grid grid-cols-[1fr_1.2fr] h-full gap-px bg-[#E8E0DC]">
+                      <div className="grid grid-cols-[1fr_1.2fr] h-full gap-px bg-[#F5E3E8]">
                         {/* Face shape illustration — Female & Male SVG */}
                         <div className="relative flex flex-col items-center justify-center bg-[#FDF9F7] min-h-[220px] p-5 gap-4">
                           {(() => {
@@ -1360,39 +1525,39 @@ export default function Analysis() {
                               <div className="flex gap-5 items-end w-full justify-center">
                                 <div className="flex flex-col items-center gap-1.5 flex-1 max-w-[70px]">
                                   {female[shape] || female.Oval}
-                                  <p className="text-[7px] tracking-[0.35em] uppercase text-[#D23669] font-[300]">Female</p>
+                                  <p className="text-[7px] tracking-[0.35em] uppercase text-[#D23669] font-[300]">หญิง</p>
                                 </div>
-                                <div className="w-px self-stretch bg-[#E8E0DC]" />
+                                <div className="w-px self-stretch bg-[#F5E3E8]" />
                                 <div className="flex flex-col items-center gap-1.5 flex-1 max-w-[70px]">
                                   {male[shape] || male.Oval}
-                                  <p className="text-[7px] tracking-[0.35em] uppercase text-[#4A7B9D] font-[300]">Male</p>
+                                  <p className="text-[7px] tracking-[0.35em] uppercase text-[#4A7B9D] font-[300]">ชาย</p>
                                 </div>
                               </div>
                             );
                           })()}
-                          <p className="text-[7px] tracking-[0.4em] uppercase text-[#888] font-[300]">Face Shape Reference</p>
+                          <p className="text-[7px] tracking-[0.4em] uppercase text-[#888] font-[300]">รูปแบบทรงหน้า</p>
                         </div>
                         {/* Face shape info */}
                         <div className="bg-white p-6 flex flex-col justify-center">
-                          <h3 className="text-[2rem] md:text-[2.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1] uppercase mb-3">
-                            {result.faceShape || "—"}
+                          <h3 className="text-xl md:text-2xl font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1] uppercase mb-2">
+                            {FACE_TYPE_LABELS_TH[result.faceShape] || result.faceShape || "—"}
                           </h3>
                           <p className="text-xs font-[300] text-[#555] leading-relaxed mb-4">{FACE_META[result.faceShape] || ""}</p>
                           {/* Key traits */}
                           {result.faceShape && (() => {
                             const traits = {
-                              Oval:      ["Balanced proportions", "Soft jawline", "Versatile styling"],
-                              Round:     ["Soft contours", "Full cheeks", "Youthful look"],
-                              Square:    ["Strong jaw", "Wide forehead", "Bold structure"],
-                              Heart:     ["Broad forehead", "Pointed chin", "High cheekbones"],
-                              Diamond:   ["Narrow forehead", "Wide cheekbones", "Narrow chin"],
-                              Rectangle: ["Elongated face", "Defined jaw", "Equal widths"],
-                              Triangle:  ["Narrow top", "Wide jaw", "Strong base"],
+                              Oval:      ["สัดส่วนสมดุล", "แนวกรามนุ่มนวล", "แต่งได้หลายสไตล์"],
+                              Round:     ["เส้นโค้งนุ่มนวล", "แก้มเต็ม", "ดูอ่อนเยาว์"],
+                              Square:    ["กรามชัดเจน", "หน้าผากกว้าง", "โครงหน้าหนักแน่น"],
+                              Heart:     ["หน้าผากกว้าง", "คางแหลม", "โหนกแก้มสูง"],
+                              Diamond:   ["หน้าผากแคบ", "โหนกแก้มกว้าง", "คางแคบ"],
+                              Rectangle: ["ใบหน้ายาว", "กรามชัดเจน", "ความกว้างเท่ากันตลอดแนว"],
+                              Triangle:  ["ด้านบนแคบ", "กรามกว้าง", "ฐานหนักแน่น"],
                             };
                             return (traits[result.faceShape] || []).map((t) => (
                               <div key={t} className="flex items-center gap-2 mb-1.5">
                                 <div className="w-1 h-1 rounded-full bg-[#D23669] flex-shrink-0" />
-                                <p className="text-[10px] text-[#888] font-[300] tracking-[0.1em]">{t}</p>
+                                <p className="text-xs text-[#888] font-[300] tracking-[0.05em]">{t}</p>
                               </div>
                             ));
                           })()}
@@ -1404,160 +1569,230 @@ export default function Analysis() {
 
                 {/* ── FACE FEATURE ANALYSIS ── */}
                 <div className="mt-10" data-aos="fade-up">
-                  <div className="flex items-end justify-between mb-8 border-t border-[#E8E0DC] pt-10">
+                  <div className="flex items-end justify-between mb-8 border-t border-[#F5E3E8] pt-10">
                     <div>
-                      <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-2">Makeup Blueprint</p>
-                      <h3 className="text-[2rem] md:text-[2.8rem] font-[200] leading-[1] text-[#1A1A1A] uppercase">
-                        Feature<br /><span className="font-[700] italic">Analysis</span>
+                      <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-2">แนวทางการแต่งหน้า</p>
+                      <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                        วิเคราะห์<br /><span className="font-[700] italic">องค์ประกอบใบหน้า</span>
                       </h3>
                     </div>
                     <p className="text-xs font-[300] text-[#888] max-w-[200px] text-right leading-relaxed hidden md:block">
-                      Personalized makeup technique based on your facial features
+                      เทคนิคแต่งหน้าเฉพาะบุคคลตามองค์ประกอบใบหน้าของคุณ
                     </p>
                   </div>
 
                   {/* Feature cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#E8E0DC]">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
                     {[
-                      { label: "Brows", value: SHAPE_RECS.brows[result.face?.brows], accent: "#C17A43" },
-                      { label: "Eyes",  value: SHAPE_RECS.eyes[result.face?.eyes],   accent: "#4A7B9D" },
-                      { label: "Nose",  value: SHAPE_RECS.nose[result.face?.nose],   accent: "#7B6A4A" },
-                      { label: "Lips",  value: SHAPE_RECS.lips[result.face?.lips],   accent: "#D23669" },
+                      { label: "คิ้ว", value: SHAPE_RECS.brows[result.face?.brows], accent: "#C17A43" },
+                      { label: "ดวงตา",  value: SHAPE_RECS.eyes[result.face?.eyes],   accent: "#4A7B9D" },
+                      { label: "จมูก",  value: SHAPE_RECS.nose[result.face?.nose],   accent: "#7B6A4A" },
+                      { label: "ริมฝีปาก",  value: SHAPE_RECS.lips[result.face?.lips],   accent: "#D23669" },
                     ].map((item) => (
                       <div key={item.label} className="bg-white p-5">
                         <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-2">{item.label}</p>
                         <p className="text-sm font-[500] text-[#1A1A1A] leading-snug">{item.value || "—"}</p>
+                        {item.value && SHAPE_RECS_EXPLAIN[item.value] && (
+                          <p className="text-xs text-[#888] font-[300] leading-snug mt-1.5">{SHAPE_RECS_EXPLAIN[item.value]}</p>
+                        )}
                         <div className="mt-4 w-6 h-[2px]" style={{ background: item.accent }} />
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* AI Makeover */}
-                <div className="border-t border-[#E8E0DC] pt-10 mt-10" data-aos="fade-up">
-                  <div className="mb-6">
-                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">AI Makeover</p>
-                    <h3 className="text-[2rem] md:text-[3rem] font-[200] leading-[1] text-[#1A1A1A] uppercase">
-                      Gemini<br /><span className="font-[700] italic">Beauty Portrait</span>
-                    </h3>
-                  </div>
-                  {geminiError && <p className="text-xs text-[#D23669] mb-4">{geminiError}</p>}
-
-                  {/* 2-col balanced: Before/After  |  Product picks */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-[#E8E0DC]">
-
-                    {/* Left: portrait panel — always same height as right */}
-                    <div className="bg-white flex flex-col">
-                      {geminiStatus === "done" && geminiImage ? (
-                        <>
-                          <div className="grid grid-cols-2 gap-px bg-[#E8E0DC] flex-1">
-                            <div className="bg-white flex flex-col">
-                              <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] p-3 pb-2">Before</p>
-                              <img src={preview} alt="Original" className="w-full flex-1 object-cover object-top" />
-                            </div>
-                            <div className="bg-white flex flex-col">
-                              <p className="text-[9px] tracking-[0.3em] uppercase text-[#D23669] font-[300] p-3 pb-2">After</p>
-                              <img src={geminiImage} alt="AI Makeover" className="w-full flex-1 object-cover object-top" />
-                            </div>
-                          </div>
-                          <div className="border-t border-[#E8E0DC] p-4 flex items-center justify-between">
-                            <a href={geminiImage} download="ai-makeover.png"
-                              className="text-[10px] font-[500] uppercase tracking-[0.2em] text-[#1A1A1A] hover:text-[#D23669] transition-colors">
-                              Download →
-                            </a>
-                            <button onClick={runGeminiGeneration}
-                              className="text-[9px] font-[500] uppercase tracking-[0.2em] text-[#888] hover:text-[#1A1A1A] transition-colors">
-                              Regenerate
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-10 min-h-[280px]">
-                          {geminiStatus === "loading" ? (
-                            <>
-                              <div className="w-5 h-5 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
-                              <p className="text-xs font-[300] text-[#888]">Creating your look...</p>
-                            </>
-                          ) : (
-                            <>
-                              <div className="w-16 h-16 border border-[#E8E0DC] flex items-center justify-center text-[#C0B8B4]">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-xs font-[300] text-[#888] mb-4">Generate an AI beauty portrait<br />from your uploaded photo</p>
-                                <button onClick={runGeminiGeneration}
-                                  className="bg-[#1A1A1A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.3em] hover:bg-[#D23669] transition-all duration-300">
-                                  Generate
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right: Season product picks */}
-                    <div className="bg-white p-6 flex flex-col">
-                      <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-1">{result.season} Picks</p>
-                      <h4 className="text-lg font-[200] text-[#1A1A1A] uppercase tracking-[0.03em] mb-1">
-                        Cosmetics for<br /><span className="font-[600] italic">Your Aura</span>
-                      </h4>
-                      <div className="w-8 h-px bg-[#D23669] mb-5 mt-2" />
-                      <div className="flex-1 divide-y divide-[#E8E0DC]">
-                        {(PRODUCTS[result.season] || []).map((p, idx) => (
-                          <div key={idx} className="flex items-center gap-4 py-4 group">
-                            <div className="w-14 h-14 overflow-hidden bg-[#F7F4F2] shrink-0">
-                              <img src={p.img} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-300" onError={(e) => { e.target.src = assetPath("assets/home2.webp"); }} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-[500] uppercase tracking-[0.15em] text-[#1A1A1A] truncate">{p.name}</p>
-                              <p className="text-xs font-[300] text-[#888] mt-0.5">฿{p.price}</p>
-                            </div>
-                            <a href={p.shopUrl} target="_blank" rel="noreferrer"
-                              className="text-[9px] font-[600] uppercase tracking-[0.2em] text-[#D23669] hover:text-[#1A1A1A] transition-colors shrink-0">
-                              Shop →
-                            </a>
-                          </div>
-                        ))}
+                {/* ── Skin Undertone (AI) + สินค้าบลัชออนจริงจาก DB — พอร์ตจาก
+                    detection_skin_for_cream(2).ipynb (classical CV: YCrCb skin-mask +
+                    Lab/ITA undertone, ไม่ใช่ ML model) ตัวคำแนะนำสินค้าดึงจากฐานข้อมูล
+                    products จริงตาม undertone ที่ตรวจได้ ไม่มีค่าตายตัว (hardcode) ── */}
+                {result.blushProducts?.length > 0 && (
+                  <div className="mt-10" data-aos="fade-up">
+                    <div className="flex items-end justify-between mb-8 border-t border-[#F5E3E8] pt-10">
+                      <div>
+                        <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-2">AI วิเคราะห์สีผิว</p>
+                        <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                          บลัชออน<br /><span className="font-[700] italic">ที่เหมาะกับผิวคุณ</span>
+                        </h3>
                       </div>
-                      <button onClick={() => navigate("/cosmetics")}
-                        className="mt-4 w-full border border-[#1A1A1A] text-[#1A1A1A] py-2.5 text-[9px] font-[600] uppercase tracking-[0.3em] hover:bg-[#1A1A1A] hover:text-white transition-all duration-300">
-                        Browse All Products
-                      </button>
+                      <div className="text-right hidden md:block">
+                        <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300]">Undertone ที่ตรวจพบ</p>
+                        <p className="text-lg font-[600] text-[#D23669] uppercase">
+                          {{ cool: "โทนเย็น", warm: "โทนอุ่น", neutral: "โทนกลาง", unknown: "ไม่ระบุ" }[result.skinUndertone] || result.skinUndertone}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+                      {result.blushProducts.map((p) => (
+                        <a
+                          key={p.product_id}
+                          href={p.shop_url || undefined}
+                          target={p.shop_url ? "_blank" : undefined}
+                          rel={p.shop_url ? "noreferrer" : undefined}
+                          className={`group bg-white block ${p.shop_url ? "" : "pointer-events-none"}`}
+                        >
+                          <div className="relative aspect-square overflow-hidden bg-[#F7F4F2]">
+                            <img
+                              src={imgUrl(p.image_url)}
+                              alt={p.name}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                              onError={(e) => { e.target.src = assetPath("assets/home2.webp"); }}
+                            />
+                            <div className="absolute top-2 left-2 bg-[#D23669] text-white text-[7px] font-[600] px-1.5 py-0.5 uppercase tracking-[0.1em]">
+                              {p.suitable_for_color || result.skinUndertone}
+                            </div>
+                          </div>
+                          <div className="p-2.5 border-t border-[#F5E3E8]">
+                            <h3 className="text-[10px] font-[500] text-[#1A1A1A] leading-snug mb-1.5 line-clamp-1 uppercase tracking-[0.03em]">{p.name}</h3>
+                            {p.shades && (
+                              <p className="text-[9px] text-[#888] font-[300] mb-1.5 line-clamp-1">{p.shades}</p>
+                            )}
+                            <span className="text-xs font-[600] text-[#1A1A1A]">฿{p.price != null ? p.price.toLocaleString() : "—"}</span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                    <p className="mt-4 text-[10px] text-[#aaa] font-[300] tracking-[0.05em]">
+                      คำนวณ undertone จากค่าความสว่างผิว (L* = {result.skinUndertoneLstar?.toFixed?.(1) ?? "—"}) และมุม ITA ({result.skinUndertoneIta?.toFixed?.(1) ?? "—"}°) ของบริเวณผิวในรูปภาพ แล้วดึงสินค้าที่ตรงกันจากคลังสินค้าจริง
+                    </p>
+                  </div>
+                )}
+
+                {/* AI Makeover — Gemini Beauty Portrait hidden (committee feedback:
+                    output doesn't look natural yet). Product picks stay visible. */}
+                {SHOW_GEMINI_MAKEOVER && (
+                  <div className="border-t border-[#F5E3E8] pt-6 mt-6" data-aos="fade-up">
+                    <div className="mb-6">
+                      <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">AI Makeover</p>
+                      <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                        Gemini<br /><span className="font-[700] italic">Beauty Portrait</span>
+                      </h3>
+                    </div>
+                    {geminiError && <p className="text-xs text-[#D23669] mb-4">{geminiError}</p>}
+
+                    {/* 2-col balanced: Before/After  |  Product picks */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.12)]">
+
+                      {/* Left: portrait panel — always same height as right */}
+                      <div className="bg-white flex flex-col">
+                        {geminiStatus === "done" && geminiImage ? (
+                          <>
+                            <div className="grid grid-cols-2 gap-px bg-[#F5E3E8] flex-1">
+                              <div className="bg-white flex flex-col">
+                                <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] p-3 pb-2">Before</p>
+                                <img src={preview} alt="Original" className="w-full flex-1 object-cover object-top" />
+                              </div>
+                              <div className="bg-white flex flex-col">
+                                <p className="text-[9px] tracking-[0.3em] uppercase text-[#D23669] font-[300] p-3 pb-2">After</p>
+                                <img src={geminiImage} alt="AI Makeover" className="w-full flex-1 object-cover object-top" />
+                              </div>
+                            </div>
+                            <div className="border-t border-[#F5E3E8] p-4 flex items-center justify-between">
+                              <a href={geminiImage} download="ai-makeover.png"
+                                className="text-[10px] font-[500] uppercase tracking-[0.2em] text-[#1A1A1A] hover:text-[#D23669] transition-colors">
+                                Download →
+                              </a>
+                              <button onClick={runGeminiGeneration}
+                                className="text-[9px] font-[500] uppercase tracking-[0.2em] text-[#888] hover:text-[#1A1A1A] transition-colors">
+                                Regenerate
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex-1 flex flex-col items-center justify-center gap-5 p-10 min-h-[280px]">
+                            {geminiStatus === "loading" ? (
+                              <>
+                                <div className="w-5 h-5 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
+                                <p className="text-xs font-[300] text-[#888]">Creating your look...</p>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-16 h-16 border border-[#F5E3E8] flex items-center justify-center text-[#C0B8B4]">
+                                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs font-[300] text-[#888] mb-4">Generate an AI beauty portrait<br />from your uploaded photo</p>
+                                  <button onClick={runGeminiGeneration}
+                                    className="rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-300">
+                                    Generate
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Season product picks */}
+                      <div className="bg-white p-6 flex flex-col">
+                        <ProductPicksPanel />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-
+                {/* Cosmetics for Your Aura — standalone, full-width, when Gemini portrait is hidden */}
+                {!SHOW_GEMINI_MAKEOVER && (
+                  <div className="border-t border-[#F5E3E8] pt-6 mt-6" data-aos="fade-up">
+                    <div className="bg-white p-6">
+                      <ProductPicksPanel />
+                    </div>
+                  </div>
+                )}
 
                 {/* Makeover Studio */}
-                <div className="border-t border-[#E8E0DC] pt-10 mt-10" data-aos="fade-up">
+                <div className="border-t border-[#F5E3E8] pt-6 mt-6" data-aos="fade-up">
                   <div className="mb-6">
-                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">Virtual Try-On</p>
-                    <h3 className="text-[2rem] md:text-[2.8rem] font-[200] leading-[1] text-[#1A1A1A] uppercase">
-                      Makeover<br /><span className="font-[700] italic">Studio</span>
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">ลองแต่งหน้าเสมือนจริง</p>
+                    <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                      สตูดิโอ<br /><span className="font-[700] italic">แต่งหน้า</span>
                     </h3>
                   </div>
 
                   {/* Studio + product panel */}
-                  <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-px bg-[#E8E0DC]">
+                  <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.12)]">
                     <div className="bg-white p-2">
                       <MakeoverStudio
                         base={preview || assetPath("assets/analysis.JPG")}
-                        onProductSelect={(p) => setSelectedStudioProduct(p || null)}
+                        onProductSelect={(products) => setSelectedStudioProducts(Array.isArray(products) ? products : (products ? [products] : []))}
+                        personalColor={result?.season}
+                        faceShape={result?.faceShape}
                       />
                     </div>
                     <div className="bg-white p-5 flex flex-col">
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-4">Selected Product</p>
-                      {selectedStudioProduct ? (
-                        <SelectedProductCard product={selectedStudioProduct} season={result?.season} />
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-4">
+                        {selectedStudioProducts.length > 1 ? `เครื่องสำอาง ${selectedStudioProducts.length} รายการสำหรับลุคนี้` : "สินค้าที่เลือก"}
+                      </p>
+                      {selectedStudioProducts.length === 1 ? (
+                        <SelectedProductCard product={selectedStudioProducts[0]} season={result?.season} />
+                      ) : selectedStudioProducts.length > 1 ? (
+                        <div className="flex flex-col gap-2">
+                          {selectedStudioProducts.map((p, i) => (
+                            <a
+                              key={i}
+                              href={p.shopUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-3 border border-[#F5E3E8] p-2 hover:border-[#1A1A1A] transition-colors"
+                            >
+                              <div className="w-12 h-12 overflow-hidden bg-[#F7F4F2] shrink-0">
+                                <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-[500] text-[#1A1A1A] truncate uppercase tracking-[0.02em]">{p.name}</p>
+                                <p className="text-[10px] text-[#888] mt-0.5">฿{p.price}</p>
+                              </div>
+                            </a>
+                          ))}
+                          <p className="text-[9px] text-[#aaa] font-[300] mt-1">เหมาะสำหรับ {SEASON_LABELS_TH[result?.season] || result?.season}</p>
+                        </div>
                       ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-10">
-                          <div className="w-10 h-10 border border-[#E8E0DC] flex items-center justify-center text-[#C0B8B4]">
+                          <div className="w-10 h-10 border border-[#F5E3E8] flex items-center justify-center text-[#C0B8B4]">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h4"/></svg>
                           </div>
-                          <p className="text-[11px] font-[300] text-[#888] leading-relaxed">
-                            Tap a swatch in the studio<br />to see the product here
+                          <p className="text-xs font-[300] text-[#888] leading-relaxed">
+                            แตะเฉดสีในสตูดิโอ<br />เพื่อดูสินค้าตรงนี้
                           </p>
                         </div>
                       )}
@@ -1565,12 +1800,119 @@ export default function Analysis() {
                   </div>
                 </div>
 
+                {/* ── YOUR SELECTED PRODUCTS — everything picked across Looks/
+                    Foundation/Lips/Eyes/Blush/Contour in the studio above,
+                    gathered into one basket for this Look. ── */}
+                <div className="border-t border-[#F5E3E8] pt-6 mt-6" data-aos="fade-up">
+                  <div className="mb-6">
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">ลุคการแต่งหน้าของคุณ</p>
+                    <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                      เครื่องสำอาง<br /><span className="font-[700] italic">ที่คุณเลือก</span>
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-6">
+                    {/* Left: product cards */}
+                    <div className="rounded-3xl border border-[#F5E3E8] bg-white shadow-[0_10px_40px_-10px_rgba(210,54,105,0.1)] p-5 md:p-6">
+                      {cartItems.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center text-center gap-3 py-16">
+                          <div className="w-12 h-12 rounded-full border border-[#F5E3E8] flex items-center justify-center text-[#D8A9B8]">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                          </div>
+                          <p className="text-sm font-[500] text-[#1A1A1A]">ยังไม่มีเครื่องสำอางที่เลือก</p>
+                          <p className="text-xs font-[300] text-[#888]">เลือกผลิตภัณฑ์เพื่อสร้างลุคของคุณ</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {cartItems.map((item) => (
+                            <div key={item.key} className="rounded-2xl border border-[#F5E3E8] bg-white overflow-hidden flex flex-col">
+                              <div className="relative aspect-square bg-[#F7F4F2]">
+                                {item.isShapeOnly ? (
+                                  <div className="w-full h-full flex items-center justify-center bg-[#FFF7F9]">
+                                    <svg width="40" height="20" viewBox="0 0 64 24" fill="none"><path d="M6,17 Q24,9 32,10 Q44,11 58,16" stroke="#D23669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={item.img}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.src = assetPath("assets/home2.webp"); }}
+                                  />
+                                )}
+                                <span className="absolute top-2 left-2 bg-white/90 text-[7px] font-[600] uppercase tracking-[0.15em] text-[#D23669] px-1.5 py-0.5 rounded-full">
+                                  {CATEGORY_LABELS_TH[item.category] || item.category}
+                                </span>
+                                <button
+                                  onClick={() => removeFromCart(item.key)}
+                                  aria-label={`ลบ ${item.name}`}
+                                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/90 flex items-center justify-center text-[#888] hover:bg-[#D23669] hover:text-white transition-colors"
+                                >
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
+                              </div>
+                              <div className="p-3 flex flex-col gap-1.5 flex-1">
+                                <p className="text-[10px] font-[500] text-[#1A1A1A] leading-snug line-clamp-2 uppercase tracking-[0.02em]">{item.name}</p>
+                                {item.shadeColor && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-3 h-3 rounded-full border border-[#F0DEE3] shrink-0" style={{ background: item.shadeColor }} />
+                                    <span className="text-[9px] text-[#888] font-[300] truncate">{item.shadeName}</span>
+                                  </div>
+                                )}
+                                {item.isShapeOnly ? (
+                                  <p className="text-[9px] uppercase tracking-[0.15em] text-[#B08B95] font-[600] mt-auto">ทรงที่เลือก</p>
+                                ) : (
+                                  <>
+                                    <p className="text-xs font-[600] text-[#1A1A1A] mt-auto">฿{parseFloat(item.price || 0).toLocaleString()}</p>
+                                    <div className="flex items-center rounded-full border border-[#F0DEE3] w-fit mt-1.5">
+                                      <button onClick={() => changeCartQty(item.key, -1)} className="w-6 h-6 flex items-center justify-center text-[#888] hover:text-[#D23669] transition-colors">−</button>
+                                      <span className="w-5 text-center text-[10px] font-[600] text-[#1A1A1A]">{item.qty}</span>
+                                      <button onClick={() => changeCartQty(item.key, 1)} className="w-6 h-6 flex items-center justify-center text-[#888] hover:text-[#D23669] transition-colors">+</button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: order summary */}
+                    <div className="rounded-3xl border border-[#F5E3E8] bg-[#FFFAFB] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.1)] p-5 md:p-6 flex flex-col">
+                      <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-4">สรุปรายการ</p>
+                      <div className="flex items-center justify-between text-xs text-[#555] font-[300] mb-2">
+                        <span>จำนวนสินค้า</span>
+                        <span>{cartCount} ชิ้น</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-[#555] font-[300] mb-4 pb-4 border-b border-[#F5E3E8]">
+                        <span>ยอดรวมสินค้า</span>
+                        <span>฿{cartTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between mb-6">
+                        <span className="text-[10px] tracking-[0.2em] uppercase text-[#1A1A1A] font-[600]">ยอดรวม</span>
+                        <span className="text-xl font-[600] text-[#D23669]">฿{cartTotal.toLocaleString()}</span>
+                      </div>
+                      <button
+                        onClick={buyAllInCart}
+                        disabled={cartItems.length === 0}
+                        className="w-full rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                      >
+                        ซื้อทั้งหมด
+                      </button>
+                      <p className="text-[9px] text-[#aaa] font-[300] mt-3 text-center leading-relaxed">
+                        ระบบจะเปิดลิงก์ร้านค้าของสินค้าแต่ละชิ้น เพื่อชำระเงินที่หน้าร้านค้าปลายทาง
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Hairstyles */}
-                <div className="border-t border-[#E8E0DC] pt-10 mt-10" data-aos="fade-up">
+                {SHOW_HAIRSTYLES && (
+                <div className="border-t border-[#F5E3E8] pt-6 mt-6" data-aos="fade-up">
                   <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
                     <div>
                       <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">Hair Recommendations</p>
-                      <h3 className="text-[2rem] md:text-[2.8rem] font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                      <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
                         Hairstyles for<br /><span className="font-[700] italic">{result.faceShape}</span>
                       </h3>
                     </div>
@@ -1593,7 +1935,7 @@ export default function Analysis() {
                             </span>
                           </div>
                         </div>
-                        <div className="p-4 border-t border-[#E8E0DC]">
+                        <div className="p-4 border-t border-[#F5E3E8]">
                           <p className="text-xs font-[500] uppercase tracking-[0.2em] text-[#1A1A1A]">{s.name}</p>
                         </div>
                       </div>
@@ -1605,9 +1947,9 @@ export default function Analysis() {
                           <div>
                             <div className="flex items-center gap-3 mb-4">
                               <p className="text-[9px] tracking-[0.4em] uppercase text-[#1A1A1A] font-[500]">Short &amp; Medium</p>
-                              <div className="flex-1 h-px bg-[#E8E0DC]" />
+                              <div className="flex-1 h-px bg-[#F5E3E8]" />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#E8E0DC]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
                               {shortMed.map((s) => <HairCard key={s.key} s={s} />)}
                             </div>
                           </div>
@@ -1616,9 +1958,9 @@ export default function Analysis() {
                           <div>
                             <div className="flex items-center gap-3 mb-4">
                               <p className="text-[9px] tracking-[0.4em] uppercase text-[#1A1A1A] font-[500]">Long</p>
-                              <div className="flex-1 h-px bg-[#E8E0DC]" />
+                              <div className="flex-1 h-px bg-[#F5E3E8]" />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#E8E0DC]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
                               {longStyles.map((s) => <HairCard key={s.key} s={s} />)}
                             </div>
                           </div>
@@ -1627,16 +1969,17 @@ export default function Analysis() {
                     );
                   })()}
                 </div>
+                )}
 
                 {/* YouTube Tutorials */}
-                <div className="border-t border-[#E8E0DC] pt-10 mt-10">
+                <div className="border-t border-[#F5E3E8] pt-6 mt-6">
                   <YouTubeReels result={result} />
                 </div>
 
                 {/* Saving indicator */}
                 {saving && (
-                  <div className="border-t border-[#E8E0DC] pt-6 mt-6">
-                    <span className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300]">Saving...</span>
+                  <div className="border-t border-[#F5E3E8] pt-6 mt-6">
+                    <span className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300]">กำลังบันทึก...</span>
                   </div>
                 )}
               </div>
@@ -1647,22 +1990,22 @@ export default function Analysis() {
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 border border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
                       <span className="text-xs font-[300] text-[#555] tracking-wide">
-                        {status === "uploading" ? "Uploading image..." : "AI is analyzing face structure and personal color..."}
+                        {status === "uploading" ? "กำลังอัปโหลดรูปภาพ..." : "AI กำลังวิเคราะห์โครงหน้าและสีประจำตัว..."}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#E8E0DC]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
                       {[1, 2].map((i) => (
                         <div key={i} className="bg-white p-8 space-y-4">
-                          <div className="h-2.5 w-20 animate-pulse bg-[#E8E0DC] rounded" />
-                          <div className="h-12 w-36 animate-pulse bg-[#E8E0DC] rounded" />
-                          <div className="h-2.5 w-40 animate-pulse bg-[#E8E0DC] rounded" />
-                          <div className="flex gap-2">{[1,2,3,4].map((j) => <div key={j} className="w-8 h-8 animate-pulse bg-[#E8E0DC]" />)}</div>
+                          <div className="h-2.5 w-20 animate-pulse bg-[#F5E3E8] rounded" />
+                          <div className="h-12 w-36 animate-pulse bg-[#F5E3E8] rounded" />
+                          <div className="h-2.5 w-40 animate-pulse bg-[#F5E3E8] rounded" />
+                          <div className="flex gap-2">{[1,2,3,4].map((j) => <div key={j} className="w-8 h-8 animate-pulse bg-[#F5E3E8]" />)}</div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm font-[300] text-[#888]">Upload your photo in Step 1 and the results will appear here automatically.</p>
+                  <p className="text-sm font-[300] text-[#888]">อัปโหลดรูปภาพในขั้นตอนที่ 1 แล้วผลลัพธ์จะแสดงที่นี่โดยอัตโนมัติ</p>
                 )}
               </div>
             )}
@@ -1670,42 +2013,42 @@ export default function Analysis() {
         )}
 
         {/* ── PREV / NEXT ── */}
-        <div className="mt-16 flex items-center justify-between border-t border-[#E8E0DC] pt-6">
+        <div className="mt-16 flex items-center justify-between border-t border-[#F5E3E8] pt-6">
           <button
             onClick={prevStep}
             disabled={currentStep === 1}
-            className="border border-[#E8E0DC] text-[#888] px-6 py-2.5 text-[10px] font-[500] uppercase tracking-[0.2em] disabled:opacity-30 hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all"
+            className="rounded-xl border border-[#F0DEE3] text-[#8A7A80] px-6 py-2.5 text-[10px] font-[500] uppercase tracking-[0.2em] disabled:opacity-30 hover:border-[#D23669] hover:text-[#D23669] transition-all"
           >
-            Back
+            ย้อนกลับ
           </button>
           <button
             onClick={nextStep}
             disabled={!canGoNext || currentStep === 2}
-            className="bg-[#1A1A1A] text-white px-8 py-2.5 text-[10px] font-[600] uppercase tracking-[0.25em] disabled:opacity-30 hover:bg-[#D23669] transition-all"
+            className="rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white px-8 py-2.5 text-[10px] font-[600] uppercase tracking-[0.25em] disabled:opacity-30 shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all"
           >
-            Next
+            ถัดไป
           </button>
         </div>
 
         <p className="mt-8 text-center text-[9px] tracking-[0.2em] text-[#aaa] font-[300]">
-          *These recommendations are for general beauty guidance only and are not a medical diagnosis.
+          *คำแนะนำนี้เป็นเพียงแนวทางด้านความงามทั่วไป ไม่ใช่การวินิจฉัยทางการแพทย์
         </p>
       </main>
 
       {/* Sticky bar (mobile) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E8E0DC] bg-white/95 p-3 backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#F5E3E8] bg-white/95 p-3 backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-1">
           <button
             onClick={() => inputRef.current?.click()}
-            className="flex-1 bg-[#1A1A1A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#D23669] transition-all"
+            className="flex-1 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all"
           >
-            Upload Photo
+            อัปโหลดรูปภาพ
           </button>
           <button
             onClick={analyzeImage}
-            className="flex-1 border border-[#E8E0DC] text-[#1A1A1A] py-3 text-[10px] font-[600] uppercase tracking-[0.2em] hover:border-[#1A1A1A] transition-all"
+            className="flex-1 rounded-xl border border-[#F0DEE3] text-[#1A1A1A] py-3 text-[10px] font-[600] uppercase tracking-[0.2em] hover:border-[#D23669] hover:text-[#D23669] transition-all"
           >
-            Analyze
+            วิเคราะห์
           </button>
         </div>
       </div>

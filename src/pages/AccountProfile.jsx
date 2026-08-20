@@ -12,12 +12,14 @@ import apiClient from "../api/client";
 import { imgUrl } from "../utils/imgUrl";
 
 const FEATURE_MAP = {
-  brows: { softArch: "Soft Arch", straight: "Straight", arched: "High Arch" },
-  eyes: { natural: "Natural Gradient", cat: "Cat-Eye Lift", dolly: "Dolly Eye" },
-  nose: { softContour: "Soft Contour", definedContour: "Defined Contour", natural: "Natural" },
-  lips: { gradient: "Gradient Lip", full: "Full Bold", soft: "Soft Blur" },
+  brows: { softArch: "คิ้วโค้งอ่อน", straight: "คิ้วตรง", arched: "คิ้วโก่งสูง" },
+  eyes: { natural: "อายไล่สีธรรมชาติ", cat: "อายไลเนอร์ยกหางตา", dolly: "ตาโตกลมหวาน" },
+  nose: { softContour: "คอนทัวร์นุ่มนวล", definedContour: "คอนทัวร์คมชัด", natural: "ธรรมชาติ" },
+  lips: { gradient: "ลิปไล่สี", full: "ลิปเต็มปากสีเข้ม", soft: "ลิปเบลอนุ่มนวล" },
 };
 const pretty = (val, group) => (FEATURE_MAP[group] || {})[val] || val || "—";
+const SEASON_LABELS_TH = { Spring: "ฤดูใบไม้ผลิ", Summer: "ฤดูร้อน", Autumn: "ฤดูใบไม้ร่วง", Winter: "ฤดูหนาว" };
+const FACE_TYPE_LABELS_TH = { Oval: "รูปไข่", Round: "กลม", Square: "เหลี่ยม", Heart: "หัวใจ", Diamond: "เพชร", Rectangle: "ยาว" };
 
 const SEASON_ACCENT = {
   Spring:  { border: "#FF85A2", bg: "#FFF5F8", text: "#D23669", gradient: "from-[#FFE4EE] to-[#FFF5F8]" },
@@ -129,10 +131,10 @@ export default function AccountProfile() {
 
             {/* Name + season */}
             <div className="flex-1 text-center sm:text-left">
-              <p className="text-[9px] tracking-[0.5em] uppercase text-[#888] font-[300] mb-2">Aura Member</p>
+              <p className="text-[9px] tracking-[0.5em] uppercase text-[#888] font-[300] mb-2">สมาชิก Aura</p>
               <h1 className="text-4xl md:text-6xl font-[200] text-[#1A1A1A] leading-none mb-3">
                 {(() => {
-                  const parts = (me?.name || "Guest").split(" ");
+                  const parts = (me?.name || "ผู้เยี่ยมชม").split(" ");
                   if (parts.length === 1) return <span className="font-[700] italic">{parts[0]}</span>;
                   return <>{parts.slice(0, -1).join(" ")} <span className="font-[700] italic">{parts[parts.length - 1]}</span></>;
                 })()}
@@ -143,7 +145,7 @@ export default function AccountProfile() {
               {last?.season && (
                 <div className="inline-flex items-center gap-2" style={{ color: seasonAccent?.text || "#888" }}>
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: seasonAccent?.border || "#E8E0DC" }} />
-                  <span className="text-[10px] tracking-[0.4em] uppercase font-[500]">{last.season} Type</span>
+                  <span className="text-[10px] tracking-[0.4em] uppercase font-[500]">โทน{SEASON_LABELS_TH[last.season] || last.season}</span>
                 </div>
               )}
             </div>
@@ -152,11 +154,11 @@ export default function AccountProfile() {
             <div className="flex flex-col gap-2 shrink-0">
               <button onClick={() => setOpenEdit(true)}
                 className="flex items-center justify-center gap-2 border border-[#E8E0DC] text-[#1A1A1A] text-[10px] font-[500] uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[#D23669] hover:text-white hover:border-[#D23669] transition-all">
-                <Edit3 size={12} /> Edit Profile
+                <Edit3 size={12} /> แก้ไขโปรไฟล์
               </button>
               <Link to="/analysis"
                 className="flex items-center justify-center gap-2 bg-[#D23669] text-white text-[10px] font-[600] uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[#FF85A2] transition-all">
-                <Zap size={12} fill="currentColor" /> New Analysis
+                <Zap size={12} fill="currentColor" /> วิเคราะห์ใหม่
               </Link>
             </div>
           </div>
@@ -164,10 +166,10 @@ export default function AccountProfile() {
           {/* Stats bar */}
           <div className="border-t border-[#E8E0DC] pt-6 mt-8 grid grid-cols-4 gap-6">
             {[
-              { label: "Analyses", value: history.length },
-              { label: "Favorites", value: likedLooks.length + likedProducts.length + likedTrends.length },
-              { label: "Coupons", value: promos.length },
-              { label: "Last Scan", value: last ? new Date(last.analysis_date || last.created_at).toLocaleDateString("en-US", { day:"numeric", month:"short" }) : "—" },
+              { label: "ครั้งที่วิเคราะห์", value: history.length },
+              { label: "รายการโปรด", value: likedLooks.length + likedProducts.length + likedTrends.length },
+              { label: "คูปอง", value: promos.length },
+              { label: "วิเคราะห์ล่าสุด", value: last ? new Date(last.analysis_date || last.created_at).toLocaleDateString("th-TH", { day:"numeric", month:"short" }) : "—" },
             ].map((s) => (
               <div key={s.label}>
                 <p className="text-2xl md:text-3xl font-[200] text-[#1A1A1A] leading-none">{s.value}</p>
@@ -183,7 +185,7 @@ export default function AccountProfile() {
 
         {/* ── My Aura ── */}
         <section>
-          <SectionHeader label="personal color" title="My Aura Type" linkTo="/history" linkLabel="View History →" />
+          <SectionHeader label="สีประจำตัว" title="สีออร่าของฉัน" linkTo="/history" linkLabel="ดูประวัติ →" />
 
           {last?.season ? (
             <div className={`bg-gradient-to-br ${seasonAccent?.gradient || "from-[#F7F4F2] to-white"} border border-[#E8E0DC]`}>
@@ -191,8 +193,8 @@ export default function AccountProfile() {
                 <div className="flex flex-col md:flex-row md:items-center gap-8">
                   {/* Season name */}
                   <div className="flex-1">
-                    <p className="text-[9px] tracking-[0.45em] uppercase mb-2" style={{ color: seasonAccent?.text || "#888" }}>Your Season</p>
-                    <p className="text-6xl md:text-8xl font-[200] text-[#1A1A1A] leading-none italic">{last.season}</p>
+                    <p className="text-[9px] tracking-[0.45em] uppercase mb-2" style={{ color: seasonAccent?.text || "#888" }}>ฤดูของคุณ</p>
+                    <p className="text-6xl md:text-8xl font-[200] text-[#1A1A1A] leading-none italic">{SEASON_LABELS_TH[last.season] || last.season}</p>
                     {palette?.desc && (
                       <p className="text-[13px] text-[#555] leading-relaxed mt-4 max-w-xs font-[300]">{palette.desc}</p>
                     )}
@@ -200,7 +202,7 @@ export default function AccountProfile() {
 
                   {/* Palette swatches */}
                   <div className="flex flex-col gap-3">
-                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">Your Palette</p>
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300]">พาเลตสีของคุณ</p>
                     <div className="flex gap-2">
                       {(palette?.colors || []).map((c, i) => (
                         <div key={i} className="flex flex-col items-center gap-1.5">
@@ -211,8 +213,8 @@ export default function AccountProfile() {
                     </div>
                     {last.face_shape && (
                       <div className="mt-2 border-t border-[#E8E0DC] pt-3">
-                        <span className="text-[9px] tracking-[0.3em] uppercase text-[#888]">Face · </span>
-                        <span className="text-[9px] tracking-[0.3em] uppercase font-[600] text-[#1A1A1A]">{last.face_shape}</span>
+                        <span className="text-[9px] tracking-[0.3em] uppercase text-[#888]">รูปหน้า · </span>
+                        <span className="text-[9px] tracking-[0.3em] uppercase font-[600] text-[#1A1A1A]">{FACE_TYPE_LABELS_TH[last.face_shape] || last.face_shape}</span>
                       </div>
                     )}
                   </div>
@@ -220,34 +222,34 @@ export default function AccountProfile() {
               </div>
             </div>
           ) : (
-            <EmptyState icon={<Sparkles size={22}/>} msg="No analysis results yet">
-              <Link to="/analysis" className="mt-4 inline-block bg-[#D23669] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#FF85A2] transition-all">Start Analysis</Link>
+            <EmptyState icon={<Sparkles size={22}/>} msg="ยังไม่มีผลการวิเคราะห์">
+              <Link to="/analysis" className="mt-4 inline-block bg-[#D23669] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#FF85A2] transition-all">เริ่มวิเคราะห์</Link>
             </EmptyState>
           )}
         </section>
 
         {/* ── Beauty Profile ── */}
         <section>
-          <SectionHeader label="analysis results" title="Beauty Profile" />
+          <SectionHeader label="ผลการวิเคราะห์" title="โปรไฟล์ความงาม" />
 
           {last ? (
             <div className="border border-[#E8E0DC] bg-white">
               <div className="grid grid-cols-2 border-b border-[#E8E0DC]">
                 <div className="p-5 border-r border-[#E8E0DC]">
-                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#888] font-[300] mb-1.5">Face Shape</p>
-                  <p className="text-xl font-[600] text-[#1A1A1A] uppercase">{last.face_shape || "—"}</p>
+                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#888] font-[300] mb-1.5">ทรงหน้า</p>
+                  <p className="text-xl font-[600] text-[#1A1A1A] uppercase">{FACE_TYPE_LABELS_TH[last.face_shape] || last.face_shape || "—"}</p>
                 </div>
                 <div className="p-5">
-                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#888] font-[300] mb-1.5">Skin Tone</p>
+                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#888] font-[300] mb-1.5">โทนผิว</p>
                   <p className="text-xl font-[600] text-[#1A1A1A]">{last.skin_tone || "—"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4">
                 {[
-                  { key: "brows", label: "Eyebrows", val: last.eyebrows },
-                  { key: "eyes", label: "Eyes", val: last.eyes },
-                  { key: "nose", label: "Nose", val: last.nose },
-                  { key: "lips", label: "Lips", val: last.lips },
+                  { key: "brows", label: "คิ้ว", val: last.eyebrows },
+                  { key: "eyes", label: "ดวงตา", val: last.eyes },
+                  { key: "nose", label: "จมูก", val: last.nose },
+                  { key: "lips", label: "ริมฝีปาก", val: last.lips },
                 ].map((f, i) => (
                   <div key={f.key} className={`p-5 ${i < 3 ? "border-r border-[#E8E0DC]" : ""}`}>
                     <p className="text-[9px] tracking-[0.35em] uppercase text-[#888] font-[300] mb-1.5">{f.label}</p>
@@ -257,13 +259,13 @@ export default function AccountProfile() {
               </div>
             </div>
           ) : (
-            <EmptyState icon={<User size={22}/>} msg="No Beauty Profile data yet" />
+            <EmptyState icon={<User size={22}/>} msg="ยังไม่มีข้อมูลโปรไฟล์ความงาม" />
           )}
         </section>
 
         {/* ── Coupons ── */}
         <section>
-          <SectionHeader label="exclusive offers" title="My Coupons" linkTo="/coupons" linkLabel="View All →" />
+          <SectionHeader label="สิทธิพิเศษ" title="คูปองของฉัน" linkTo="/coupons" linkLabel="ดูทั้งหมด →" />
 
           {promos.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -298,7 +300,7 @@ export default function AccountProfile() {
 
                     {p.end_date && (
                       <p className="text-[9px] text-[#888] tracking-[0.2em] uppercase">
-                        Expires {new Date(p.end_date).toLocaleDateString("en-US", { day:"numeric", month:"short", year:"2-digit" })}
+                        หมดอายุ {new Date(p.end_date).toLocaleDateString("th-TH", { day:"numeric", month:"short", year:"2-digit" })}
                       </p>
                     )}
                   </div>
@@ -306,15 +308,15 @@ export default function AccountProfile() {
               })}
             </div>
           ) : (
-            <EmptyState icon={<Tag size={22}/>} msg="No available coupons yet">
-              <Link to="/coupons" className="mt-4 inline-block border border-[#D23669] text-[#D23669] px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] hover:text-white transition-all">All Coupons</Link>
+            <EmptyState icon={<Tag size={22}/>} msg="ยังไม่มีคูปองที่ใช้ได้">
+              <Link to="/coupons" className="mt-4 inline-block border border-[#D23669] text-[#D23669] px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] hover:text-white transition-all">คูปองทั้งหมด</Link>
             </EmptyState>
           )}
         </section>
 
         {/* ── Liked Looks ── */}
         <section>
-          <SectionHeader label="your saves" title="Liked Looks" linkTo="/looks" linkLabel="View All →" />
+          <SectionHeader label="รายการที่บันทึกไว้" title="ลุคที่ถูกใจ" linkTo="/looks" linkLabel="ดูทั้งหมด →" />
 
           {likedLooks.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -330,7 +332,7 @@ export default function AccountProfile() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     {f.season && (
                       <span className="absolute top-2.5 left-2.5 text-[8px] uppercase tracking-[0.2em] bg-[#1A1A1A]/80 backdrop-blur-sm text-white px-2 py-0.5">
-                        {f.season}
+                        {SEASON_LABELS_TH[f.season] || f.season}
                       </span>
                     )}
                   </div>
@@ -339,8 +341,8 @@ export default function AccountProfile() {
               ))}
             </div>
           ) : (
-            <EmptyState icon={<Heart size={22}/>} msg="No liked looks yet">
-              <Link to="/looks" className="mt-4 inline-block border border-[#D23669] text-[#D23669] px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] hover:text-white transition-all">View All Looks</Link>
+            <EmptyState icon={<Heart size={22}/>} msg="ยังไม่มีลุคที่ถูกใจ">
+              <Link to="/looks" className="mt-4 inline-block border border-[#D23669] text-[#D23669] px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] hover:text-white transition-all">ดูลุคทั้งหมด</Link>
             </EmptyState>
           )}
         </section>
@@ -348,7 +350,7 @@ export default function AccountProfile() {
         {/* ── Saved Trends ── */}
         {likedTrends.length > 0 && (
           <section>
-            <SectionHeader label="trending now" title="Saved Trends" linkTo="/looks" linkLabel="View All →" />
+            <SectionHeader label="กำลังฮิต" title="เทรนด์ที่บันทึกไว้" linkTo="/looks" linkLabel="ดูทั้งหมด →" />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {likedTrends.slice(0, 4).map((f) => (
                 <Link to="/looks" key={f.id} className="group cursor-pointer block">
@@ -360,7 +362,7 @@ export default function AccountProfile() {
                       onError={e => { e.target.src = "/assets/home2.webp"; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="absolute top-2.5 left-2.5 text-[8px] uppercase tracking-[0.2em] bg-[#D23669]/90 text-white px-2 py-0.5">Trend</span>
+                    <span className="absolute top-2.5 left-2.5 text-[8px] uppercase tracking-[0.2em] bg-[#D23669]/90 text-white px-2 py-0.5">เทรนด์</span>
                   </div>
                   <p className="text-[10px] uppercase tracking-[0.15em] text-[#555] font-[400] mt-2 truncate">{f.title}</p>
                 </Link>
@@ -371,7 +373,7 @@ export default function AccountProfile() {
 
         {/* ── Liked Products ── */}
         <section>
-          <SectionHeader label="your wishlist" title="Liked Products" linkTo="/cosmetics" linkLabel="View All →" />
+          <SectionHeader label="รายการที่อยากได้" title="สินค้าที่ถูกใจ" linkTo="/cosmetics" linkLabel="ดูทั้งหมด →" />
 
           {likedProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -397,20 +399,20 @@ export default function AccountProfile() {
               ))}
             </div>
           ) : (
-            <EmptyState icon={<Heart size={22}/>} msg="No liked products yet">
-              <Link to="/cosmetics" className="mt-4 inline-block border border-[#D23669] text-[#D23669] px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] hover:text-white transition-all">All Products</Link>
+            <EmptyState icon={<Heart size={22}/>} msg="ยังไม่มีสินค้าที่ถูกใจ">
+              <Link to="/cosmetics" className="mt-4 inline-block border border-[#D23669] text-[#D23669] px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D23669] hover:text-white transition-all">สินค้าทั้งหมด</Link>
             </EmptyState>
           )}
         </section>
 
         {/* ── Quick Links ── */}
         <section>
-          <SectionHeader label="navigate" title="Quick Links" />
+          <SectionHeader label="ไปยังหน้าอื่น" title="ลิงก์ด่วน" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#E8E0DC]">
             {[
-              { to: "/history", icon: <History size={20}/>, label: "Analysis History", sub: `${history.length} scans` },
-              { to: "/coupons", icon: <Tag size={20}/>, label: "All Coupons", sub: `${promos.length} available` },
-              { to: "/cosmetics", icon: <Sparkles size={20}/>, label: "All Products", sub: `${likedProducts.length} liked` },
+              { to: "/history", icon: <History size={20}/>, label: "ประวัติการวิเคราะห์", sub: `${history.length} ครั้ง` },
+              { to: "/coupons", icon: <Tag size={20}/>, label: "คูปองทั้งหมด", sub: `${promos.length} รายการ` },
+              { to: "/cosmetics", icon: <Sparkles size={20}/>, label: "สินค้าทั้งหมด", sub: `${likedProducts.length} รายการที่ถูกใจ` },
             ].map((item) => (
               <Link key={item.to} to={item.to}
                 className="bg-white p-7 hover:bg-[#FFF5F8] border-b-2 border-transparent hover:border-[#D23669] transition-all duration-300 group flex flex-col justify-between min-h-[140px]">
@@ -510,7 +512,7 @@ function EditModal({ open, onClose, me, onSaved }) {
       window.dispatchEvent(new Event("auth:changed"));
       onSaved?.(next);
       onClose();
-    } catch { setErr("Failed to save. Please try again."); }
+    } catch { setErr("บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); }
     finally { setSaving(false); }
   };
 
@@ -519,8 +521,8 @@ function EditModal({ open, onClose, me, onSaved }) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="bg-white border border-[#E8E0DC] max-w-sm w-full p-8 space-y-6 shadow-2xl">
         <div>
-          <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-1">Account</p>
-          <h3 className="text-2xl font-[200] text-[#1A1A1A]">Edit <span className="font-[700] italic">Profile</span></h3>
+          <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-1">บัญชีผู้ใช้</p>
+          <h3 className="text-2xl font-[200] text-[#1A1A1A]">แก้ไข <span className="font-[700] italic">โปรไฟล์</span></h3>
         </div>
 
         <div className="flex justify-center">
@@ -543,11 +545,11 @@ function EditModal({ open, onClose, me, onSaved }) {
         <input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={handleFile} />
 
         <div>
-          <label className="block text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-2">Display Name</label>
+          <label className="block text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-2">ชื่อที่แสดง</label>
           <input
             value={username}
             onChange={e => setUsername(e.target.value)}
-            placeholder="Display Name"
+            placeholder="ชื่อที่แสดง"
             className="border border-[#E8E0DC] px-4 py-3 text-sm w-full focus:outline-none focus:border-[#1A1A1A] transition-all"
           />
         </div>
@@ -557,11 +559,11 @@ function EditModal({ open, onClose, me, onSaved }) {
         <div className="flex gap-3">
           <button onClick={onClose} disabled={saving}
             className="flex-1 border border-[#E8E0DC] text-[#888] py-3 text-[10px] font-[500] uppercase tracking-[0.2em] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all">
-            Cancel
+            ยกเลิก
           </button>
           <button onClick={onSave} disabled={saving}
             className="flex-1 bg-[#D23669] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#FF85A2] transition-all disabled:opacity-50">
-            {saving ? "Saving..." : "Save"}
+            {saving ? "กำลังบันทึก..." : "บันทึก"}
           </button>
         </div>
       </div>

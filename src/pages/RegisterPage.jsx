@@ -118,11 +118,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] font-light flex items-center justify-center px-6 pt-[60px] lg:pt-[180px] pb-12 selection:bg-[#C5A358]/20">
-      
+    <div className="relative min-h-screen bg-gradient-to-br from-[#FFF7F9] via-white to-[#FDEEF2] text-[#2B2226] font-light flex items-center justify-center px-6 pt-[60px] lg:pt-[180px] pb-12 selection:bg-[#D23669]/15 overflow-hidden">
+
       {/* Background Decor */}
+      <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#FBD4DE]/40 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-[#F9E3E9]/50 blur-3xl pointer-events-none" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
-        <span className="text-[18vw] font-serif italic text-gray-100 select-none uppercase leading-none opacity-40">
+        <span className="text-[18vw] font-serif italic text-[#FBE1E7] select-none uppercase leading-none opacity-60">
           Studio
         </span>
       </div>
@@ -130,86 +132,86 @@ export default function RegisterPage() {
       <div className="relative z-10 w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-10 space-y-4">
-          <span className="text-[10px] tracking-[0.6em] font-bold uppercase text-[#C5A358]">AuraMatch Atelier</span>
-          <h1 className="text-4xl md:text-5xl font-serif italic leading-none">Create Account.</h1>
-          <p className="text-xs text-gray-400 tracking-widest uppercase">Join our curated beauty community</p>
+          <span className="text-[10px] tracking-[0.6em] font-bold uppercase text-[#D23669]">AuraMatch Atelier</span>
+          <h1 className="font-['Cormorant_Garamond',serif] text-4xl md:text-5xl italic leading-none text-[#2B2226]">Create Account.</h1>
+          <p className="text-xs text-[#A78E96] tracking-widest uppercase">Join our curated beauty community</p>
         </div>
 
         {/* Feedback Message */}
         {(err || info) && (
-          <div className={`mb-6 py-4 px-6 border-l-2 text-[11px] font-bold uppercase tracking-widest animate-fade-in ${
-            err ? "border-[#C5A358] bg-white text-red-500" : "border-green-500 bg-white text-green-600"
+          <div className={`mb-6 py-4 px-6 rounded-xl border text-[11px] font-bold uppercase tracking-widest animate-fade-in ${
+            err ? "border-[#D23669]/30 bg-[#FFF1F5] text-[#D23669]" : "border-green-300 bg-green-50 text-green-600"
           }`}>
             {err || info}
           </div>
         )}
 
         {/* Form Container */}
-        <div className="bg-white/40 backdrop-blur-md p-8 md:p-12 rounded-2xl border border-white/20 shadow-sm">
+        <div className="bg-white p-8 md:p-12 rounded-3xl border border-[#F7E4EA] shadow-[0_20px_60px_-15px_rgba(210,54,105,0.18)]">
           <form onSubmit={onSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold tracking-[0.2em] text-gray-400 uppercase">Full Name</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold tracking-[0.2em] text-[#8A7A80] uppercase">Full Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-transparent border-b border-gray-100 py-3 text-sm focus:outline-none focus:border-[#C5A358] transition-all"
-                  placeholder="EX. JANE DOE"
+                  className="w-full rounded-xl border border-[#F0DEE3] bg-[#FFFBFC] px-4 py-3 text-sm focus:outline-none focus:border-[#D23669] focus:ring-4 focus:ring-[#D23669]/10 transition-all"
+                  placeholder="Ex. Jane Doe"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold tracking-[0.2em] text-gray-400 uppercase">Email Address</label>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold tracking-[0.2em] text-[#8A7A80] uppercase">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent border-b border-gray-100 py-3 text-sm focus:outline-none focus:border-[#C5A358] transition-all"
-                  placeholder="EMAIL@EXAMPLE.COM"
+                  className="w-full rounded-xl border border-[#F0DEE3] bg-[#FFFBFC] px-4 py-3 text-sm focus:outline-none focus:border-[#D23669] focus:ring-4 focus:ring-[#D23669]/10 transition-all"
+                  placeholder="email@example.com"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold tracking-[0.2em] text-gray-400 uppercase">Password</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold tracking-[0.2em] text-[#8A7A80] uppercase">Password</label>
                 <input
                   type="password"
                   value={pw}
                   onChange={(e) => setPw(e.target.value)}
-                  className="w-full bg-transparent border-b border-gray-100 py-3 text-sm focus:outline-none focus:border-[#C5A358] transition-all"
+                  className="w-full rounded-xl border border-[#F0DEE3] bg-[#FFFBFC] px-4 py-3 text-sm focus:outline-none focus:border-[#D23669] focus:ring-4 focus:ring-[#D23669]/10 transition-all"
                   placeholder="••••••••"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold tracking-[0.2em] text-gray-400 uppercase">Confirm Password</label>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold tracking-[0.2em] text-[#8A7A80] uppercase">Confirm Password</label>
                 <input
                   type="password"
                   value={pw2}
                   onChange={(e) => setPw2(e.target.value)}
-                  className="w-full bg-transparent border-b border-gray-100 py-3 text-sm focus:outline-none focus:border-[#C5A358] transition-all"
+                  className="w-full rounded-xl border border-[#F0DEE3] bg-[#FFFBFC] px-4 py-3 text-sm focus:outline-none focus:border-[#D23669] focus:ring-4 focus:ring-[#D23669]/10 transition-all"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
-            <div className="pt-4 flex items-start gap-3">
+            <div className="pt-2 flex items-start gap-3">
               <input
                 type="checkbox"
                 id="agree"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                className="mt-1 accent-[#C5A358]"
+                className="mt-1 accent-[#D23669]"
               />
-              <label htmlFor="agree" className="text-[10px] text-gray-400 uppercase tracking-widest leading-relaxed">
-                I agree to the <Link to="/terms" className="text-[#C5A358] underline">Terms</Link> and <Link to="/privacy" className="text-[#C5A358] underline">Privacy Policy</Link>
+              <label htmlFor="agree" className="text-[10px] text-[#8A7A80] uppercase tracking-widest leading-relaxed">
+                I agree to the <Link to="/terms" className="text-[#D23669] underline">Terms</Link> and <Link to="/privacy" className="text-[#D23669] underline">Privacy Policy</Link>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full py-5 border border-[#1A1A1A] bg-[#1A1A1A] text-white transition-all hover:bg-transparent hover:text-[#1A1A1A] overflow-hidden rounded-sm"
+              className="group relative w-full py-4 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white transition-all duration-300 shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 overflow-hidden"
             >
               <span className="relative z-10 text-[10px] tracking-[0.4em] font-bold uppercase">
                 {loading ? "Creating..." : "Create Account"}
@@ -218,9 +220,9 @@ export default function RegisterPage() {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-[10px] tracking-widest text-gray-400 uppercase">
+            <p className="text-[10px] tracking-widest text-[#8A7A80] uppercase">
               Already a member?{" "}
-              <Link to="/login" className="text-[#C5A358] font-bold hover:border-b border-[#C5A358] pb-0.5 ml-1 transition-all">
+              <Link to="/login" className="text-[#D23669] font-bold hover:border-b border-[#D23669] pb-0.5 ml-1 transition-all">
                 Sign In
               </Link>
             </p>
@@ -229,7 +231,7 @@ export default function RegisterPage() {
       </div>
 
       <footer className="fixed bottom-10 w-full text-center hidden md:block">
-        <p className="text-[9px] tracking-[0.6em] font-bold uppercase text-gray-200 pointer-events-none">
+        <p className="text-[9px] tracking-[0.6em] font-bold uppercase text-[#E8C3CD] pointer-events-none">
           Paris — Bangkok — Tokyo
         </p>
       </footer>

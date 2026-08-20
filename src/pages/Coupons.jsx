@@ -109,7 +109,7 @@ const CouponPage = () => {
   };
 
   const daysLeft = (d) => d ? Math.ceil((new Date(d) - new Date()) / 86400000) : null;
-  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: '2-digit' });
+  const fmt = (d) => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] text-[#3A3437] font-sans antialiased overflow-x-hidden selection:bg-[#FFD1DC] selection:text-[#D23669] pt-[60px] lg:pt-[180px]">
@@ -192,10 +192,10 @@ const CouponPage = () => {
                 Exclusive Deals
               </div> */}
               <h2 className="text-4xl md:text-5xl font-[900] tracking-tighter uppercase text-[#3A3437] leading-none">
-                All Coupons
+                คูปองทั้งหมด
               </h2>
               <p className="text-sm text-gray-400 mt-2">
-                {loading ? '...' : `${filteredPromotions.length} offer${filteredPromotions.length !== 1 ? 's' : ''} available`}
+                {loading ? '...' : `มีโปรโมชั่น ${filteredPromotions.length} รายการ`}
               </p>
             </div>
 
@@ -207,7 +207,7 @@ const CouponPage = () => {
                   type="text"
                   value={searchQuery}
                   onChange={e => handleSetSearch(e.target.value)}
-                  placeholder="Search brand, name or code..."
+                  placeholder="ค้นหาแบรนด์ ชื่อ หรือรหัสคูปอง..."
                   className="w-full pl-10 pr-10 py-3 bg-white border border-[#EEDDE4] rounded-full text-sm text-[#3A3437] placeholder:text-gray-300 shadow-sm focus:outline-none focus:border-[#D23669] focus:ring-2 focus:ring-[#D23669]/10 transition-all"
                 />
                 {searchQuery && (
@@ -227,7 +227,7 @@ const CouponPage = () => {
                   ${selectedBrand === 'All'
                     ? 'bg-[#D23669] text-white border-[#D23669] shadow-md shadow-[#D23669]/20'
                     : 'bg-white text-gray-400 border-[#EEDDE4] hover:border-[#D23669] hover:text-[#D23669]'}`}>
-                <LayoutGrid size={10} /> All
+                <LayoutGrid size={10} /> ทั้งหมด
               </button>
               {allBrands.filter(b => b.logo_path).map(brand => {
                 const isActive = String(selectedBrand) === String(brand.brand_id);
@@ -249,7 +249,7 @@ const CouponPage = () => {
               })}
               {selectedBrand !== 'All' && (
                 <button onClick={() => handleSetBrand('All')} className="text-[9px] font-black uppercase tracking-widest text-gray-300 hover:text-[#D23669] transition-colors ml-1">
-                  Clear ×
+                  ล้างตัวกรอง ×
                 </button>
               )}
             </div>
@@ -265,12 +265,12 @@ const CouponPage = () => {
               <div className="w-14 h-14 bg-white border border-[#E0DAD5] flex items-center justify-center">
                 <Loader2 className="animate-spin text-[#221D1D]" size={22} />
               </div>
-              <p className="text-[9px] font-[700] uppercase tracking-[0.45em] text-[#958F8F]">Loading Offers</p>
+              <p className="text-[9px] font-[700] uppercase tracking-[0.45em] text-[#958F8F]">กำลังโหลดโปรโมชั่น</p>
             </div>
           ) : filteredPromotions.length === 0 ? (
             <div className="bg-white border border-[#E0DAD5] text-center py-28" data-aos="fade-up">
               <Gift size={22} className="mx-auto mb-4 text-[#C0C0C0]" />
-              <p className="text-[9px] font-[700] uppercase tracking-[0.45em] text-[#958F8F]">No coupons available yet.</p>
+              <p className="text-[9px] font-[700] uppercase tracking-[0.45em] text-[#958F8F]">ยังไม่มีคูปองในขณะนี้</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -293,7 +293,7 @@ const CouponPage = () => {
 
                       {isExpiringSoon && (
                         <span className="absolute top-3 right-0 text-[7px] font-[700] uppercase tracking-[0.3em] px-2 py-0.5 bg-[#221D1D] text-white z-10">
-                          {days}d left
+                          เหลือ {days} วัน
                         </span>
                       )}
 
@@ -311,10 +311,10 @@ const CouponPage = () => {
                             <p className="text-[2.8rem] font-[800] tracking-tighter text-[#221D1D] leading-none">
                               {p.discount_percent}<span className="text-base font-[400] text-[#221D1D]/50">%</span>
                             </p>
-                            <p className="text-[8px] font-[700] uppercase tracking-[0.45em] text-[#221D1D]/70">off</p>
+                            <p className="text-[8px] font-[700] uppercase tracking-[0.45em] text-[#221D1D]/70">ส่วนลด</p>
                           </>
                         ) : (
-                          <p className="text-sm font-[800] uppercase tracking-[0.1em] text-[#221D1D] text-center">Special<br/>Deal</p>
+                          <p className="text-sm font-[800] uppercase tracking-[0.1em] text-[#221D1D] text-center">ดีลพิเศษ<br/>สำหรับคุณ</p>
                         )}
                       </div>
 
@@ -346,7 +346,7 @@ const CouponPage = () => {
                             )}
                             {p.end_date && (
                               <span className="flex items-center gap-1 text-[8px] font-[700] text-[#958F8F] uppercase tracking-[0.3em]">
-                                <Clock size={8} /> Until {fmt(p.end_date)}
+                                <Clock size={8} /> ถึง {fmt(p.end_date)}
                               </span>
                             )}
                           </div>
@@ -359,7 +359,7 @@ const CouponPage = () => {
                           <>
                             <div className="border border-dashed border-[#E0DAD5] bg-[#F5F5F6] px-3 py-2.5 text-center">
                               <p className="text-[7px] font-[700] uppercase tracking-[0.45em] text-[#958F8F] mb-1 flex items-center justify-center gap-1">
-                                <Tag size={7} /> Code
+                                <Tag size={7} /> รหัสคูปอง
                               </p>
                               <p className="text-sm font-[800] tracking-[0.25em] font-mono text-[#221D1D]">{p.coupon_code}</p>
                             </div>
@@ -368,13 +368,13 @@ const CouponPage = () => {
                                 ${isCopied
                                   ? 'bg-[#EBC2C8] text-[#221D1D] border-[#EBC2C8]'
                                   : 'bg-white text-[#221D1D] border-[#221D1D] hover:bg-[#221D1D] hover:text-white'}`}>
-                              {isCopied ? <><Check size={10} /> Copied!</> : <><Copy size={10} /> Copy Code</>}
+                              {isCopied ? <><Check size={10} /> คัดลอกแล้ว!</> : <><Copy size={10} /> คัดลอกรหัส</>}
                             </button>
                           </>
                         ) : (
                           <div className="border border-dashed border-[#E0DAD5] px-3 py-3 text-center">
-                            <p className="text-[7px] font-[700] uppercase tracking-[0.4em] text-[#C0C0C0]">No code needed</p>
-                            <p className="text-[8px] font-[700] uppercase tracking-[0.3em] text-[#221D1D] mt-1">Auto applied</p>
+                            <p className="text-[7px] font-[700] uppercase tracking-[0.4em] text-[#C0C0C0]">ไม่ต้องใช้รหัส</p>
+                            <p className="text-[8px] font-[700] uppercase tracking-[0.3em] text-[#221D1D] mt-1">ใช้สิทธิ์อัตโนมัติ</p>
                           </div>
                         )}
                       </div>
@@ -409,7 +409,7 @@ const CouponPage = () => {
           )}
           {!loading && filteredPromotions.length > 0 && (
             <p className="text-center text-[8px] font-[700] tracking-[0.45em] uppercase text-[#C0C0C0] mt-4">
-              Page {currentPage} of {totalPages || 1}
+              หน้า {currentPage} จาก {totalPages || 1}
             </p>
           )}
         </div>

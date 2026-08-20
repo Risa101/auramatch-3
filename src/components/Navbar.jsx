@@ -55,12 +55,12 @@ export default function NavbarDailyDose() {
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const navItems = [
-    { label: t("nav.home") || "Home", to: "/" },
-    { label: t("nav.analysis") || "Analysis", to: "/analysis" },
-    { label: t("nav.advisor") || "Advisor", to: "/advisor" },
-    { label: t("nav.look") || "Looks", to: "/looks" },
-    { label: t("nav.cosmetics") || "Shop", to: "/cosmetics" },
-    { label: t("coupon") || "Coupons", to: "/coupons" },
+    { label: t("nav.home") || "หน้าหลัก", to: "/" },
+    { label: t("nav.analysis") || "วิเคราะห์", to: "/analysis" },
+    { label: t("nav.advisor") || "คำแนะนำ", to: "/advisor" },
+    { label: t("nav.look") || "ลุคของฉัน", to: "/looks" },
+    { label: t("nav.cosmetics") || "เครื่องสำอาง", to: "/cosmetics" },
+    { label: t("coupon") || "คูปอง", to: "/coupons" },
   ];
 
   return (
@@ -73,10 +73,10 @@ export default function NavbarDailyDose() {
         {/* Strip 1 — Announcement (dark, thin) */}
         <div className="bg-[#EBC2C8] text-center py-3">
           <p className="text-[9px] tracking-[0.5em] uppercase text-black/60 font-[400]">
-            Discover Your Personal Color &nbsp;·&nbsp;
+            ค้นหาสีประจำตัวของคุณ &nbsp;·&nbsp;
             <button onClick={() => navigate("/analysis")}
-              className="text-[#FF2D78] underline underline-offset-2 hover:text-white transition-colors duration-200 ml-1">
-              Start Free Analysis
+              className="text-[#D23669] underline underline-offset-2 hover:text-white transition-colors duration-200 ml-1">
+              เริ่มวิเคราะห์ฟรี
             </button>
           </p>
         </div>
@@ -118,9 +118,9 @@ export default function NavbarDailyDose() {
               {!me ? (
                 <>
                   <Link to="/login" className="text-[10px] font-[600] uppercase tracking-[0.4em] text-[#958F8F] hover:text-[#221D1D] transition-colors">
-                    Sign In
+                    เข้าสู่ระบบ
                   </Link>
-                  <Link to="/login" className="text-[#221D1D] hover:text-[#FF2D78] transition-colors">
+                  <Link to="/login" className="text-[#221D1D] hover:text-[#D23669] transition-colors">
                     <ShoppingBag size={18} strokeWidth={1.5} />
                   </Link>
                 </>
@@ -129,35 +129,35 @@ export default function NavbarDailyDose() {
                   {acctOpen && <div className="fixed inset-0 z-10" onClick={() => setAcctOpen(false)} />}
 
                   <button onClick={() => setAcctOpen(v => !v)}
-                    className="relative z-20 text-[#221D1D] hover:text-[#FF2D78] transition-colors">
+                    className="relative z-20 text-[#221D1D] hover:text-[#D23669] transition-colors">
                     <User size={18} strokeWidth={1.5} />
                   </button>
 
-                  <Link to="/cosmetics" className="text-[#221D1D] hover:text-[#FF2D78] transition-colors">
+                  <Link to="/cosmetics" className="text-[#221D1D] hover:text-[#D23669] transition-colors">
                     <ShoppingBag size={18} strokeWidth={1.5} />
                   </Link>
 
                   {/* Dropdown */}
                   {acctOpen && (
                     <div className="absolute right-0 top-full mt-4 w-52 bg-white border border-[#E0DAD5] shadow-lg z-20">
-                      <div className="h-0.5 bg-[#FF2D78] w-full" />
+                      <div className="h-0.5 bg-[#D23669] w-full" />
                       <div className="px-5 py-4 border-b border-[#E0DAD5]">
                         <p className="text-[9px] font-[700] uppercase tracking-[0.4em] text-[#221D1D] truncate">{me.name}</p>
                         <p className="text-[8px] font-[400] text-[#958F8F] truncate mt-0.5">{me.email}</p>
                       </div>
                       <div className="py-1">
                         <Link to="/account" onClick={() => setAcctOpen(false)}
-                          className="flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#605858] hover:bg-[#F9E2E7] hover:text-[#FF2D78] transition-colors">
-                          <User size={12} /> Profile
+                          className="flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#605858] hover:bg-[#F9E2E7] hover:text-[#D23669] transition-colors">
+                          <User size={12} /> โปรไฟล์
                         </Link>
                         <Link to="/history" onClick={() => setAcctOpen(false)}
-                          className="flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#605858] hover:bg-[#F9E2E7] hover:text-[#FF2D78] transition-colors">
-                          <History size={12} /> History
+                          className="flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#605858] hover:bg-[#F9E2E7] hover:text-[#D23669] transition-colors">
+                          <History size={12} /> ประวัติการวิเคราะห์
                         </Link>
                         <div className="h-px bg-[#E0DAD5] mx-4 my-1" />
                         <button onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#4E3844] hover:bg-[#F9E2E7] hover:text-[#FF2D78] transition-colors">
-                          <LogOut size={12} /> Sign Out
+                          className="w-full flex items-center gap-3 px-5 py-3 text-[9px] font-[600] uppercase tracking-[0.35em] text-[#4E3844] hover:bg-[#F9E2E7] hover:text-[#D23669] transition-colors">
+                          <LogOut size={12} /> ออกจากระบบ
                         </button>
                       </div>
                     </div>
@@ -203,7 +203,7 @@ export default function NavbarDailyDose() {
             AuraMatch
           </Link>
           <button onClick={() => setMobileOpen(!mobileOpen)}
-            className="text-[#221D1D] hover:text-[#FF2D78] transition-colors p-1">
+            className="text-[#221D1D] hover:text-[#D23669] transition-colors p-1">
             {mobileOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
           </button>
         </div>
@@ -222,7 +222,7 @@ export default function NavbarDailyDose() {
         {/* Logo */}
         <div className="pt-16 px-8 pb-8 border-b border-white/10">
           <p className="vs-logo text-[1.6rem] tracking-[0.22em] text-white">AuraMatch</p>
-          <div className="w-8 h-[2px] bg-[#FF2D78] mt-3" />
+          <div className="w-8 h-[2px] bg-[#D23669] mt-3" />
         </div>
 
         {/* Nav links */}
@@ -231,7 +231,7 @@ export default function NavbarDailyDose() {
             <Link key={item.to} to={item.to} onClick={() => { setMobileOpen(false); scrollTop(); }}
               className={`text-[2.5rem] font-[800] uppercase tracking-[0.04em] leading-tight py-1
                 transition-all duration-300
-                ${pathname === item.to ? "text-[#FF2D78]" : "text-white/60 hover:text-white"}`}
+                ${pathname === item.to ? "text-[#D23669]" : "text-white/60 hover:text-white"}`}
               style={{ transitionDelay: mobileOpen ? `${idx * 40}ms` : "0ms" }}>
               {item.label}
             </Link>
@@ -242,17 +242,17 @@ export default function NavbarDailyDose() {
         <div className="px-8 py-8 border-t border-white/10 flex items-center justify-between">
           {!me ? (
             <button onClick={() => { navigate("/login"); setMobileOpen(false); }}
-              className="text-[9px] font-[600] uppercase tracking-[0.45em] text-white border border-[#FF2D78] px-6 py-3 hover:bg-[#FF2D78] transition-colors">
-              Sign In
+              className="text-[9px] font-[600] uppercase tracking-[0.45em] text-white border border-[#D23669] px-6 py-3 hover:bg-[#D23669] transition-colors">
+              เข้าสู่ระบบ
             </button>
           ) : (
             <div className="flex flex-col gap-2">
               <p className="text-[9px] tracking-[0.4em] uppercase text-[#958F8F]">{me.name}</p>
               <div className="flex gap-5">
                 <Link to="/account" onClick={() => setMobileOpen(false)}
-                  className="text-[9px] font-[600] uppercase tracking-[0.4em] text-white/60">Profile</Link>
+                  className="text-[9px] font-[600] uppercase tracking-[0.4em] text-white/60">โปรไฟล์</Link>
                 <button onClick={handleLogout}
-                  className="text-[9px] font-[600] uppercase tracking-[0.4em] text-[#FF2D78]">Sign Out</button>
+                  className="text-[9px] font-[600] uppercase tracking-[0.4em] text-[#D23669]">ออกจากระบบ</button>
               </div>
             </div>
           )}
@@ -260,14 +260,13 @@ export default function NavbarDailyDose() {
             {['EN', 'TH'].map(l => (
               <button key={l} onClick={() => i18n.changeLanguage(l.toLowerCase())}
                 className={`text-[9px] font-[600] uppercase tracking-[0.3em] ${
-                  i18n.language.toUpperCase() === l ? "text-[#FF2D78]" : "text-white/30"}`}>{l}</button>
+                  i18n.language.toUpperCase() === l ? "text-[#D23669]" : "text-white/30"}`}>{l}</button>
             ))}
           </div>
         </div>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@400;600;700;800;900&display=swap');
         .vs-logo { font-family: 'Cormorant Garamond', serif; font-variant-caps: small-caps; font-weight: 500; }
         header nav, header div { font-family: 'Montserrat', sans-serif; }
       `}</style>
