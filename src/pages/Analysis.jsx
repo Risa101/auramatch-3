@@ -3,7 +3,7 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Analysis.css";
 import MakeoverStudio from "../components/MakeoverStudio.jsx";
-import { saveAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzeSeasonML, analyzeColorEngine, analyzeUndertone } from "../callapi/call_api_user";
+import { saveAnalysisHistory, getAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzeSeasonLab, analyzeColorEngine, analyzeUndertone, getRecommendedProducts } from "../callapi/call_api_user";
 import { detectFaceShape, loadFaceModels } from "../utils/faceShapeDetector";
 import { logAiCall } from "../utils/aiLogger";
 import { imgUrl } from "../utils/imgUrl";
@@ -21,13 +21,6 @@ const COLORS = {
   hover: "#D23669",
 };
 
-function resolveApiBaseUrl() {
-  const raw = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "";
-  if (raw) return String(raw).replace(/\/+$/, "");
-  return "";
-}
-
-const API_BASE_URL = resolveApiBaseUrl();
 const GEMINI_PROMPT = import.meta.env.VITE_GEMINI_PROMPT || "Apply natural everyday makeup to this exact face photo. Do NOT change the person's face shape, bone structure, skin tone, eye shape, nose, lips shape, or any facial features — the person's identity must remain 100% identical. Only add: light foundation to even skin tone, soft blush on cheeks, subtle neutral eyeshadow, defined brows following their natural arch, thin eyeliner, mascara, and a natural lip tint. The result must look like the same real person wearing light makeup. Keep the same lighting, angle, background, and photo style. Photo-realistic output only.";
 const BASE_PATH = import.meta.env.BASE_URL || "/";
 const assetPath = (p) => `${BASE_PATH}${String(p).replace(/^\/+/, "")}`;
@@ -383,7 +376,7 @@ function SelectedProductCard({ product, season }) {
   };
 
   return (
-    <article className="rounded-2xl border border-[#F5E3E8] bg-white overflow-hidden shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+    <article className="rounded-2xl border border-[#F5E3E8] bg-white overflow-hidden shadow-sm">
       {/* Image */}
       <div className="relative aspect-square w-full overflow-hidden bg-[#F7F4F2]">
         <img
@@ -417,7 +410,7 @@ function SelectedProductCard({ product, season }) {
         </p>
         <button
           onClick={openShop}
-          className="w-full rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-300"
+          className="w-full rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-sm hover:shadow-md transition-all duration-300"
         >
           ซื้อลุคนี้เลย
         </button>
@@ -562,8 +555,10 @@ async function saveAnalysisToBackend(userId, entry) {
   }
   const payload = {
     user_id: userId,
-    season: entry?.season || null,
-    face_shape: entry?.faceShape || null,
+    // season/face_shape เป็น NOT NULL ใน DB — ถ้าขั้นตอนวิเคราะห์ไหนไม่สำเร็จ
+    // (เช่น face-api.js หาหน้าไม่เจอ) ต้องมี fallback ไม่งั้น insert จะพังเงียบๆ
+    season: entry?.season || "Unknown",
+    face_shape: entry?.faceShape || "Unknown",
     eyebrows: entry?.face?.brows || null,
     eyes: entry?.face?.eyes || null,
     nose: entry?.face?.nose || null,
@@ -579,15 +574,16 @@ async function saveAnalysisToBackend(userId, entry) {
   }
 }
 
+// Both used to raw-fetch(`${API_BASE_URL}/...`) with a hand-resolved base URL
+// that (unlike src/api/client.js's apiClient) never checked for localhost —
+// so on a local dev server it always hit the production Railway URL, which
+// isn't CORS-configured for localhost and is intermittently down. Reuses the
+// shared, correctly-resolved apiClient (via getAnalysisHistory) instead.
 async function fetchLatestAnalysis(userId) {
   if (!userId) return null;
   try {
-    const token = localStorage.getItem("auramatch:token") || "";
-    const res = await fetch(`${API_BASE_URL}/api/analysis-history/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json().catch(() => []);
-    if (!res.ok || !Array.isArray(data) || data.length === 0) return null;
+    const data = await getAnalysisHistory(userId);
+    if (!Array.isArray(data) || data.length === 0) return null;
     const latest = data[0];
     return {
       season: latest.season || null,
@@ -611,13 +607,7 @@ async function fetchLatestAnalysis(userId) {
 async function fetchAnalysisHistory(userId) {
   if (!userId) return [];
   try {
-    const token = localStorage.getItem("auramatch:token") || "";
-    const res = await fetch(`${API_BASE_URL}/api/analysis-history/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json().catch(() => []);
-    if (!res.ok || !Array.isArray(data)) return [];
-    return data;
+    return await getAnalysisHistory(userId);
   } catch (e) {
     console.warn("Fetch history failed:", e);
     return [];
@@ -721,6 +711,40 @@ function fileToImgElement(file) {
     img.onerror = reject;
     img.src = url;
   });
+}
+
+// Crop to the detected face box (+ padding) before handing the photo to the
+// backend's classical-CV skin-color analyzers (undertone / season fallback).
+// Those sample skin color from a plain Lab-threshold over whatever pixels
+// they're given — on the full photo that includes hair, clothing, and
+// background, which can throw the average off badly on real-world lighting.
+// Cropping to just the face (padded a bit for the forehead/jaw margin) keeps
+// them looking at mostly-skin pixels instead. Falls back to the original
+// file if the crop fails for any reason — never blocks the analysis.
+async function cropToFaceBox(imgEl, file, box, paddingRatio = 0.15) {
+  if (!box) return file;
+  try {
+    const padX = box.width * paddingRatio;
+    const padY = box.height * paddingRatio;
+    const x = Math.max(0, box.x - padX);
+    const y = Math.max(0, box.y - padY);
+    const w = Math.min(imgEl.naturalWidth - x, box.width + padX * 2);
+    const h = Math.min(imgEl.naturalHeight - y, box.height + padY * 2);
+    if (w <= 0 || h <= 0) return file;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(imgEl, x, y, w, h, 0, 0, w, h);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    if (!blob) return file;
+    return new File([blob], file.name || "face-crop.jpg", { type: "image/jpeg" });
+  } catch (e) {
+    console.warn("[cropToFaceBox] falling back to full photo:", e);
+    return file;
+  }
 }
 
 /* ===== History + Profile helpers (inline) ===== */
@@ -953,28 +977,71 @@ export default function Analysis() {
           data = await analyzeImageMock(pickedFile);
         }
 
-        // ── RandomForest ML: วิเคราะห์ season จาก skin tone ──
+        // ── face-api.js: detect face shape จาก landmark เอง — ทำก่อนเพื่อนำ face
+        // box ไป crop รูปให้ตัววิเคราะห์สีผิวด้านล่าง (ดูเหตุผลที่ cropToFaceBox()) ──
+        const faceStart = Date.now();
+        let skinCropFile = pickedFile; // fallback: เต็มรูปเดิม ถ้าหาหน้าไม่เจอ
         try {
-          const mlStart = Date.now();
-          const mlResult = await analyzeSeasonML(pickedFile);
-          if (mlResult?.season) {
-            console.log("[RandomForest] season:", mlResult.season, "confidence:", mlResult.confidence);
-            data.season = mlResult.season;
-            data.seasonConfidence = mlResult.confidence;
-            data.skinRgb = mlResult.skin_rgb;
+          await loadFaceModels();
+          const imgEl = await fileToImgElement(pickedFile);
+          const faceResult = await detectFaceShape(imgEl);
+          if (faceResult.shape) {
+            console.log("[face-api.js] detected shape:", faceResult.shape, "ratios:", faceResult.ratios);
+            data.faceShape = faceResult.shape;
+            data.faceShapeConfidence = faceResult.confidence;
+            data.faceShapeRatios = faceResult.ratios;
             logAiCall({
-              modelUsed: "RandomForest",
-              task: "seasonal_color",
-              input: mlResult.skin_rgb,
-              output: mlResult.season,
-              confidence: mlResult.confidence,
-              processingMs: Date.now() - mlStart,
+              modelUsed: "face-api.js",
+              task: "face_shape",
+              input: faceResult.ratios,
+              output: faceResult.shape,
+              confidence: faceResult.confidence,
+              processingMs: Date.now() - faceStart,
               success: true,
               userId: auth.currentUser?.uid || null,
             });
           }
-        } catch (mlErr) {
-          console.warn("[RandomForest] season prediction failed:", mlErr);
+          if (faceResult.box) {
+            skinCropFile = await cropToFaceBox(imgEl, pickedFile, faceResult.box);
+          }
+        } catch (faceErr) {
+          console.warn("[face-api.js] face shape detection failed:", faceErr);
+          logAiCall({
+            modelUsed: "face-api.js",
+            task: "face_shape",
+            input: {},
+            output: null,
+            processingMs: Date.now() - faceStart,
+            success: false,
+            errorMessage: faceErr?.message || "unknown error",
+            userId: auth.currentUser?.uid || null,
+          });
+        }
+        // ──────────────────────────────────────────────────────
+
+        // ── Season (classical CIELAB): ไขว้ ITA (warm/cool) กับ L* (light/deep) ──
+        // แทนที่ RandomForest เดิม (ลบแล้ว — ดู undertone_service.py::estimate_season)
+        // ใช้ skinCropFile (ครอบเฉพาะหน้า) แทนรูปเต็ม กัน background/ผม/เสื้อผ้าปน
+        try {
+          const labStart = Date.now();
+          const labResult = await analyzeSeasonLab(skinCropFile);
+          if (labResult?.season && labResult.season !== "unknown") {
+            console.log("[SeasonLab] season:", labResult.season, "ITA:", labResult.ita, "L*:", labResult.l_star);
+            data.season = labResult.season;
+            data.seasonIta = labResult.ita;
+            data.seasonLStar = labResult.l_star;
+            logAiCall({
+              modelUsed: "CIELAB-ITA",
+              task: "seasonal_color",
+              input: { ita: labResult.ita, l_star: labResult.l_star },
+              output: labResult.season,
+              processingMs: Date.now() - labStart,
+              success: true,
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        } catch (labErr) {
+          console.warn("[SeasonLab] season prediction failed:", labErr);
         }
         // ──────────────────────────────────────────────────────
 
@@ -1011,7 +1078,7 @@ export default function Analysis() {
         // — ไม่ใช่ ML model) + สินค้าบลัชออนจริงจาก DB ที่ตรงกับ undertone นั้น ──
         try {
           const undertoneStart = Date.now();
-          const utResult = await analyzeUndertone(pickedFile);
+          const utResult = await analyzeUndertone(skinCropFile);
           if (utResult?.success) {
             console.log("[Undertone] tone:", utResult.undertone, "ITA:", utResult.ita, "L*:", utResult.l_star);
             data.skinUndertone = utResult.undertone;
@@ -1033,40 +1100,12 @@ export default function Analysis() {
         }
         // ──────────────────────────────────────────────────────
 
-        // ── face-api.js: detect face shape จาก landmark เอง ──
-        const faceStart = Date.now();
+        // ── ลิปที่แนะนำจริงจาก DB (พร้อมลิงก์ร้านค้าจริงถ้ามี) ตาม season ที่ได้ ──
         try {
-          await loadFaceModels();
-          const imgEl = await fileToImgElement(pickedFile);
-          const faceResult = await detectFaceShape(imgEl);
-          if (faceResult.shape) {
-            console.log("[face-api.js] detected shape:", faceResult.shape, "ratios:", faceResult.ratios);
-            data.faceShape = faceResult.shape;
-            data.faceShapeConfidence = faceResult.confidence;
-            data.faceShapeRatios = faceResult.ratios;
-            logAiCall({
-              modelUsed: "face-api.js",
-              task: "face_shape",
-              input: faceResult.ratios,
-              output: faceResult.shape,
-              confidence: faceResult.confidence,
-              processingMs: Date.now() - faceStart,
-              success: true,
-              userId: auth.currentUser?.uid || null,
-            });
-          }
-        } catch (faceErr) {
-          console.warn("[face-api.js] face shape detection failed:", faceErr);
-          logAiCall({
-            modelUsed: "face-api.js",
-            task: "face_shape",
-            input: {},
-            output: null,
-            processingMs: Date.now() - faceStart,
-            success: false,
-            errorMessage: faceErr?.message || "unknown error",
-            userId: auth.currentUser?.uid || null,
-          });
+          const lipRes = await getRecommendedProducts(data.season || "All", { category: "lip", limit: 4 });
+          data.lipProducts = lipRes?.data || [];
+        } catch (lipErr) {
+          console.warn("[LipProducts] fetch failed:", lipErr);
         }
         // ──────────────────────────────────────────────────────
       } else {
@@ -1233,7 +1272,7 @@ export default function Analysis() {
       <div className="w-8 h-px bg-[#D23669] mb-8 mt-3" />
 
       {/* Same card language as the Cosmetics catalog page — image, match badge, name + price + shop link */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
         {(PRODUCTS[result?.season] || []).map((p, idx) => (
           <a
             key={idx}
@@ -1268,18 +1307,18 @@ export default function Analysis() {
       </div>
 
       <button onClick={() => navigate("/cosmetics")}
-        className="mt-8 w-full rounded-xl border border-[#D23669] text-[#D23669] py-2.5 text-[9px] font-[600] uppercase tracking-[0.3em] hover:bg-gradient-to-r hover:from-[#D23669] hover:to-[#C2255A] hover:text-white hover:border-transparent transition-all duration-300">
+        className="mt-8 w-full rounded-xl border border-[#D23669] text-[#D23669] py-2.5 text-[9px] font-[600] uppercase tracking-[0.3em] hover:bg-[#D23669] hover:text-white hover:border-transparent transition-all duration-300">
         ดูสินค้าทั้งหมด
       </button>
     </>
   );
 
   return (
-    <div className="bg-gradient-to-b from-white via-[#FFFAFB] to-white text-[#1A1A1A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
+    <div className="bg-white text-[#1A1A1A] font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
       <main className="mx-auto max-w-[1400px] px-6 md:px-10 pt-[60px] lg:pt-[180px] pb-32">
 
         {/* ── STEP INDICATOR ── */}
-        <div className="flex rounded-2xl border border-[#F5E3E8] mb-14 overflow-hidden shadow-[0_8px_30px_-12px_rgba(210,54,105,0.12)]">
+        <div className="flex rounded-2xl border border-[#F5E3E8] mb-14 overflow-hidden shadow-sm">
           {/* Step 1 */}
           <button
             onClick={() => setCurrentStep(1)}
@@ -1342,7 +1381,7 @@ export default function Analysis() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
               {/* Photo preview */}
-              <div className="overflow-hidden rounded-3xl border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.15)] bg-[#F7F4F2]" style={{ aspectRatio: "4/5" }}>
+              <div className="overflow-hidden rounded-3xl border border-[#F5E3E8] shadow-sm bg-[#F7F4F2]" style={{ aspectRatio: "4/5" }}>
                 {preview ? (
                   <img src={preview} alt="preview" className="h-full w-full object-cover" />
                 ) : (
@@ -1376,7 +1415,7 @@ export default function Analysis() {
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => inputRef.current?.click()}
-                      className="rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-300"
+                      className="rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] shadow-sm hover:shadow-md transition-all duration-300"
                     >
                       เลือกรูปภาพ
                     </button>
@@ -1452,7 +1491,7 @@ export default function Analysis() {
             {result ? (
               <div>
                 {/* ── RESULT HERO: Photo + Season + Face Shape ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.15)]" data-aos="fade-up">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-sm" data-aos="fade-up">
 
                   {/* Left: uploaded photo */}
                   <div className="relative overflow-hidden bg-[#F7F4F2] aspect-[3/4] lg:aspect-auto">
@@ -1582,7 +1621,7 @@ export default function Analysis() {
                   </div>
 
                   {/* Feature cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
                     {[
                       { label: "คิ้ว", value: SHAPE_RECS.brows[result.face?.brows], accent: "#C17A43" },
                       { label: "ดวงตา",  value: SHAPE_RECS.eyes[result.face?.eyes],   accent: "#4A7B9D" },
@@ -1622,7 +1661,7 @@ export default function Analysis() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
                       {result.blushProducts.map((p) => (
                         <a
                           key={p.product_id}
@@ -1658,6 +1697,49 @@ export default function Analysis() {
                   </div>
                 )}
 
+                {/* ── ลิปที่แนะนำจริงจาก DB ตาม personal color season — พร้อมลิงก์ร้านค้า
+                    จริง (shop_url) เมื่อมีข้อมูล เช่น TikTok Shop ── */}
+                {result.lipProducts?.length > 0 && (
+                  <div className="mt-10" data-aos="fade-up">
+                    <div className="flex items-end justify-between mb-8 border-t border-[#F5E3E8] pt-10">
+                      <div>
+                        <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-2">แนะนำสำหรับ{SEASON_LABELS_TH[result?.season] || result?.season}</p>
+                        <h3 className="text-xl md:text-2xl font-[200] leading-[1] text-[#1A1A1A] uppercase">
+                          ลิป<br /><span className="font-[700] italic">ที่เหมาะกับออร่าคุณ</span>
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
+                      {result.lipProducts.map((p) => (
+                        <a
+                          key={p.product_id}
+                          href={p.shop_url || undefined}
+                          target={p.shop_url ? "_blank" : undefined}
+                          rel={p.shop_url ? "noreferrer" : undefined}
+                          className={`group bg-white block ${p.shop_url ? "" : "pointer-events-none"}`}
+                        >
+                          <div className="relative aspect-square overflow-hidden bg-[#F7F4F2]">
+                            <img
+                              src={imgUrl(p.image_url)}
+                              alt={p.name}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                              onError={(e) => { e.target.src = assetPath("assets/home2.webp"); }}
+                            />
+                          </div>
+                          <div className="p-2.5 border-t border-[#F5E3E8]">
+                            <h3 className="text-[10px] font-[500] text-[#1A1A1A] leading-snug mb-1.5 line-clamp-1 uppercase tracking-[0.03em]">{p.name}</h3>
+                            {p.shades && (
+                              <p className="text-[9px] text-[#888] font-[300] mb-1.5 line-clamp-1">{p.shades}</p>
+                            )}
+                            <span className="text-xs font-[600] text-[#1A1A1A]">฿{p.price != null ? p.price.toLocaleString() : "—"}</span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* AI Makeover — Gemini Beauty Portrait hidden (committee feedback:
                     output doesn't look natural yet). Product picks stay visible. */}
                 {SHOW_GEMINI_MAKEOVER && (
@@ -1671,7 +1753,7 @@ export default function Analysis() {
                     {geminiError && <p className="text-xs text-[#D23669] mb-4">{geminiError}</p>}
 
                     {/* 2-col balanced: Before/After  |  Product picks */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.12)]">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-sm">
 
                       {/* Left: portrait panel — always same height as right */}
                       <div className="bg-white flex flex-col">
@@ -1713,7 +1795,7 @@ export default function Analysis() {
                                 <div className="text-center">
                                   <p className="text-xs font-[300] text-[#888] mb-4">Generate an AI beauty portrait<br />from your uploaded photo</p>
                                   <button onClick={runGeminiGeneration}
-                                    className="rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-300">
+                                    className="rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-sm hover:shadow-md transition-all duration-300">
                                     Generate
                                   </button>
                                 </div>
@@ -1750,11 +1832,23 @@ export default function Analysis() {
                   </div>
 
                   {/* Studio + product panel */}
-                  <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.12)]">
+                  <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-px bg-[#F5E3E8] rounded-3xl overflow-hidden border border-[#F5E3E8] shadow-sm">
                     <div className="bg-white p-2">
                       <MakeoverStudio
                         base={preview || assetPath("assets/analysis.JPG")}
-                        onProductSelect={(products) => setSelectedStudioProducts(Array.isArray(products) ? products : (products ? [products] : []))}
+                        onProductSelect={(products) => {
+                          const list = Array.isArray(products) ? products : (products ? [products] : []);
+                          setSelectedStudioProducts(list);
+                          // A shade the user just actively picked should reappear in the
+                          // cart even if it was removed earlier — only re-adding the same
+                          // shade later should undo a removal, not just staying selected.
+                          setRemovedCartKeys((prev) => {
+                            if (prev.size === 0) return prev;
+                            const next = new Set(prev);
+                            list.forEach((p) => next.delete(cartKey(p)));
+                            return next.size === prev.size ? prev : next;
+                          });
+                        }}
                         personalColor={result?.season}
                         faceShape={result?.faceShape}
                       />
@@ -1813,7 +1907,7 @@ export default function Analysis() {
 
                   <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-6">
                     {/* Left: product cards */}
-                    <div className="rounded-3xl border border-[#F5E3E8] bg-white shadow-[0_10px_40px_-10px_rgba(210,54,105,0.1)] p-5 md:p-6">
+                    <div className="rounded-3xl border border-[#F5E3E8] bg-white shadow-sm p-5 md:p-6">
                       {cartItems.length === 0 ? (
                         <div className="flex flex-col items-center justify-center text-center gap-3 py-16">
                           <div className="w-12 h-12 rounded-full border border-[#F5E3E8] flex items-center justify-center text-[#D8A9B8]">
@@ -1878,7 +1972,7 @@ export default function Analysis() {
                     </div>
 
                     {/* Right: order summary */}
-                    <div className="rounded-3xl border border-[#F5E3E8] bg-[#FFFAFB] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.1)] p-5 md:p-6 flex flex-col">
+                    <div className="rounded-3xl border border-[#F5E3E8] bg-[#FFFAFB] shadow-sm p-5 md:p-6 flex flex-col">
                       <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-4">สรุปรายการ</p>
                       <div className="flex items-center justify-between text-xs text-[#555] font-[300] mb-2">
                         <span>จำนวนสินค้า</span>
@@ -1895,7 +1989,7 @@ export default function Analysis() {
                       <button
                         onClick={buyAllInCart}
                         disabled={cartItems.length === 0}
-                        className="w-full rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                        className="w-full rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] shadow-sm hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#D23669] disabled:hover:shadow-none"
                       >
                         ซื้อทั้งหมด
                       </button>
@@ -1949,7 +2043,7 @@ export default function Analysis() {
                               <p className="text-[9px] tracking-[0.4em] uppercase text-[#1A1A1A] font-[500]">Short &amp; Medium</p>
                               <div className="flex-1 h-px bg-[#F5E3E8]" />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
                               {shortMed.map((s) => <HairCard key={s.key} s={s} />)}
                             </div>
                           </div>
@@ -1960,7 +2054,7 @@ export default function Analysis() {
                               <p className="text-[9px] tracking-[0.4em] uppercase text-[#1A1A1A] font-[500]">Long</p>
                               <div className="flex-1 h-px bg-[#F5E3E8]" />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
                               {longStyles.map((s) => <HairCard key={s.key} s={s} />)}
                             </div>
                           </div>
@@ -1993,7 +2087,7 @@ export default function Analysis() {
                         {status === "uploading" ? "กำลังอัปโหลดรูปภาพ..." : "AI กำลังวิเคราะห์โครงหน้าและสีประจำตัว..."}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_8px_30px_-10px_rgba(210,54,105,0.12)]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
                       {[1, 2].map((i) => (
                         <div key={i} className="bg-white p-8 space-y-4">
                           <div className="h-2.5 w-20 animate-pulse bg-[#F5E3E8] rounded" />
@@ -2024,7 +2118,7 @@ export default function Analysis() {
           <button
             onClick={nextStep}
             disabled={!canGoNext || currentStep === 2}
-            className="rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white px-8 py-2.5 text-[10px] font-[600] uppercase tracking-[0.25em] disabled:opacity-30 shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all"
+            className="rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white px-8 py-2.5 text-[10px] font-[600] uppercase tracking-[0.25em] disabled:opacity-30 disabled:hover:bg-[#D23669] shadow-sm hover:shadow-md transition-all"
           >
             ถัดไป
           </button>
@@ -2040,7 +2134,7 @@ export default function Analysis() {
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-1">
           <button
             onClick={() => inputRef.current?.click()}
-            className="flex-1 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all"
+            className="flex-1 rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] shadow-sm hover:shadow-md transition-all"
           >
             อัปโหลดรูปภาพ
           </button>

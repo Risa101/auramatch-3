@@ -361,7 +361,7 @@ const CosmeticStore = () => {
         <div className="max-w-[1280px] mx-auto px-6 md:px-12">
           <div className="border-t border-[#E8E0DC] pt-10 mb-12" data-aos="fade-up">
             <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Color Harmony</p>
-            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
+            <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
               Discover Your<br /><span className="font-[700] italic">Season</span>
             </h2>
           </div>
@@ -375,7 +375,7 @@ const CosmeticStore = () => {
               >
                 <div className="absolute inset-0 p-8 flex flex-col z-20">
                   <p className="text-[10px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">{item.id}</p>
-                  <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] uppercase mb-1">{item.name}</h4>
+                  <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] mb-1">{item.name}</h4>
                   <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-4">{item.tag}</p>
 
                   <div className="flex-grow flex items-center group-hover:items-start group-hover:mt-4 transition-all duration-700">
@@ -383,7 +383,7 @@ const CosmeticStore = () => {
                       {item.palette.map((color, pIdx) => (
                         <div
                           key={pIdx}
-                          className={`h-8 w-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'}`}
+                          className={`h-8 w-8 max-w-full mx-auto rounded-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-0 scale-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'}`}
                           style={{ backgroundColor: color, transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms' }}
                         />
                       ))}
@@ -413,7 +413,7 @@ const CosmeticStore = () => {
               <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">
                 {selectedSeason === 'All' ? 'All Seasons' : `Specially for ${selectedSeason}`}
               </p>
-              <h1 className="text-[3rem] md:text-[5rem] font-[200] leading-[1] uppercase text-[#1A1A1A]">
+              <h1 className="text-[3rem] md:text-[5rem] font-[200] leading-[1] text-[#1A1A1A]">
                 Aura<br /><span className="font-[700] italic">Boutique</span>
               </h1>
             </div>
@@ -522,7 +522,7 @@ const CosmeticStore = () => {
 
                     <div className="p-4 border-t border-[#E8E0DC]">
                       <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1">{item.category}</p>
-                      <h3 className="text-xs font-[500] text-[#1A1A1A] leading-snug mb-3 line-clamp-2 uppercase tracking-[0.05em]">{item.name}</h3>
+                      <h3 className="text-xs font-[500] text-[#1A1A1A] leading-snug mb-3 line-clamp-2 tracking-[0.05em]">{item.name}</h3>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-[600] text-[#1A1A1A]">฿{parseFloat(item.price).toLocaleString()}</span>
                         <div className="flex items-center gap-1">
@@ -650,7 +650,7 @@ const CosmeticStore = () => {
                   <div className="flex flex-wrap gap-2 mb-3">
                     <span className="text-[9px] font-[500] uppercase tracking-[0.2em] text-[#888] border border-[#E8E0DC] px-3 py-1">{selectedProduct.category}</span>
                   </div>
-                  <h3 className="text-xl font-[600] text-[#1A1A1A] leading-tight uppercase mb-2">{selectedProduct.name}</h3>
+                  <h3 className="text-xl font-[600] text-[#1A1A1A] leading-tight mb-2">{selectedProduct.name}</h3>
                   {selectedProduct.description && (
                     <p className="text-xs font-[300] text-[#555] leading-relaxed">{selectedProduct.description}</p>
                   )}

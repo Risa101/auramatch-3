@@ -20,7 +20,6 @@ export default function AuramatchDailyDose() {
   const [isLoading, setIsLoading] = useState(true);
   const [makeupLooks, setMakeupLooks] = useState([]);
   const [activeColor, setActiveColor] = useState("Spring");
-  const [faceGender, setFaceGender] = useState("female");
   const [likedProducts, setLikedProducts] = useState({});
   const [selectedLook, setSelectedLook] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -38,8 +37,6 @@ export default function AuramatchDailyDose() {
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const goAdvisor = () => navigate("/advisor");
-
-  const goAnalysis = () => navigate("/analysis");
 
   const buildApiImage = (path) => {
     if (!path) return "/assets/home2.webp";
@@ -97,7 +94,7 @@ export default function AuramatchDailyDose() {
   ];
 
   const fallbackBestSellers = [
-    { product_id: 9001, name: "Laneige Neo Cushion Glow", price: 1290, image_url: "/assets/ad4.JPG" },
+    { product_id: 9001, name: "Laneige Neo Cushion Glow", price: 1290, image_url: "/assets/laneige-removebg-preview.webp" },
     { product_id: 9002, name: "Dior Forever Cushion", price: 2490, image_url: "/assets/dior.jpeg" },
     { product_id: 9003, name: "Peripera Ink Velvet", price: 390, image_url: "/assets/ad7.JPG" },
   ];
@@ -278,42 +275,33 @@ export default function AuramatchDailyDose() {
 
   return (
     
-    <div className="bg-[#FAF7F5] text-[#1A1A1A] font-sans selection:bg-[#FFDCE6] selection:text-[#C85A7D] antialiased pt-[60px] lg:pt-[180px]">
+    <div className="bg-white text-[#1A1A1A] font-sans selection:bg-[#FFDCE6] selection:text-[#C85A7D] antialiased pt-[60px] lg:pt-[180px]">
       {/* --- 1. HERO --- */}
-      <header className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-        <img src="/laglace/homee.webp" alt="" fetchpriority="high" decoding="async"
+      <header className="relative h-screen min-h-[600px] overflow-hidden">
+        <img src="/assets/makeup.jpeg" alt="AuraMatch" fetchpriority="high" decoding="async"
           className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 opacity-0"
           onLoad={(e) => e.currentTarget.classList.replace("opacity-0", "opacity-100")} />
-        {/* Center vignette — darkens around center-bottom so text stays readable */}
-        <div className="absolute inset-0 bg-black/40" />
+        {/* Gradient only at the very top and very bottom (behind the heading and the
+            button) — the middle band stays clear so her face is never covered */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_28%,rgba(0,0,0,0)_68%,rgba(0,0,0,0.5)_100%)]" />
 
-        {/* Centered text block */}
-        <div className="relative z-10 flex flex-col items-center text-center px-6" data-aos="fade-up">
-
-          {/* Eyebrow */}
-          <p className="text-[10px] tracking-[0.5em] uppercase text-white font-[400] mb-6 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+        {/* Heading — pinned to the top */}
+        <div className="absolute top-0 inset-x-0 z-10 flex flex-col items-center text-center px-6 pt-16 sm:pt-20 md:pt-24" data-aos="fade-up">
+          <p className="text-[10px] tracking-[0.5em] uppercase text-white font-[400] mb-5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
             AuraMatch &nbsp;·&nbsp; 2026
           </p>
-
-          {/* Main heading */}
-          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[200] leading-[0.88] tracking-[0.08em] text-white uppercase mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+          <h1 className="text-[2.4rem] sm:text-[3.4rem] md:text-[4.6rem] lg:text-[5.5rem] font-[200] leading-[0.92] tracking-[0.08em] text-white mb-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
             Your
           </h1>
-          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[800] leading-[0.88] tracking-[-0.01em] text-white uppercase italic mb-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-            Aura Match
+          <h1 className="text-[2.4rem] sm:text-[3.4rem] md:text-[4.6rem] lg:text-[5.5rem] font-[800] leading-[0.92] tracking-[-0.01em] text-white italic drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            <span className="text-[#FF85A2]">Aura</span> Match
           </h1>
+        </div>
 
-          {/* Thin divider */}
-          <div className="w-12 h-px bg-white/50 mb-6" />
-
-          {/* Subtitle */}
-          <p className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-white font-[300] max-w-xs leading-loose mb-10 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-            Biometric beauty analysis.<br />Personalized for your skin, season &amp; soul.
-          </p>
-
-          {/* CTA */}
+        {/* CTA — pinned to the bottom of the photo */}
+        <div className="absolute bottom-0 inset-x-0 z-10 flex justify-center px-6 pb-10 sm:pb-14" data-aos="fade-up">
           <button onClick={() => navigate("/analysis")}
-            className="bg-white text-[#1A1A1A] px-10 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] border border-white hover:bg-[#EBC2C8] hover:text-black hover:border-black transition-all duration-300">
+            className="bg-[#D23669] hover:bg-[#B92D5B] text-white px-10 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-sm hover:shadow-md transition-all duration-300">
             Begin Analysis
           </button>
         </div>
@@ -350,15 +338,6 @@ export default function AuramatchDailyDose() {
                 Which Shape<br /><span className="font-[700] italic">Are You?</span>
               </h2>
             </div>
-            {/* Gender toggle */}
-            <div className="flex gap-px bg-[#E8E0DC]" onClick={(e) => e.stopPropagation()}>
-              {["female", "male"].map((g) => (
-                <button key={g} onClick={(e) => { e.stopPropagation(); setFaceGender(g); }}
-                  className={`px-5 py-2 text-[9px] font-[600] uppercase tracking-[0.3em] transition-all duration-200 ${faceGender === g ? "bg-[#1A1A1A] text-white" : "bg-white text-[#888] hover:text-[#1A1A1A]"}`}>
-                  {g === "female" ? "Female" : "Male"}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -366,25 +345,25 @@ export default function AuramatchDailyDose() {
         <div className="overflow-x-auto snap-x snap-mandatory no-scrollbar md:overflow-visible">
           <div className="flex md:grid md:grid-cols-6 gap-2 min-w-max md:min-w-0 px-6 md:px-12">
             {[
-              { label: "Oval",     female: "/assets/oval.jpg.webp",     male: "/assets/ovalmen.jpg" },
-              { label: "Round",    female: "/assets/round.jpg.webp",    male: "/assets/roundmen.jpg" },
-              { label: "Square",   female: "/assets/square.jpg.webp",   male: "/assets/squaremen.jpg" },
-              { label: "Heart",    female: "/assets/heart.jpg.webp",    male: "/assets/heart.jpg.webp" },
-              { label: "Diamond",  female: "/assets/diamond.jpg.webp",  male: "/assets/diamondmen.jpg" },
-              { label: "Triangle", female: "/assets/triangle.jpg.webp", male: "/assets/trainglemen.jpg" },
+              { label: "Oval",     image: "/assets/ovalface.jpeg" },
+              { label: "Round",    image: "/assets/roundface.jpg" },
+              { label: "Square",   image: "/assets/recface.jpg" },
+              { label: "Heart",    image: "/assets/heartface.jpg" },
+              { label: "Diamond",  image: "/assets/diamondface.jpg" },
+              { label: "Triangle", image: "/assets/triagle.jpg" },
             ].map((shape, i) => {
-              const img = faceGender === "male" ? shape.male : shape.female;
+              const img = shape.image;
               return (
               <div key={shape.label}
                 data-aos="fade-up" data-aos-delay={i * 60}
                 className="group relative snap-center w-[44vw] md:w-auto shrink-0 cursor-pointer">
 
                 {/* Image — tall portrait */}
-                <div className="relative aspect-[3/5] overflow-hidden bg-[#F0EDEA]">
+                <div className="relative aspect-[3/5] overflow-hidden bg-white">
                   <img src={img} alt={shape.label}
-                    className="w-full h-full object-cover object-center scale-[1.3] group-hover:scale-[1.38] transition-transform duration-700 ease-out" />
+                    className="w-full h-full object-contain object-center p-4 group-hover:scale-[1.04] transition-transform duration-700 ease-out" />
                   {/* Dark overlay on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors duration-400" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-400" />
                   {/* Number tag */}
                   <span className="absolute top-4 left-4 text-[9px] tracking-[0.35em] text-white/40 font-[300] group-hover:text-white/70 transition-colors duration-400">
                     {String(i + 1).padStart(2, '0')}
@@ -408,7 +387,7 @@ export default function AuramatchDailyDose() {
 
         {/* Bottom CTA */}
         <div className="max-w-[1280px] mx-auto px-6 md:px-12 mt-8 flex justify-end" data-aos="fade-up">
-          <button onClick={goAnalysis}
+          <button onClick={(e) => { e.stopPropagation(); goAdvisor(); }}
             className="text-[10px] tracking-[0.2em] uppercase text-[#1A1A1A] border-b border-[#1A1A1A] pb-0.5 hover:text-[#D23669] hover:border-[#D23669] transition-colors">
             Find My Shape →
           </button>
@@ -420,7 +399,7 @@ export default function AuramatchDailyDose() {
         <div className="max-w-[1280px] mx-auto px-6 md:px-12">
           <div className="border-t border-[#E8E0DC] pt-10 mb-12" data-aos="fade-up">
             <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Color Harmony</p>
-            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] uppercase">
+            <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
               Discover Your<br /><span className="font-[700] italic">Season</span>
             </h2>
           </div>
@@ -434,7 +413,7 @@ export default function AuramatchDailyDose() {
               >
                 <div className="relative md:absolute md:inset-0 p-6 md:p-8 flex flex-col z-20">
                   <p className="text-[10px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-3">{item.id}</p>
-                  <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] uppercase mb-1">{item.name}</h4>
+                  <h4 className="text-2xl font-[700] italic tracking-tight text-[#1A1A1A] mb-1">{item.name}</h4>
                   <p className="text-[9px] tracking-[0.2em] uppercase text-[#888] font-[300] mb-4">{item.tag}</p>
 
                   <div className="flex-grow flex items-start mt-2 md:items-center md:mt-0 md:group-hover:items-start md:group-hover:mt-4 transition-all duration-700">
@@ -442,7 +421,7 @@ export default function AuramatchDailyDose() {
                       {item.palette.map((color, pIdx) => (
                         <div
                           key={pIdx}
-                          className={`h-8 w-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:scale-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:scale-100 md:group-hover:pointer-events-auto'}`}
+                          className={`h-8 w-8 max-w-full mx-auto rounded-full transition-all duration-500 ${pIdx < 4 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:scale-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:scale-100 md:group-hover:pointer-events-auto'}`}
                           style={{ backgroundColor: color, transitionDelay: pIdx > 3 ? `${(pIdx - 4) * 15}ms` : '0ms' }}
                         />
                       ))}
@@ -510,14 +489,14 @@ export default function AuramatchDailyDose() {
       </section> */}
 
       {/* --- LAGLACE BRAND PROMO --- */}
-      <section className="py-20 bg-[#FAF7F5]">
+      <section className="py-20 bg-white">
         <div className="max-w-[1280px] mx-auto px-6 md:px-12">
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10" data-aos="fade-up">
             <div>
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Partner Brand</p>
-              <h2 className="text-[2.8rem] md:text-[4.5rem] font-[200] tracking-[0.12em] text-[#1A1A1A] leading-[1] uppercase">
+              <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">
                 la<span className="font-[700]">glace</span>
               </h2>
               <p className="text-[11px] tracking-[0.15em] text-[#888] font-[300] mt-2">
@@ -589,7 +568,7 @@ export default function AuramatchDailyDose() {
 
       {/* --- PRODUCT MODAL (VS style) --- */}
       {isProductModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/60" onClick={closeProductModal} />
           <div className="relative z-10 w-full max-w-4xl max-h-[95vh] overflow-hidden bg-white flex flex-col md:flex-row">
             <button onClick={closeProductModal}
@@ -599,7 +578,7 @@ export default function AuramatchDailyDose() {
             <div className="w-full md:w-[45%] aspect-[4/5] md:aspect-auto overflow-hidden bg-[#F5F3F0] shrink-0">
               <img src={buildApiImage(selectedProduct.image_url)} alt={selectedProduct.name} className="w-full h-full object-contain p-8" />
             </div>
-            <div className="flex flex-col p-8 md:p-12 overflow-y-auto custom-scrollbar">
+            <div className="flex flex-col min-h-0 p-8 md:p-12 overflow-y-auto custom-scrollbar">
               <p className="text-[9px] tracking-[0.35em] uppercase text-[#aaa] font-[300] mb-4">Best Seller</p>
               <h3 className="text-[1.8rem] md:text-[2.4rem] font-[300] tracking-[-0.01em] text-[#1A1A1A] leading-[1.05] mb-4">
                 {selectedProduct.name}
@@ -687,7 +666,7 @@ export default function AuramatchDailyDose() {
 
       {/* --- LOOK DETAIL MODAL (VS style) --- */}
       {selectedLook && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedLook(null)} />
           <div className="relative z-10 w-full max-w-4xl max-h-[95vh] overflow-hidden bg-white flex flex-col md:flex-row">
             <button onClick={() => setSelectedLook(null)}
@@ -697,7 +676,7 @@ export default function AuramatchDailyDose() {
             <div className="w-full md:w-[45%] aspect-[3/4] md:aspect-auto overflow-hidden bg-[#F5F3F0] shrink-0">
               <img src={buildApiImage(selectedLook.image_url)} alt={selectedLook.look_name} className="h-full w-full object-cover object-top" />
             </div>
-            <div className="p-8 md:p-12 flex flex-col overflow-y-auto custom-scrollbar">
+            <div className="p-8 md:p-12 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
               <p className="text-[9px] tracking-[0.35em] uppercase text-[#aaa] font-[300] mb-4">
                 {selectedLook.personal_color || activeColor} Collection
               </p>
@@ -719,9 +698,9 @@ export default function AuramatchDailyDose() {
       )}
 
       {/* --- BEST SELLERS --- */}
-      <section className="py-20 bg-[#FAFAFA]">
+      <section className="py-20 bg-white">
         <div className="max-w-[1280px] mx-auto px-6 md:px-12">
-          <div className="flex justify-between items-end mb-12" data-aos="fade-up">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-12" data-aos="fade-up">
             <div>
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Featured</p>
               <h2 className="text-[2.4rem] md:text-[3.6rem] font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1]">

@@ -134,12 +134,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-[#FFF7F9] via-white to-[#FDEEF2] mt-[60px] lg:mt-[180px]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[#FFF9FA] mt-[60px] lg:mt-[180px]">
 
       {/* ── Left: brand panel ── */}
-      <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#D23669] via-[#C2255A] to-[#4A1A2A] p-14">
-        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-[#FBD4DE]/20 blur-3xl" />
+      <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-[#C2255A] p-14">
         <img src="/laglace/homee.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-overlay" />
         <div className="relative z-10">
           <p className="text-[9px] tracking-[0.5em] uppercase text-white/60 font-[300]">AuraMatch · Atelier</p>
@@ -165,7 +163,7 @@ export default function LoginPage() {
         {/* Mobile logo */}
         <p className="lg:hidden text-[9px] tracking-[0.5em] uppercase text-[#B08B95] font-[300] mb-8 text-center">AuraMatch · Atelier</p>
 
-        <div className="max-w-[400px] w-full mx-auto bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(210,54,105,0.18)] border border-[#F7E4EA] p-8 md:p-11">
+        <div className="max-w-[400px] w-full mx-auto bg-white rounded-3xl shadow-sm border border-[#F7E4EA] p-8 md:p-11">
 
           {/* Heading */}
           <div className="mb-9">
@@ -216,7 +214,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-3.5 text-[10px] font-[600] uppercase tracking-[0.35em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0"
+              className="w-full rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white py-3.5 text-[10px] font-[600] uppercase tracking-[0.35em] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:bg-[#D23669] disabled:hover:shadow-sm disabled:hover:translate-y-0"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>

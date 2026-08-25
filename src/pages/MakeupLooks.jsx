@@ -173,41 +173,34 @@ const SeasonalGallery = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#FFFAFB] to-white overflow-x-hidden font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
+    <div className="min-h-screen bg-white overflow-x-hidden font-sans selection:bg-[#FFD1DC] selection:text-[#D23669] antialiased">
 
-      {/* --- HERO (Victoria's Secret editorial style) --- */}
-      <header className="relative h-screen min-h-[600px] max-h-[900px] flex flex-col justify-end overflow-hidden mt-[60px] lg:mt-[180px]">
-        <img
-          src="/assets/spring-makeup-lead.webp"
-          alt="Spring Makeup 2026"
-          className="absolute inset-0 w-full h-full object-cover object-top scale-[1.02]"
-        />
-        {/* subtle vignette — keeps image clean, darkens only bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/30 to-transparent" />
+      {/* --- HERO — same image + layout pattern as the home page hero --- */}
+      <header className="relative h-screen min-h-[600px] overflow-hidden mt-[60px] lg:mt-[180px]">
+        <img src="/assets/makeup.jpeg" alt="AuraMatch" fetchpriority="high" decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 opacity-0"
+          onLoad={(e) => e.currentTarget.classList.replace("opacity-0", "opacity-100")} />
+        {/* Gradient only at the very top and very bottom — the middle band stays
+            clear so the photo's face is never covered */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_28%,rgba(0,0,0,0)_68%,rgba(0,0,0,0.5)_100%)]" />
 
-        {/* editorial text block — bottom aligned */}
-        <div className="relative z-10 w-full pb-14 md:pb-20 flex flex-col items-center text-center gap-6 px-6">
-
-          {/* eyebrow label */}
-          <p data-aos="fade-up" data-aos-delay="0"
-            className="text-[9px] font-[600] uppercase tracking-[0.45em] text-white/60 leading-none">
+        {/* Heading — pinned to the top */}
+        <div className="absolute top-0 inset-x-0 z-10 flex flex-col items-center text-center px-6 pt-16 sm:pt-20 md:pt-24" data-aos="fade-up">
+          <p className="text-[9px] font-[600] uppercase tracking-[0.45em] text-white/60 leading-none mb-5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
             Aura Match &nbsp;·&nbsp; Spring / Summer 2026
           </p>
-
-          {/* main heading — thin elegant weight */}
-          <h1 data-aos="fade-up" data-aos-delay="60"
-            className="text-[2.6rem] sm:text-[3.6rem] md:text-[5rem] lg:text-[6.2rem] font-[200] leading-[0.92] tracking-[0.06em] text-white uppercase">
+          <h1 className="text-[2.4rem] sm:text-[3.4rem] md:text-[4.6rem] lg:text-[5.5rem] font-[200] leading-[0.92] tracking-[0.06em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
             Makeup
             <br />
             <span className="font-[800] tracking-tighter italic text-[#FF85A2]">for</span>
             {" "}
             <span className="font-[800] tracking-tighter">{activeSeason}</span>
           </h1>
+        </div>
 
-          {/* season tab bar — clean text tabs, no pill background */}
-          <div data-aos="fade-up" data-aos-delay="120"
-            className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* Season tabs — pinned to the bottom of the photo */}
+        <div className="absolute bottom-0 inset-x-0 z-10 flex justify-center px-6 pb-10 sm:pb-14" data-aos="fade-up">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
             {Object.keys(seasonTheme).map((s, i) => (
               <>
                 <button
@@ -303,7 +296,7 @@ const SeasonalGallery = () => {
                   return (
                     <div key={trend.num} data-aos="fade-up" data-aos-delay={i * 40}
                       onClick={() => setSelectedTrend({ ...trend, trendProducts: getProductsForTrend(trend.cats) })}
-                      className="group bg-white flex flex-col cursor-pointer rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-[0_4px_20px_rgba(210,54,105,0.06)] hover:shadow-[0_14px_36px_rgba(210,54,105,0.16)] hover:-translate-y-1 transition-all duration-300">
+                      className="group bg-white flex flex-col cursor-pointer rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
 
                       {/* Image */}
                       <div className="relative overflow-hidden aspect-[3/4] bg-[#F5F3F0]">
@@ -421,7 +414,7 @@ const SeasonalGallery = () => {
                 onClick={() => setActiveSeason(s)}
                 className={`px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase transition-all duration-200 border-r border-[#F5E3E8] last:border-r-0 ${
                   activeSeason === s
-                    ? 'bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white'
+                    ? 'bg-[#D23669] text-white'
                     : 'text-[#8A7A80] hover:text-[#D23669] bg-white'
                 }`}>
                 {s}
@@ -441,7 +434,7 @@ const SeasonalGallery = () => {
             {currentLooks.length > 0 ? (
               currentLooks.map((item, i) => (
                 <div key={i} data-aos="fade-up" data-aos-delay={i * 40}
-                  className="group cursor-pointer bg-white relative overflow-hidden rounded-2xl border border-[#F5E3E8] shadow-[0_4px_20px_rgba(210,54,105,0.06)] hover:shadow-[0_14px_36px_rgba(210,54,105,0.16)] hover:-translate-y-1 transition-all duration-300"
+                  className="group cursor-pointer bg-white relative overflow-hidden rounded-2xl border border-[#F5E3E8] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
                   onClick={() => setSelectedLook(item)}
                 >
                   {/* Image */}
@@ -599,7 +592,7 @@ const SeasonalGallery = () => {
                 <div className="mt-auto pt-6 border-t border-[#F5E3E8] flex gap-3">
                   <button
                     onClick={() => toggleLike({ id: `trend_${selectedTrend.num}`, title: selectedTrend.name, img: selectedTrend.img, type: 'trend' })}
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200 ${likedIds.includes(`trend_${selectedTrend.num}`) ? 'bg-gradient-to-r from-[#D23669] to-[#C2255A] border-[#D23669] text-white' : 'border-[#F0DEE3] text-[#8A7A80] hover:border-[#D23669] hover:text-[#D23669]'}`}>
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200 ${likedIds.includes(`trend_${selectedTrend.num}`) ? 'bg-[#D23669] border-[#D23669] text-white' : 'border-[#F0DEE3] text-[#8A7A80] hover:border-[#D23669] hover:text-[#D23669]'}`}>
                     <Heart size={14} className={likedIds.includes(`trend_${selectedTrend.num}`) ? 'fill-white' : ''} />
                   </button>
                   {!getUserFacePhoto() ? (
@@ -609,7 +602,7 @@ const SeasonalGallery = () => {
                   ) : (
                     <button onClick={() => handleTryOnTrend(selectedTrend)}
                       disabled={trendTryOnStatus === 'loading'}
-                      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-200 disabled:opacity-40 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white text-[10px] tracking-[0.25em] uppercase font-[400] shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-40 disabled:hover:bg-[#D23669] disabled:hover:shadow-sm flex items-center justify-center gap-2">
                       {trendTryOnStatus === 'loading'
                         ? <><Loader2 size={12} className="animate-spin" /> Styling</>
                         : trendTryOnStatus === 'done'
@@ -699,7 +692,7 @@ const SeasonalGallery = () => {
                     }}
                     className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200 ${
                       likedIds.includes(`look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`)
-                        ? 'bg-gradient-to-r from-[#D23669] to-[#C2255A] border-[#D23669] text-white'
+                        ? 'bg-[#D23669] border-[#D23669] text-white'
                         : 'border-[#F0DEE3] text-[#8A7A80] hover:border-[#D23669] hover:text-[#D23669]'
                     }`}>
                     <Heart size={14} className={likedIds.includes(`look_${selectedLook.look_id || selectedLook.id || selectedLook.name}`) ? 'fill-white' : ''} />
@@ -710,7 +703,7 @@ const SeasonalGallery = () => {
                     </button>
                   ) : (
                     <button onClick={handleTryOnLook} disabled={tryOnStatus === 'loading'}
-                      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white text-[10px] tracking-[0.25em] uppercase font-[400] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all duration-200 disabled:opacity-40 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white text-[10px] tracking-[0.25em] uppercase font-[400] shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-40 disabled:hover:bg-[#D23669] disabled:hover:shadow-sm flex items-center justify-center gap-2">
                       {tryOnStatus === 'loading'
                         ? <><Loader2 size={12} className="animate-spin" /> Styling</>
                         : tryOnStatus === 'done' ? 'Try Again' : 'Try This Look'}

@@ -55,11 +55,12 @@ export const analyzeFaceApi = async (file) => {
   return response.data;
 };
 
-// วิเคราะห์ Seasonal Color ด้วย RandomForest model ที่เทรนเอง (ไม่ใช้ Gemini)
-export const analyzeSeasonML = async (file) => {
+// วิเคราะห์ Seasonal Color ด้วยกฎ classical บน CIELAB ล้วนๆ (ITA x L*) — แทนที่
+// RandomForest เดิม (ลบแล้ว เพราะไม่มี dataset ให้เทรนใหม่แบบ Lab ได้)
+export const analyzeSeasonLab = async (file) => {
   const formData = new FormData();
   formData.append("image", file);
-  const response = await apiClient.post("/api/ml/analyze-season", formData, {
+  const response = await apiClient.post("/api/season/analyze", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
@@ -83,6 +84,16 @@ export const analyzeUndertone = async (file) => {
   const response = await apiClient.post("/api/undertone/analyze", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return response.data;
+};
+
+// ดึงสินค้าแนะนำจริงจาก DB ตาม personal color season (+ หมวดสินค้า ถ้าระบุ)
+// พร้อมลิงก์ร้านค้าจริง (shop_url) — ใช้แทนรายการ hardcode สำหรับหมวดที่มีข้อมูลจริงใน DB
+export const getRecommendedProducts = async (season, { category, limit = 8 } = {}) => {
+  const params = { season };
+  if (category) params.category = category;
+  if (limit) params.limit = limit;
+  const response = await apiClient.get("/products/recommendations", { params });
   return response.data;
 };
 

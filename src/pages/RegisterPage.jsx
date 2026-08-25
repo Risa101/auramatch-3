@@ -118,16 +118,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-[#FFF7F9] via-white to-[#FDEEF2] text-[#2B2226] font-light flex items-center justify-center px-6 pt-[60px] lg:pt-[180px] pb-12 selection:bg-[#D23669]/15 overflow-hidden">
-
-      {/* Background Decor */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#FBD4DE]/40 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-[#F9E3E9]/50 blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
-        <span className="text-[18vw] font-serif italic text-[#FBE1E7] select-none uppercase leading-none opacity-60">
-          Studio
-        </span>
-      </div>
+    <div className="relative min-h-screen bg-[#FFF9FA] text-[#2B2226] font-light flex items-center justify-center px-6 pt-[60px] lg:pt-[180px] pb-12 selection:bg-[#D23669]/15 overflow-hidden">
 
       <div className="relative z-10 w-full max-w-lg">
         {/* Header */}
@@ -147,7 +138,7 @@ export default function RegisterPage() {
         )}
 
         {/* Form Container */}
-        <div className="bg-white p-8 md:p-12 rounded-3xl border border-[#F7E4EA] shadow-[0_20px_60px_-15px_rgba(210,54,105,0.18)]">
+        <div className="bg-white p-8 md:p-12 rounded-3xl border border-[#F7E4EA] shadow-sm">
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
@@ -211,7 +202,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full py-4 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white transition-all duration-300 shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 overflow-hidden"
+              className="group relative w-full py-4 rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-[#D23669] disabled:hover:shadow-sm disabled:hover:translate-y-0 overflow-hidden"
             >
               <span className="relative z-10 text-[10px] tracking-[0.4em] font-bold uppercase">
                 {loading ? "Creating..." : "Create Account"}

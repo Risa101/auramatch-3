@@ -97,7 +97,7 @@ export default function AccountProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#1A1A1A] antialiased pb-24">
+    <div className="min-h-screen bg-white text-[#1A1A1A] antialiased pb-24">
 
       {/* ── HERO ── */}
       <div className="relative bg-white border-b border-[#E8E0DC] mt-[60px] lg:mt-[180px] overflow-hidden">
@@ -119,7 +119,7 @@ export default function AccountProfile() {
                 {(me?.photoURL || me?.avatar) ? (
                   <img src={me.photoURL || me.avatar} alt="avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#D23669] to-[#FF85A2] flex items-center justify-center text-white text-5xl font-black">
+                  <div className="w-full h-full bg-[#D23669] flex items-center justify-center text-white text-5xl font-black">
                     {(me?.name?.[0] || "U").toUpperCase()}
                   </div>
                 )}
@@ -157,7 +157,7 @@ export default function AccountProfile() {
                 <Edit3 size={12} /> แก้ไขโปรไฟล์
               </button>
               <Link to="/analysis"
-                className="flex items-center justify-center gap-2 bg-[#D23669] text-white text-[10px] font-[600] uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[#FF85A2] transition-all">
+                className="flex items-center justify-center gap-2 bg-[#D23669] text-white text-[10px] font-[600] uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[#B92D5B] transition-all">
                 <Zap size={12} fill="currentColor" /> วิเคราะห์ใหม่
               </Link>
             </div>
@@ -223,7 +223,7 @@ export default function AccountProfile() {
             </div>
           ) : (
             <EmptyState icon={<Sparkles size={22}/>} msg="ยังไม่มีผลการวิเคราะห์">
-              <Link to="/analysis" className="mt-4 inline-block bg-[#D23669] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#FF85A2] transition-all">เริ่มวิเคราะห์</Link>
+              <Link to="/analysis" className="mt-4 inline-block bg-[#D23669] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#B92D5B] transition-all">เริ่มวิเคราะห์</Link>
             </EmptyState>
           )}
         </section>
@@ -531,7 +531,7 @@ function EditModal({ open, onClose, me, onSaved }) {
               {preview ? (
                 <img src={imgUrl(preview)} alt="preview" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#D23669] to-[#FF85A2] flex items-center justify-center text-white text-4xl font-black">
+                <div className="w-full h-full bg-[#D23669] flex items-center justify-center text-white text-4xl font-black">
                   {(me?.name?.[0] || "U").toUpperCase()}
                 </div>
               )}
@@ -562,7 +562,7 @@ function EditModal({ open, onClose, me, onSaved }) {
             ยกเลิก
           </button>
           <button onClick={onSave} disabled={saving}
-            className="flex-1 bg-[#D23669] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#FF85A2] transition-all disabled:opacity-50">
+            className="flex-1 bg-[#D23669] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#B92D5B] transition-all disabled:opacity-50 disabled:hover:bg-[#D23669]">
             {saving ? "กำลังบันทึก..." : "บันทึก"}
           </button>
         </div>

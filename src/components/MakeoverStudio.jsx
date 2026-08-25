@@ -394,9 +394,15 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
     useEffect(() => {
         if (!rendererRef.current || !glOk) return;
         rendererRef.current.render({
-            lips: { enabled: !!lips.color, color: lips.color || "#000000", intensity: lips.color ? 0.55 : 0 },
-            blush: { enabled: !!blush.color, color: blush.color || "#000000", intensity: blush.color ? 0.35 : 0 },
-            eyeshadow: { enabled: !!eye.color, color: eye.color || "#000000", intensity: eye.color ? 0.5 : 0 },
+            // Intensities bumped up from the original 0.55/0.35/0.5 — the shader's
+            // recolor() already preserves the photo's own shading (see makeupRenderer.js),
+            // so a low mix alpha on top of that was reading as faint/washed-out instead
+            // of an actual worn-makeup color. Lips go closest to full coverage (real
+            // lipstick is close to opaque); blush/eyeshadow stay a bit short of that
+            // since real blush/shadow is meant to look blended rather than solid.
+            lips: { enabled: !!lips.color, color: lips.color || "#000000", intensity: lips.color ? 0.85 : 0 },
+            blush: { enabled: !!blush.color, color: blush.color || "#000000", intensity: blush.color ? 0.55 : 0 },
+            eyeshadow: { enabled: !!eye.color, color: eye.color || "#000000", intensity: eye.color ? 0.65 : 0 },
         });
     }, [lips, eye, blush, foundation, glOk]);
 
@@ -547,10 +553,10 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
     const currentItems = { Brows: BROWS, Eyes: activeEyes, Lips: activeLips, Hairstyle: HAIRSTYLES }[tab];
 
     return (
-        <div className="bg-gradient-to-b from-white to-[#FFFAFB] rounded-3xl p-4 md:p-6">
+        <div className="bg-white rounded-3xl p-4 md:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* LEFT: PREVIEW */}
-                <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.15)] bg-[#F7F4F2]">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-[#F5E3E8] shadow-sm bg-[#F7F4F2]">
                     <img
                         src={base}
                         alt="base face"
@@ -599,7 +605,7 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                 </div>
 
                 {/* RIGHT: CONTROL PANEL */}
-                <div className="bg-white rounded-3xl border border-[#F5E3E8] shadow-[0_10px_40px_-10px_rgba(210,54,105,0.08)] p-6 flex flex-col gap-5">
+                <div className="bg-white rounded-3xl border border-[#F5E3E8] shadow-sm p-6 flex flex-col gap-5">
                     {/* Tab bar */}
                     <div className="flex flex-wrap gap-1.5 bg-[#FFF7F9] rounded-2xl p-1.5">
                         {TABS.map((t) => (
@@ -609,7 +615,7 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                                 onClick={() => setTab(t)}
                                 className={`flex-1 py-2 rounded-xl text-[9px] font-[600] uppercase tracking-[0.2em] transition-all ${
                                     tab === t
-                                        ? "bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white shadow-sm"
+                                        ? "bg-[#D23669] hover:bg-[#B92D5B] text-white shadow-sm"
                                         : "bg-transparent text-[#8A7A80] hover:text-[#D23669]"
                                 }`}
                             >
@@ -627,7 +633,7 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                                     onClick={() => setHairColor(c)}
                                     className={`rounded-xl py-4 text-[10px] font-[400] uppercase tracking-[0.15em] transition-all border ${
                                         hairColor?.key === c.key
-                                            ? "bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white border-[#D23669]"
+                                            ? "bg-[#D23669] hover:bg-[#B92D5B] text-white border-[#D23669]"
                                             : "bg-white border-[#F5E3E8] text-[#8A7A80] hover:border-[#D23669] hover:text-[#D23669]"
                                     }`}
                                 >
@@ -697,7 +703,7 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                                                     onClick={() => setActiveSeason(s)}
                                                     className={`flex-1 py-1.5 rounded-lg text-[9px] font-[600] uppercase tracking-[0.1em] border transition-all ${
                                                         activeSeason === s
-                                                            ? "bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white border-transparent"
+                                                            ? "bg-[#D23669] hover:bg-[#B92D5B] text-white border-transparent"
                                                             : "bg-white text-[#8A7A80] border-[#F5E3E8] hover:border-[#D23669] hover:text-[#D23669]"
                                                     }`}
                                                 >
@@ -777,7 +783,7 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                                                     }`}
                                                 >
                                                     {isRecommended && shape.key !== "none" && (
-                                                        <span className="absolute top-1.5 right-1.5 text-[6px] font-[700] uppercase tracking-[0.1em] text-white bg-gradient-to-r from-[#D23669] to-[#C2255A] px-1.5 py-0.5 rounded-full">
+                                                        <span className="absolute top-1.5 right-1.5 text-[6px] font-[700] uppercase tracking-[0.1em] text-white bg-[#D23669] px-1.5 py-0.5 rounded-full">
                                                             เหมาะกับคุณ
                                                         </span>
                                                     )}
@@ -849,7 +855,7 @@ export default function MakeoverStudio({ base = assetPath("assets/analysis.JPG")
                                 setSavedMsg(true);
                                 setTimeout(() => setSavedMsg(false), 2000);
                             }}
-                            className="flex-1 rounded-xl bg-gradient-to-r from-[#D23669] to-[#C2255A] text-white py-2.5 text-[10px] font-[600] uppercase tracking-[0.2em] shadow-[0_8px_24px_-6px_rgba(210,54,105,0.5)] hover:shadow-[0_10px_28px_-4px_rgba(210,54,105,0.6)] transition-all"
+                            className="flex-1 rounded-xl bg-[#D23669] hover:bg-[#B92D5B] text-white py-2.5 text-[10px] font-[600] uppercase tracking-[0.2em] shadow-sm hover:shadow-md transition-all"
                         >
                             {savedMsg ? "บันทึกแล้ว" : "บันทึกลุค"}
                         </button>

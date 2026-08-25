@@ -132,12 +132,12 @@ export default function UltimateAcademy() {
   ];
 
   const faceShapes = [
-    { shape: "Oval", trait: "The Benchmark", desc: "The most balanced proportions — forehead slightly wider than chin, cheeks beautifully curved.", image: "/assets/oval.jpg.webp" },
-    { shape: "Round", trait: "Circular Symmetry", desc: "Cheekbone width equals face length, with rounded jawline and no sharp angles.", image: "/assets/round.jpg.webp" },
-    { shape: "Square", trait: "Angular Precision", desc: "Wide jawline parallel to forehead, creating a strong and powerful look.", image: "/assets/square.jpg.webp" },
-    { shape: "Heart", trait: "Upper Dominance", desc: "Wide forehead with a center hairline peak and a tapered pointed chin like a heart symbol.", image: "/assets/heart.jpg.webp" },
-    { shape: "Diamond", trait: "Cheekbone Focus", desc: "Cheekbones are the widest point, while forehead and jaw are narrow and defined.", image: "/assets/diamond.jpg.webp" },
-    { shape: "Oblong", trait: "Vertical Depth", desc: "Face length noticeably greater than width, with a slim and elegant bone structure.", image: "/assets/triangle.jpg.webp" }
+    { shape: "Oval", trait: "The Benchmark", desc: "The most balanced proportions — forehead slightly wider than chin, cheeks beautifully curved.", image: "/assets/ovalface.jpeg" },
+    { shape: "Round", trait: "Circular Symmetry", desc: "Cheekbone width equals face length, with rounded jawline and no sharp angles.", image: "/assets/roundface.jpg" },
+    { shape: "Square", trait: "Angular Precision", desc: "Wide jawline parallel to forehead, creating a strong and powerful look.", image: "/assets/recface.jpg" },
+    { shape: "Heart", trait: "Upper Dominance", desc: "Wide forehead with a center hairline peak and a tapered pointed chin like a heart symbol.", image: "/assets/heartface.jpg" },
+    { shape: "Diamond", trait: "Cheekbone Focus", desc: "Cheekbones are the widest point, while forehead and jaw are narrow and defined.", image: "/assets/diamondface.jpg" },
+    { shape: "Oblong", trait: "Vertical Depth", desc: "Face length noticeably greater than width, with a slim and elegant bone structure.", image: "/assets/triagle.jpg" }
   ];
 
   const closetCards = [
@@ -184,7 +184,7 @@ export default function UltimateAcademy() {
                 <X size={14} />
               </button>
               <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Aura Deep-Dive</p>
-              <h2 className="text-3xl md:text-5xl font-[200] tracking-[0.02em] uppercase mb-6 leading-[1]">
+              <h2 className="text-3xl md:text-5xl font-[200] tracking-[0.02em] mb-6 leading-[1]">
                 {selectedTopic ? knowledgeBase[selectedTopic].title : seasonalData[selectedSeason].title}
               </h2>
               <p className="text-sm font-[300] text-[#555] leading-relaxed mb-8 border-l-2 border-[#1A1A1A] pl-5">
@@ -201,33 +201,32 @@ export default function UltimateAcademy() {
         </div>
       )}
 
-      {/* ── HERO ── */}
-      <header className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden mt-[60px] lg:mt-[180px]">
-        <img src="/laglace/homee.webp" alt="" fetchpriority="high" decoding="async"
+      {/* ── HERO — same image + layout pattern as the home page hero ── */}
+      <header className="relative h-screen min-h-[600px] overflow-hidden mt-[60px] lg:mt-[180px]">
+        <img src="/assets/makeup.jpeg" alt="AuraMatch" fetchpriority="high" decoding="async"
           className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 opacity-0"
           onLoad={(e) => e.currentTarget.classList.replace("opacity-0", "opacity-100")} />
-        <div className="absolute inset-0 bg-black/40" />
+        {/* Gradient only at the very top and very bottom — the middle band stays
+            clear so the photo's face is never covered */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_28%,rgba(0,0,0,0)_68%,rgba(0,0,0,0.5)_100%)]" />
 
-        <div className="relative z-10 flex flex-col items-center text-center px-6" data-aos="fade-up">
-          <p className="text-[10px] tracking-[0.5em] uppercase text-white font-[400] mb-6 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+        {/* Heading — pinned to the top */}
+        <div className="absolute top-0 inset-x-0 z-10 flex flex-col items-center text-center px-6 pt-16 sm:pt-20 md:pt-24" data-aos="fade-up">
+          <p className="text-[10px] tracking-[0.5em] uppercase text-white font-[400] mb-5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
             AuraMatch &nbsp;·&nbsp; Academy 2026
           </p>
-
-          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[200] leading-[0.88] tracking-[0.08em] text-white uppercase mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+          <h1 className="text-[2.4rem] sm:text-[3.4rem] md:text-[4.6rem] lg:text-[5.5rem] font-[200] leading-[0.92] tracking-[0.08em] text-white mb-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
             Visual
           </h1>
-          <h1 className="text-[3.2rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] font-[800] leading-[0.88] tracking-[-0.01em] text-white uppercase italic mb-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-            IQ Logic
+          <h1 className="text-[2.4rem] sm:text-[3.4rem] md:text-[4.6rem] lg:text-[5.5rem] font-[800] leading-[0.92] tracking-[-0.01em] text-white italic drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            <span className="text-[#FF85A2]">IQ</span> Logic
           </h1>
+        </div>
 
-          <div className="w-12 h-px bg-white/50 mb-6" />
-
-          <p className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-white font-[300] max-w-xs leading-loose mb-10 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-            Decoding the biometric science of beauty.<br />Elevate your aesthetic intelligence.
-          </p>
-
+        {/* CTA — pinned to the bottom of the photo */}
+        <div className="absolute bottom-0 inset-x-0 z-10 flex justify-center px-6 pb-10 sm:pb-14" data-aos="fade-up">
           <button onClick={() => navigate("/analysis")}
-            className="bg-white text-[#1A1A1A] px-10 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] border border-white hover:bg-[#D23669] hover:text-white hover:border-[#D23669] transition-all duration-300">
+            className="bg-[#D23669] hover:bg-[#B92D5B] text-white px-10 py-4 text-[10px] font-[600] uppercase tracking-[0.3em] shadow-sm hover:shadow-md transition-all duration-300">
             Start Your Analysis
           </button>
         </div>
@@ -318,7 +317,7 @@ export default function UltimateAcademy() {
           <div className="border-t border-[#E8E0DC] pt-10 mb-16 flex flex-col md:flex-row justify-between items-end gap-8" data-aos="fade-up">
             <div>
               <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Lesson 02</p>
-              <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1]">
+              <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1]">
                 The Four<br /><span className="font-[700] italic">Aura Archetypes</span>
               </h2>
             </div>
@@ -364,7 +363,7 @@ export default function UltimateAcademy() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="border-t border-[#E8E0DC] pt-10 mb-16 text-center" data-aos="fade-up">
             <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Skin Undertone</p>
-            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1]">
+            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1]">
               Cool · Warm<br /><span className="font-[700] italic">Neutral</span>
             </h2>
             <p className="mt-5 text-xs font-[300] text-[#888] uppercase tracking-[0.25em] max-w-lg mx-auto leading-loose">
@@ -377,7 +376,7 @@ export default function UltimateAcademy() {
               <div key={item.key} data-aos="fade-up" data-aos-delay={idx * 80}
                 className="bg-white p-8 md:p-10">
                 <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">{item.sub}</p>
-                <h3 className="text-2xl font-[500] uppercase tracking-tight text-[#1A1A1A] mb-4">{item.title}</h3>
+                <h3 className="text-2xl font-[500] tracking-tight text-[#1A1A1A] mb-4">{item.title}</h3>
                 <p className="text-xs font-[300] text-[#555] leading-relaxed mb-6">{item.desc}</p>
                 <div className="flex flex-wrap gap-2">
                   {item.chips.map((chip) => (
@@ -436,7 +435,7 @@ export default function UltimateAcademy() {
             <div className="w-full lg:w-[38%] lg:sticky lg:top-28 h-fit" data-aos="fade-right">
               <div className="border-t border-[#E8E0DC] pt-10">
                 <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-4">Lesson 03</p>
-                <h2 className="text-[3rem] md:text-[4rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1] mb-8">
+                <h2 className="text-[2.2rem] sm:text-[2.8rem] md:text-[3.6rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1] mb-8">
                   The Six<br /><span className="font-[700] italic">Geometry Archetypes</span>
                 </h2>
                 <p className="text-xs font-[300] text-[#555] leading-relaxed border-l-2 border-[#E8E0DC] pl-5 mb-10">
@@ -459,9 +458,9 @@ export default function UltimateAcademy() {
                 { shape: "Long", trait: "Vertical Focus", desc: "Face length exceeds width — focus on horizontal balance.", image: faceShapes[5].image }
               ].map((item, i) => (
                 <div key={item.shape} className="group bg-white overflow-hidden hover:bg-[#EBC2C8] transition-all duration-500 cursor-default">
-                  <div className="aspect-square overflow-hidden bg-[#F7F4F2]">
+                  <div className="aspect-square overflow-hidden bg-white">
                     <img src={item.image} alt={item.shape}
-                      className="w-full h-full object-cover scale-[1.3] group-hover:scale-[1.35] transition-transform duration-500" loading="lazy" />
+                      className="w-full h-full object-contain p-4 group-hover:scale-[1.04] transition-transform duration-500" loading="lazy" />
                   </div>
                   <div className="p-5 border-t border-[#E8E0DC] group-hover:border-[#333]">
                     <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-1 group-hover:text-[#888]">0{i+1}</p>
@@ -475,12 +474,13 @@ export default function UltimateAcademy() {
         </div>
       </section>
 
-      {/* ── LESSON 04: CLOSET LOGIC ── */}
+      {/* ── LESSON 04: CLOSET LOGIC — hidden for this session ── */}
+      {false && (
       <section className="py-24 bg-white">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10">
           <div className="border-t border-[#E8E0DC] pt-10 mb-16 text-center" data-aos="fade-up">
             <p className="text-[9px] tracking-[0.45em] uppercase text-[#888] font-[300] mb-3">Lesson 04</p>
-            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] uppercase leading-[1]">
+            <h2 className="text-[3rem] md:text-[4.5rem] font-[200] tracking-[0.02em] text-[#1A1A1A] leading-[1]">
               Closet<br /><span className="font-[700] italic">Logic</span>
             </h2>
           </div>
@@ -492,7 +492,7 @@ export default function UltimateAcademy() {
                   {card.percent}
                 </span>
                 <div>
-                  <h4 className={`text-xl font-[600] uppercase mb-3 ${card.highlight ? "text-white" : "text-[#1A1A1A]"}`}>{card.title}</h4>
+                  <h4 className={`text-xl font-[600] mb-3 ${card.highlight ? "text-white" : "text-[#1A1A1A]"}`}>{card.title}</h4>
                   <p className={`text-xs font-[300] leading-relaxed uppercase tracking-[0.1em] ${card.highlight ? "text-white/60" : "text-[#888]"}`}>
                     {card.desc}
                   </p>
@@ -514,6 +514,7 @@ export default function UltimateAcademy() {
           </div> */}
         </div>
       </section>
+      )}
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }

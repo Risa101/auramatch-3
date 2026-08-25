@@ -128,7 +128,7 @@ export default function AnalysisHistory() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#1A1A1A] antialiased pb-32 overflow-x-hidden">
+    <div className="min-h-screen bg-white text-[#1A1A1A] antialiased pb-32 overflow-x-hidden">
 
       {/* ── HEADER ── */}
       <header className="bg-white border-b border-[#E8E0DC] mt-[60px] lg:mt-[180px] overflow-hidden relative">
@@ -141,7 +141,7 @@ export default function AnalysisHistory() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div>
               <p className="text-[9px] tracking-[0.6em] uppercase text-[#888] font-[300] mb-4">Personal Archive</p>
-              <h1 className="text-5xl md:text-8xl font-[200] text-[#1A1A1A] leading-none">
+              <h1 className="text-[2.4rem] md:text-[3.6rem] font-[200] text-[#1A1A1A] leading-none">
                 Analysis<br/><span className="font-[700] italic">History</span>
               </h1>
               {items.length > 0 && (
@@ -152,7 +152,7 @@ export default function AnalysisHistory() {
             </div>
             <div className="flex gap-3">
               <Link to="/analysis"
-                className="inline-flex items-center gap-2 bg-[#D23669] text-white px-7 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#FF85A2] transition-all">
+                className="inline-flex items-center gap-2 bg-[#D23669] text-white px-7 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#B92D5B] transition-all">
                 <Plus size={13} /> New Scan
               </Link>
             </div>
@@ -233,7 +233,7 @@ export default function AnalysisHistory() {
           <div className="py-40 text-center border border-dashed border-[#E8E0DC] bg-white">
             <Sparkles size={28} className="mx-auto mb-5 text-[#C0B8B4]" />
             <p className="text-[11px] text-[#888] uppercase tracking-[0.3em] font-[300] mb-6">No items in history</p>
-            <Link to="/analysis" className="inline-block bg-[#D23669] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#FF85A2] transition-all">
+            <Link to="/analysis" className="inline-block bg-[#D23669] text-white px-8 py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#B92D5B] transition-all">
               Start New Analysis
             </Link>
           </div>
@@ -317,7 +317,7 @@ export default function AnalysisHistory() {
         {totalPages > 1 && (
           <div className="mt-12 flex items-center justify-center gap-1">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="px-5 h-10 border border-[#E8E0DC] bg-white text-[10px] uppercase tracking-[0.2em] text-[#888] hover:bg-[#D23669] hover:text-white hover:border-[#D23669] disabled:opacity-30 transition-all">
+              className="px-5 h-10 border border-[#E8E0DC] bg-white text-[10px] uppercase tracking-[0.2em] text-[#888] hover:bg-[#D23669] hover:text-white hover:border-[#D23669] disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-[#888] disabled:hover:border-[#E8E0DC] transition-all">
               ← Prev
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
@@ -327,7 +327,7 @@ export default function AnalysisHistory() {
               </button>
             ))}
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="px-5 h-10 border border-[#E8E0DC] bg-white text-[10px] uppercase tracking-[0.2em] text-[#888] hover:bg-[#D23669] hover:text-white hover:border-[#D23669] disabled:opacity-30 transition-all">
+              className="px-5 h-10 border border-[#E8E0DC] bg-white text-[10px] uppercase tracking-[0.2em] text-[#888] hover:bg-[#D23669] hover:text-white hover:border-[#D23669] disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-[#888] disabled:hover:border-[#E8E0DC] transition-all">
               Next →
             </button>
           </div>
@@ -413,7 +413,7 @@ export default function AnalysisHistory() {
 
                   <div className="flex gap-3">
                     <Link to="/analysis"
-                      className="flex-1 text-center py-3 bg-[#D23669] text-white text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#FF85A2] transition-all">
+                      className="flex-1 text-center py-3 bg-[#D23669] text-white text-[10px] font-[600] uppercase tracking-[0.2em] hover:bg-[#B92D5B] transition-all">
                       Re-Analyze
                     </Link>
                     <button onClick={() => deleteOne(detail.id)}
