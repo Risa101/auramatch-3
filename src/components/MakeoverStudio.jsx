@@ -212,6 +212,7 @@ const RECOMMENDED_SHAPES_BY_FACE = {
     Heart: ["soft-arch", "rounded"],
     Long: ["straight", "soft-arch"],
     Rectangle: ["straight", "soft-arch"],
+    Triangle: ["high-arch", "soft-arch"],
     Diamond: ["rounded", "soft-arch"],
 };
 function BrowShapeIcon({ path, active }) {

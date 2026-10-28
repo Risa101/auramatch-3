@@ -21,8 +21,8 @@ There are no test commands — this project has no test suite.
 **Frontend:** React 18 + Vite (JavaScript/JSX, no TypeScript)
 **Styling:** Tailwind CSS + Framer Motion + AOS
 **Auth:** Firebase (email/password + social) with tokens stored in localStorage
-**Backend:** Node.js API on Railway (`https://auramatch-backend-production.up.railway.app`)
-**Database:** Firebase Firestore + backend DB
+**Backend:** Flask (Python) API on Railway (`https://auramatch-backend-production.up.railway.app`) — confirmed via `services/*_service.py` references in frontend comments (`personal_color_service.py`, `gemini_service.py`, `product_platform_service.py`) and a teammate's report diagram; one single backend host serves auth, products, and AI endpoints alike
+**Database:** Firebase Firestore (AI call logs, realtime sync) + MySQL (backend's primary relational DB — users, products, orders, etc.)
 **Storage:** Firebase Cloud Storage
 **AI:** Google Generative AI (Gemini) for photo transformation
 **Deployment:** Vercel (frontend), Railway (backend)

@@ -5,6 +5,7 @@ import 'aos/dist/aos.css';
 import { getdataProducts, generateGeminiImage } from "../callapi/call_api_user";
 import { Link, useLocation } from "react-router-dom";
 import { toggleLike as globalToggleLike, subscribeLikes } from "../utils/likes";
+import ProductPlatformButtons from "../components/ProductPlatformButtons";
 
 function b64ToFile(dataUrl, filename = 'face.jpg') {
   try {
@@ -716,32 +717,9 @@ const CosmeticStore = () => {
                   </div>
                 )}
 
-                <div className="border-t border-[#E8E0DC] pt-5 space-y-2">
+                <div className="border-t border-[#E8E0DC] pt-5">
                   <p className="text-[9px] tracking-[0.3em] uppercase text-[#888] font-[300] mb-3">Available at</p>
-                  <a
-                    href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center w-full bg-[#1A1A1A] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#010101] transition-all"
-                  >
-                    TikTok Shop
-                  </a>
-                  <a
-                    href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center w-full bg-[#EE4D2D] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#D94429] transition-all"
-                  >
-                    Shopee
-                  </a>
-                  <a
-                    href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center w-full bg-[#0F0E8E] text-white py-3 text-[10px] font-[600] uppercase tracking-[0.25em] hover:bg-[#0D0C7A] transition-all"
-                  >
-                    Lazada
-                  </a>
+                  <ProductPlatformButtons product={selectedProduct} />
                 </div>
 
                 {relatedProducts.length > 0 && (

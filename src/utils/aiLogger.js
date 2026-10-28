@@ -7,7 +7,7 @@
  * ข้อมูลที่เก็บ:
  *  - timestamp     : เวลาที่ AI ทำงาน
  *  - userId        : ผู้ใช้งาน (ถ้า login)
- *  - modelUsed     : โมเดลที่ใช้ ("face-api.js" | "RandomForest" | "Gemini")
+ *  - modelUsed     : โมเดลที่ใช้ ("MediaPipe-FaceLandmarker" | "ColorEngine-CIELAB" | "Gemini")
  *  - input         : ข้อมูลที่ป้อนเข้าโมเดล
  *  - output        : ผลลัพธ์ที่ได้
  *  - confidence    : ความมั่นใจของโมเดล (0-1)
@@ -25,8 +25,8 @@ const AI_LOGS_COLLECTION = "ai_logs";
  * บันทึก log การใช้ AI
  *
  * @param {object} params
- * @param {string} params.modelUsed    - ชื่อโมเดล: "face-api.js" | "RandomForest" | "Gemini"
- * @param {string} params.task         - งานที่ทำ: "face_shape" | "seasonal_color" | "makeup_generation"
+ * @param {string} params.modelUsed    - ชื่อโมเดล: "MediaPipe-FaceLandmarker" | "ColorEngine-CIELAB" | "Gemini"
+ * @param {string} params.task         - งานที่ทำ: "face_shape" | "seasonal_color" | "makeup_style" | "makeup_generation"
  * @param {object} params.input        - ข้อมูล input (ไม่ใส่รูปภาพ ใส่แค่ feature)
  * @param {any}    params.output       - ผลลัพธ์
  * @param {number} params.confidence   - ความมั่นใจ 0-1 (optional)

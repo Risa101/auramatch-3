@@ -26,3 +26,11 @@ pnpm-debug.log*
 # large media
 /public/*.mov
 /public/*.MOV
+
+# extracted face-shape images/landmarks (real face photos, do not commit)
+dataset/face_shape_extracted/
+
+# local-only: face photo datasets, test photos, Office lock files
+/dataset/
+/testai/
+~$*

@@ -19,7 +19,7 @@ const FEATURE_MAP = {
 };
 const pretty = (val, group) => (FEATURE_MAP[group] || {})[val] || val || "—";
 const SEASON_LABELS_TH = { Spring: "ฤดูใบไม้ผลิ", Summer: "ฤดูร้อน", Autumn: "ฤดูใบไม้ร่วง", Winter: "ฤดูหนาว" };
-const FACE_TYPE_LABELS_TH = { Oval: "รูปไข่", Round: "กลม", Square: "เหลี่ยม", Heart: "หัวใจ", Diamond: "เพชร", Rectangle: "ยาว" };
+const FACE_TYPE_LABELS_TH = { Oval: "รูปไข่", Round: "กลม", Square: "เหลี่ยม", Heart: "หัวใจ", Diamond: "เพชร", Triangle: "สามเหลี่ยม", Rectangle: "ยาว" };
 
 const SEASON_ACCENT = {
   Spring:  { border: "#FF85A2", bg: "#FFF5F8", text: "#D23669", gradient: "from-[#FFE4EE] to-[#FFF5F8]" },

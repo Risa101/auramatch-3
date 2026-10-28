@@ -3,10 +3,13 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Analysis.css";
 import MakeoverStudio from "../components/MakeoverStudio.jsx";
-import { saveAnalysisHistory, getAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzeSeasonLab, analyzeColorEngine, analyzeUndertone, getRecommendedProducts } from "../callapi/call_api_user";
-import { detectFaceShape, loadFaceModels } from "../utils/faceShapeDetector";
+import { saveAnalysisHistory, getAnalysisHistory, generateGeminiImage, analyzeFaceApi, analyzePersonalColor, getRecommendedProducts } from "../callapi/call_api_user";
+import { detectFaceLandmarksMP } from "../utils/faceLandmarkerMP";
+import { detectFaceShapeFromLandmarks } from "../utils/faceGeometry";
+import { assessImageQuality } from "../utils/imageQuality";
 import { logAiCall } from "../utils/aiLogger";
 import { imgUrl } from "../utils/imgUrl";
+import { resolvePrimaryLink } from "../utils/platformLinks.js";
 
 /* ✅ persist realtime */
 import { auth } from "../lib/firebase";
@@ -26,7 +29,8 @@ const BASE_PATH = import.meta.env.BASE_URL || "/";
 const assetPath = (p) => `${BASE_PATH}${String(p).replace(/^\/+/, "")}`;
 
 const SEASONS = ["Spring", "Summer", "Autumn", "Winter"];
-const FACE_TYPES = ["Oval", "Round", "Square", "Heart", "Diamond", "Rectangle"];
+// Must match FACE_SHAPES in src/utils/faceGeometry.js (the six home-page shapes).
+const FACE_TYPES = ["Oval", "Round", "Square", "Heart", "Diamond", "Triangle"];
 const SEASON_META = {
   Spring: { tone: "อบอุ่น • สดใส", note: "โทนอบอุ่น สดใส และอ่อนโยน", glow: "from-[#FFF1D8] to-[#FFDDE7]" },
   Summer: { tone: "เย็น • นุ่มนวล", note: "โทนเย็น นุ่มนวล และละมุน", glow: "from-[#EAF2FF] to-[#F1E8FF]" },
@@ -36,7 +40,7 @@ const SEASON_META = {
 // Display labels for SEASONS/FACE_TYPES — those arrays stay English since their
 // values double as lookup keys (SEASON_META[season], PRODUCTS[season], etc.)
 const SEASON_LABELS_TH = { Spring: "ฤดูใบไม้ผลิ", Summer: "ฤดูร้อน", Autumn: "ฤดูใบไม้ร่วง", Winter: "ฤดูหนาว" };
-const FACE_TYPE_LABELS_TH = { Oval: "รูปไข่", Round: "กลม", Square: "เหลี่ยม", Heart: "หัวใจ", Diamond: "เพชร", Rectangle: "ยาว" };
+const FACE_TYPE_LABELS_TH = { Oval: "รูปไข่", Round: "กลม", Square: "เหลี่ยม", Heart: "หัวใจ", Diamond: "เพชร", Triangle: "สามเหลี่ยม", Rectangle: "ยาว" };
 // Display labels for the `category` tag MakeoverStudio attaches to each cart
 // item (Foundation/Lips/Eyes/Blush/Brows/Contour) — stays English at the
 // source since it's also half of the cart item's dedupe key (cartKey()).
@@ -47,6 +51,8 @@ const FACE_META = {
   Square: "กรามชัดเจน ดูมั่นใจและโดดเด่น",
   Heart: "หน้าผากเด่น คางเรียว ดูน่ารักสดใส",
   Diamond: "โหนกแก้มชัด คมและมีเสน่ห์",
+  Triangle: "กรามกว้าง หน้าผากแคบ ดูหนักแน่นมั่นคง",
+  // Results saved before the six-shape model may still say Rectangle.
   Rectangle: "ใบหน้าเรียวยาวสง่างาม โครงหน้าชัดเจน",
 };
 
@@ -176,6 +182,11 @@ const HAIR_STYLE_MAP = {
     { key: "curtain-bangs", name: "Curtain Bangs",      img: assetPath("hair/curtain-bangs.jpg"), length: "short" },
     { key: "long-soft",     name: "Long Soft Layers",   img: assetPath("hair/Long-layers.jpg"),   length: "long" },
   ],
+  Triangle: [
+    { key: "layered-wolf",  name: "Soft Wolf Cut",      img: assetPath("hair/SoftWolfCut.jpg"),        length: "medium" },
+    { key: "side-bangs",    name: "Side-swept Bangs",   img: assetPath("hair/Side-sweptBangs.jpg"),    length: "short" },
+    { key: "long-layers",   name: "Long Layers",        img: assetPath("hair/LongLayers.jpg"),         length: "long" },
+  ],
   Rectangle: [
     { key: "soft-waves",    name: "Soft Waves",         img: assetPath("hair/soft-waves.jpg"),    length: "long" },
     { key: "bouncy-lob",    name: "Bouncy Lob",         img: assetPath("hair/bouncy-lob.jpg"),    length: "medium" },
@@ -208,6 +219,7 @@ const FACE_SHAPE_TH = {
   Square: "Square",
   Heart: "Heart",
   Diamond: "Diamond",
+  Triangle: "Triangle",
   Rectangle: "Rectangle",
   Pear: "Pear",
 };
@@ -556,7 +568,7 @@ async function saveAnalysisToBackend(userId, entry) {
   const payload = {
     user_id: userId,
     // season/face_shape เป็น NOT NULL ใน DB — ถ้าขั้นตอนวิเคราะห์ไหนไม่สำเร็จ
-    // (เช่น face-api.js หาหน้าไม่เจอ) ต้องมี fallback ไม่งั้น insert จะพังเงียบๆ
+    // (เช่น MediaPipe หาหน้าไม่เจอ) ต้องมี fallback ไม่งั้น insert จะพังเงียบๆ
     season: entry?.season || "Unknown",
     face_shape: entry?.faceShape || "Unknown",
     eyebrows: entry?.face?.brows || null,
@@ -702,7 +714,7 @@ function fileToDataURL(file) {
   });
 }
 
-// แปลง File → HTMLImageElement (สำหรับ face-api.js)
+// แปลง File → HTMLImageElement (สำหรับ MediaPipe FaceLandmarker + image-quality gate)
 function fileToImgElement(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -711,40 +723,6 @@ function fileToImgElement(file) {
     img.onerror = reject;
     img.src = url;
   });
-}
-
-// Crop to the detected face box (+ padding) before handing the photo to the
-// backend's classical-CV skin-color analyzers (undertone / season fallback).
-// Those sample skin color from a plain Lab-threshold over whatever pixels
-// they're given — on the full photo that includes hair, clothing, and
-// background, which can throw the average off badly on real-world lighting.
-// Cropping to just the face (padded a bit for the forehead/jaw margin) keeps
-// them looking at mostly-skin pixels instead. Falls back to the original
-// file if the crop fails for any reason — never blocks the analysis.
-async function cropToFaceBox(imgEl, file, box, paddingRatio = 0.15) {
-  if (!box) return file;
-  try {
-    const padX = box.width * paddingRatio;
-    const padY = box.height * paddingRatio;
-    const x = Math.max(0, box.x - padX);
-    const y = Math.max(0, box.y - padY);
-    const w = Math.min(imgEl.naturalWidth - x, box.width + padX * 2);
-    const h = Math.min(imgEl.naturalHeight - y, box.height + padY * 2);
-    if (w <= 0 || h <= 0) return file;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(imgEl, x, y, w, h, 0, 0, w, h);
-
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    if (!blob) return file;
-    return new File([blob], file.name || "face-crop.jpg", { type: "image/jpeg" });
-  } catch (e) {
-    console.warn("[cropToFaceBox] falling back to full photo:", e);
-    return file;
-  }
 }
 
 /* ===== History + Profile helpers (inline) ===== */
@@ -942,31 +920,192 @@ export default function Analysis() {
       setStatus("analyzing");
       let data;
       if (pickedFile && pickedFile.size > 0) {
-        // ── Gemini: วิเคราะห์ season + สีผิว ──
+        const imgEl = await fileToImgElement(pickedFile);
+
+        // ── Landmarks: MediaPipe FaceLandmarker, run ONCE and reused for
+        // both face-shape geometry and the image-quality gate below, and
+        // sent to the backend so it doesn't need its own detection pass.
+        // Replaces face-api.js entirely (see src/utils/faceGeometry.js's
+        // docstring for why: no forehead landmarks + no rotation
+        // correction were real, verified bugs in that module). ──
+        let landmarksNorm = null;
+        try {
+          landmarksNorm = await detectFaceLandmarksMP(imgEl);
+        } catch (lmErr) {
+          // detectFaceLandmarksMP() only throws when the MediaPipe model/WASM
+          // itself fails to load or run (e.g. the CDN it fetches from is
+          // blocked) -- a genuine "no face in this photo" result resolves to
+          // null without throwing. So a throw here is never a photo-quality
+          // problem; report it as the infrastructure failure it is instead
+          // of falling through to the image-quality gate's "retake your
+          // photo" messaging, which the user could never satisfy.
+          console.warn("[faceLandmarkerMP] detection failed:", lmErr);
+          setStatus("error");
+          setError("ไม่สามารถโหลดระบบวิเคราะห์ใบหน้าได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง");
+          if (autoMode) setCurrentStep(1);
+          return;
+        }
+
+        let faceShapeResult = null;
+        if (landmarksNorm) {
+          const faceShapeStart = Date.now();
+          try {
+            faceShapeResult = detectFaceShapeFromLandmarks(landmarksNorm, imgEl.naturalWidth, imgEl.naturalHeight);
+            logAiCall({
+              modelUsed: "MediaPipe-FaceLandmarker",
+              task: "face_shape",
+              input: faceShapeResult.measurements,
+              output: faceShapeResult.shape,
+              confidence: faceShapeResult.confidence,
+              processingMs: Date.now() - faceShapeStart,
+              success: true,
+              userId: auth.currentUser?.uid || null,
+            });
+          } catch (geomErr) {
+            console.warn("[faceGeometry] measurement failed:", geomErr);
+            logAiCall({
+              modelUsed: "MediaPipe-FaceLandmarker",
+              task: "face_shape",
+              input: {},
+              output: null,
+              processingMs: Date.now() - faceShapeStart,
+              success: false,
+              errorMessage: geomErr?.message || "unknown error",
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        }
+
+        // ── Image quality gate: never analyze (and never fabricate a
+        // season for) a photo where the measurement would be closer to
+        // noise than signal — see src/utils/imageQuality.js. ──
+        const faceInfo = faceShapeResult
+          ? {
+              faceWidthFraction: faceShapeResult.measurements.raw.faceWidth / imgEl.naturalWidth,
+              rollDeg: faceShapeResult.measurements.rollDeg,
+            }
+          : null;
+        const quality = assessImageQuality(imgEl, faceInfo);
+        if (quality.level === "reject") {
+          console.warn("[ImageQuality] rejected:", quality.reasons);
+          setStatus("quality_rejected");
+          setError(quality.messageTh);
+          if (autoMode) setCurrentStep(1);
+          return;
+        }
+
+        data = {
+          faceShape: faceShapeResult?.shape || null,
+          faceShapeConfidence: faceShapeResult?.confidence ?? null,
+          faceShapeRunnerUp: faceShapeResult?.runnerUp || null,
+          faceShapeProbabilities: faceShapeResult?.probabilities || null,
+          faceShapeMeasurements: faceShapeResult?.measurements || null,
+          imageQuality: quality.level, // "good" | "warning"
+          imageQualityWarnings: quality.reasons,
+          hairLength: pick(["Short", "Medium", "Long"]),
+          hairTexture: pick(["Straight", "Wavy", "Curly"]),
+        };
+
+        // ── Personal Color: THE single authoritative source for season +
+        // undertone (replaces three classifiers that used to silently
+        // overwrite each other — Gemini's guess, a global-threshold Lab
+        // endpoint, and an unreachable-in-production "color engine" proxy).
+        // See services/personal_color_service.py. A failure here is a real
+        // ANALYSIS_FAILED, not something to paper over with a guessed
+        // season — the whole point of this refactor was to stop doing that. ──
+        // landmarksNorm is guaranteed truthy here: a falsy value already
+        // returns early above, either from the lmErr catch (load/network
+        // failure) or the image-quality gate's "face_measurement_unavailable"
+        // reject -- so this never actually starts as a failure.
+        let personalColorFailed = false;
+        if (landmarksNorm) {
+          const pcStart = Date.now();
+          try {
+            const pc = await analyzePersonalColor(pickedFile, landmarksNorm);
+            if (pc?.valid) {
+              data.season = pc.season;
+              data.subTone = pc.sub_tone;
+              data.seasonConfidence = pc.confidence;
+              data.seasonReliability = pc.reliability;
+              data.rankedSeasons = pc.ranked_seasons;
+              data.axes = pc.axes;
+              data.skinUndertone = pc.undertone;
+              data.skinLab = pc.skin_lab;
+              data.ita = pc.ita;
+              data.blushProducts = pc.recommended_products || [];
+              data.colorQuality = pc.quality;
+              logAiCall({
+                modelUsed: "ColorEngine-CIELAB",
+                task: "seasonal_color",
+                input: { skin_lab: pc.skin_lab, ita: pc.ita },
+                output: pc.season,
+                confidence: pc.confidence,
+                processingMs: Date.now() - pcStart,
+                success: true,
+                userId: auth.currentUser?.uid || null,
+              });
+            } else {
+              personalColorFailed = true;
+              console.warn("[PersonalColor] invalid result:", pc?.reason);
+              logAiCall({
+                modelUsed: "ColorEngine-CIELAB",
+                task: "seasonal_color",
+                input: {},
+                output: null,
+                processingMs: Date.now() - pcStart,
+                success: false,
+                errorMessage: pc?.reason || "invalid result",
+                userId: auth.currentUser?.uid || null,
+              });
+            }
+          } catch (pcErr) {
+            personalColorFailed = true;
+            console.warn("[PersonalColor] request failed:", pcErr);
+            logAiCall({
+              modelUsed: "ColorEngine-CIELAB",
+              task: "seasonal_color",
+              input: {},
+              output: null,
+              processingMs: Date.now() - pcStart,
+              success: false,
+              errorMessage: pcErr?.message || "unknown error",
+              userId: auth.currentUser?.uid || null,
+            });
+          }
+        }
+
+        if (personalColorFailed) {
+          setStatus("error");
+          setError("ไม่สามารถวิเคราะห์สีผิวได้ — กรุณาลองใหม่ด้วยภาพที่เห็นใบหน้าชัดเจนและมีแสงเพียงพอ");
+          if (autoMode) setCurrentStep(1);
+          return; // never fabricate a season on failure
+        }
+
+        // ── Gemini: makeup styling suggestion ONLY (brows/eyes/nose/lips).
+        // No longer asked for season/faceShape — see call_api_user.jsx and
+        // backend services/gemini_service.py for why. A Gemini failure here
+        // only affects the styling suggestion, never the season result
+        // above, so it degrades to a neutral default instead of failing
+        // the whole analysis. ──
         const geminiStart = Date.now();
         try {
           const res = await analyzeFaceApi(pickedFile);
-          data = {
-            season: res.season,
-            faceShape: res.faceShape,
-            face: res.face,
-            hairLength: pick(["Short", "Medium", "Long"]),
-            hairTexture: pick(["Straight", "Wavy", "Curly"]),
-          };
+          data.face = res.face;
           logAiCall({
             modelUsed: "Gemini",
-            task: "seasonal_color",
+            task: "makeup_style",
             input: { fileName: pickedFile.name, fileSize: pickedFile.size },
-            output: { season: res.season, faceShape: res.faceShape },
+            output: res.face,
             processingMs: Date.now() - geminiStart,
             success: true,
             userId: auth.currentUser?.uid || null,
           });
         } catch (apiErr) {
-          console.warn("Gemini analyze-face failed, falling back to mock:", apiErr);
+          console.warn("Gemini makeup-style suggestion failed, using a neutral default:", apiErr);
+          data.face = { brows: "softArch", eyes: "natural", nose: "natural", lips: "gradient" };
           logAiCall({
             modelUsed: "Gemini",
-            task: "seasonal_color",
+            task: "makeup_style",
             input: { fileName: pickedFile.name },
             output: null,
             processingMs: Date.now() - geminiStart,
@@ -974,131 +1113,7 @@ export default function Analysis() {
             errorMessage: apiErr?.message || "unknown error",
             userId: auth.currentUser?.uid || null,
           });
-          data = await analyzeImageMock(pickedFile);
         }
-
-        // ── face-api.js: detect face shape จาก landmark เอง — ทำก่อนเพื่อนำ face
-        // box ไป crop รูปให้ตัววิเคราะห์สีผิวด้านล่าง (ดูเหตุผลที่ cropToFaceBox()) ──
-        const faceStart = Date.now();
-        let skinCropFile = pickedFile; // fallback: เต็มรูปเดิม ถ้าหาหน้าไม่เจอ
-        try {
-          await loadFaceModels();
-          const imgEl = await fileToImgElement(pickedFile);
-          const faceResult = await detectFaceShape(imgEl);
-          if (faceResult.shape) {
-            console.log("[face-api.js] detected shape:", faceResult.shape, "ratios:", faceResult.ratios);
-            data.faceShape = faceResult.shape;
-            data.faceShapeConfidence = faceResult.confidence;
-            data.faceShapeRatios = faceResult.ratios;
-            logAiCall({
-              modelUsed: "face-api.js",
-              task: "face_shape",
-              input: faceResult.ratios,
-              output: faceResult.shape,
-              confidence: faceResult.confidence,
-              processingMs: Date.now() - faceStart,
-              success: true,
-              userId: auth.currentUser?.uid || null,
-            });
-          }
-          if (faceResult.box) {
-            skinCropFile = await cropToFaceBox(imgEl, pickedFile, faceResult.box);
-          }
-        } catch (faceErr) {
-          console.warn("[face-api.js] face shape detection failed:", faceErr);
-          logAiCall({
-            modelUsed: "face-api.js",
-            task: "face_shape",
-            input: {},
-            output: null,
-            processingMs: Date.now() - faceStart,
-            success: false,
-            errorMessage: faceErr?.message || "unknown error",
-            userId: auth.currentUser?.uid || null,
-          });
-        }
-        // ──────────────────────────────────────────────────────
-
-        // ── Season (classical CIELAB): ไขว้ ITA (warm/cool) กับ L* (light/deep) ──
-        // แทนที่ RandomForest เดิม (ลบแล้ว — ดู undertone_service.py::estimate_season)
-        // ใช้ skinCropFile (ครอบเฉพาะหน้า) แทนรูปเต็ม กัน background/ผม/เสื้อผ้าปน
-        try {
-          const labStart = Date.now();
-          const labResult = await analyzeSeasonLab(skinCropFile);
-          if (labResult?.season && labResult.season !== "unknown") {
-            console.log("[SeasonLab] season:", labResult.season, "ITA:", labResult.ita, "L*:", labResult.l_star);
-            data.season = labResult.season;
-            data.seasonIta = labResult.ita;
-            data.seasonLStar = labResult.l_star;
-            logAiCall({
-              modelUsed: "CIELAB-ITA",
-              task: "seasonal_color",
-              input: { ita: labResult.ita, l_star: labResult.l_star },
-              output: labResult.season,
-              processingMs: Date.now() - labStart,
-              success: true,
-              userId: auth.currentUser?.uid || null,
-            });
-          }
-        } catch (labErr) {
-          console.warn("[SeasonLab] season prediction failed:", labErr);
-        }
-        // ──────────────────────────────────────────────────────
-
-        // ── Color Engine (auramatchgenz): MediaPipe + CIELAB, ละเอียดสุด ──
-        // ถ้า service ไม่รัน (เช่นตอน production ที่ยังไม่ได้ host) จะ 503
-        // แล้ว fallback ไปใช้ค่าจาก RandomForest/Gemini ที่ตั้งไว้ก่อนหน้าโดยอัตโนมัติ
-        try {
-          const colorEngineStart = Date.now();
-          const ceResult = await analyzeColorEngine(pickedFile);
-          if (ceResult?.valid && ceResult?.season) {
-            console.log("[ColorEngine] season:", ceResult.season, "subTone:", ceResult.sub_tone, "confidence:", ceResult.confidence);
-            data.season = ceResult.season;
-            data.seasonConfidence = ceResult.confidence;
-            data.subTone = ceResult.sub_tone;
-            data.warmCool = ceResult.warm_cool;
-            data.skinLab = ceResult.skin_lab;
-            logAiCall({
-              modelUsed: "ColorEngine",
-              task: "seasonal_color",
-              input: ceResult.skin_lab,
-              output: ceResult.season,
-              confidence: ceResult.confidence,
-              processingMs: Date.now() - colorEngineStart,
-              success: true,
-              userId: auth.currentUser?.uid || null,
-            });
-          }
-        } catch (ceErr) {
-          console.warn("[ColorEngine] analysis failed, keeping previous season estimate:", ceErr);
-        }
-        // ──────────────────────────────────────────────────────
-
-        // ── Skin Undertone (classical CV, พอร์ตจาก detection_skin_for_cream(2).ipynb
-        // — ไม่ใช่ ML model) + สินค้าบลัชออนจริงจาก DB ที่ตรงกับ undertone นั้น ──
-        try {
-          const undertoneStart = Date.now();
-          const utResult = await analyzeUndertone(skinCropFile);
-          if (utResult?.success) {
-            console.log("[Undertone] tone:", utResult.undertone, "ITA:", utResult.ita, "L*:", utResult.l_star);
-            data.skinUndertone = utResult.undertone;
-            data.skinUndertoneIta = utResult.ita;
-            data.skinUndertoneLstar = utResult.l_star;
-            data.blushProducts = utResult.recommended_products || [];
-            logAiCall({
-              modelUsed: "UndertoneCV",
-              task: "skin_undertone",
-              input: { skin_pixel_count: utResult.skin_pixel_count },
-              output: utResult.undertone,
-              processingMs: Date.now() - undertoneStart,
-              success: true,
-              userId: auth.currentUser?.uid || null,
-            });
-          }
-        } catch (utErr) {
-          console.warn("[Undertone] analysis failed:", utErr);
-        }
-        // ──────────────────────────────────────────────────────
 
         // ── ลิปที่แนะนำจริงจาก DB (พร้อมลิงก์ร้านค้าจริงถ้ามี) ตาม season ที่ได้ ──
         try {
@@ -1440,7 +1455,7 @@ export default function Analysis() {
                     </div>
                   </div>
                 )}
-                {stepDone[1] && status !== "uploading" && status !== "analyzing" && (
+                {stepDone[1] && status === "done" && (
                   <div className="border-t border-[#F5E3E8] pt-6">
                     <p className="text-[9px] tracking-[0.4em] uppercase text-[#888] font-[300] mb-2">สถานะ</p>
                     <p className="text-xs font-[300] text-[#1A1A1A]">อัปโหลดรูปแล้ว — วิเคราะห์เสร็จสมบูรณ์</p>
@@ -1525,6 +1540,22 @@ export default function Analysis() {
                         ))}
                       </div>
                       <p className="text-xs font-[300] text-[#555] leading-relaxed">{SEASON_META[result.season]?.note || ""}</p>
+                      {/* Audit fix: reliability was computed all along but never
+                          shown — a near-tie result used to look identical to a
+                          confident one. Only shown when it's genuinely worth a
+                          caveat (not "high"), so the common case stays clean. */}
+                      {result.seasonReliability && result.seasonReliability !== "high" && (
+                        <p className="mt-3 text-[10px] font-[300] text-[#B98A00] tracking-wide">
+                          {result.seasonReliability === "low"
+                            ? "⚠ ผลลัพธ์นี้มีความไม่แน่นอนสูง — ลองถ่ายรูปใหม่ในที่แสงสว่างขึ้น"
+                            : "ผลลัพธ์นี้มีความมั่นใจปานกลาง"}
+                        </p>
+                      )}
+                      {result.imageQuality === "warning" && (
+                        <p className="mt-1 text-[10px] font-[300] text-[#B98A00] tracking-wide">
+                          ⚠ คุณภาพรูปภาพอาจไม่เหมาะสมที่สุด (แสง/ความคมชัด/มุมหน้า)
+                        </p>
+                      )}
                     </div>
 
                     {/* Face Shape card with image */}
@@ -1581,6 +1612,34 @@ export default function Analysis() {
                           <h3 className="text-xl md:text-2xl font-[200] tracking-[0.03em] text-[#1A1A1A] leading-[1] uppercase mb-2">
                             {FACE_TYPE_LABELS_TH[result.faceShape] || result.faceShape || "—"}
                           </h3>
+                          {/* Runner-up: the face-shape model is only ~25% accurate on 6 classes,
+                              so the second most likely shape is shown alongside the first.
+                              Results saved before the model existed have no runner-up. */}
+                          {result.faceShapeRunnerUp && result.faceShapeProbabilities && (
+                            <div className="mb-3">
+                              <p className="text-xs font-[300] text-[#555] mb-2">
+                                หรือใกล้เคียง{" "}
+                                <span className="font-[600] text-[#D23669]">
+                                  {FACE_TYPE_LABELS_TH[result.faceShapeRunnerUp] || result.faceShapeRunnerUp}
+                                </span>
+                              </p>
+                              {[result.faceShape, result.faceShapeRunnerUp].map((s) => {
+                                const pct = Math.round((result.faceShapeProbabilities[s] || 0) * 100);
+                                return (
+                                  <div key={s} className="flex items-center gap-2 mb-1">
+                                    <p className="text-[10px] text-[#888] font-[300] w-16 shrink-0">{FACE_TYPE_LABELS_TH[s] || s}</p>
+                                    <div className="flex-1 h-1 bg-[#F5E3E8]">
+                                      <div className="h-1 bg-[#D23669]" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <p className="text-[10px] text-[#888] font-[300] w-8 text-right">{pct}%</p>
+                                  </div>
+                                );
+                              })}
+                              <p className="text-[9px] text-[#AAA] font-[300] mt-1.5 leading-relaxed">
+                                ประเมินจากสัดส่วนเส้นขอบใบหน้า ใช้เป็นแนวทางเบื้องต้น
+                              </p>
+                            </div>
+                          )}
                           <p className="text-xs font-[300] text-[#555] leading-relaxed mb-4">{FACE_META[result.faceShape] || ""}</p>
                           {/* Key traits */}
                           {result.faceShape && (() => {
@@ -1662,13 +1721,15 @@ export default function Analysis() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
-                      {result.blushProducts.map((p) => (
+                      {result.blushProducts.map((p) => {
+                        const link = resolvePrimaryLink(p);
+                        return (
                         <a
                           key={p.product_id}
-                          href={p.shop_url || undefined}
-                          target={p.shop_url ? "_blank" : undefined}
-                          rel={p.shop_url ? "noreferrer" : undefined}
-                          className={`group bg-white block ${p.shop_url ? "" : "pointer-events-none"}`}
+                          href={link || undefined}
+                          target={link ? "_blank" : undefined}
+                          rel={link ? "noreferrer" : undefined}
+                          className={`group bg-white block ${link ? "" : "pointer-events-none"}`}
                         >
                           <div className="relative aspect-square overflow-hidden bg-[#F7F4F2]">
                             <img
@@ -1689,10 +1750,11 @@ export default function Analysis() {
                             <span className="text-xs font-[600] text-[#1A1A1A]">฿{p.price != null ? p.price.toLocaleString() : "—"}</span>
                           </div>
                         </a>
-                      ))}
+                        );
+                      })}
                     </div>
                     <p className="mt-4 text-[10px] text-[#aaa] font-[300] tracking-[0.05em]">
-                      คำนวณ undertone จากค่าความสว่างผิว (L* = {result.skinUndertoneLstar?.toFixed?.(1) ?? "—"}) และมุม ITA ({result.skinUndertoneIta?.toFixed?.(1) ?? "—"}°) ของบริเวณผิวในรูปภาพ แล้วดึงสินค้าที่ตรงกันจากคลังสินค้าจริง
+                      คำนวณ undertone จากค่าความสว่างผิว (L* = {result.skinLab?.[0]?.toFixed?.(1) ?? "—"}) และมุม ITA ({result.ita?.toFixed?.(1) ?? "—"}°) ของบริเวณผิวในรูปภาพ แล้วดึงสินค้าที่ตรงกันจากคลังสินค้าจริง
                     </p>
                   </div>
                 )}
@@ -1711,13 +1773,15 @@ export default function Analysis() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-[#F5E3E8] rounded-2xl overflow-hidden border border-[#F5E3E8] shadow-sm">
-                      {result.lipProducts.map((p) => (
+                      {result.lipProducts.map((p) => {
+                        const link = resolvePrimaryLink(p);
+                        return (
                         <a
                           key={p.product_id}
-                          href={p.shop_url || undefined}
-                          target={p.shop_url ? "_blank" : undefined}
-                          rel={p.shop_url ? "noreferrer" : undefined}
-                          className={`group bg-white block ${p.shop_url ? "" : "pointer-events-none"}`}
+                          href={link || undefined}
+                          target={link ? "_blank" : undefined}
+                          rel={link ? "noreferrer" : undefined}
+                          className={`group bg-white block ${link ? "" : "pointer-events-none"}`}
                         >
                           <div className="relative aspect-square overflow-hidden bg-[#F7F4F2]">
                             <img
@@ -1735,7 +1799,8 @@ export default function Analysis() {
                             <span className="text-xs font-[600] text-[#1A1A1A]">฿{p.price != null ? p.price.toLocaleString() : "—"}</span>
                           </div>
                         </a>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

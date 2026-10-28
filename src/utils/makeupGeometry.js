@@ -48,20 +48,46 @@ export function toStagePoints(landmarks, indices, width, height) {
   return indices.map((i) => ({ x: landmarks[i].x * width, y: landmarks[i].y * height }));
 }
 
+/**
+ * Head-roll angle (radians) from the same eye-outer-corner pair
+ * src/utils/faceGeometry.js's alignLandmarks() uses (33/263), so every
+ * placement below tilts consistently with the face-shape pipeline.
+ */
+function faceRoll(landmarks, width, height) {
+  const l = { x: landmarks[EYE_UPPER_RIGHT[0]].x * width, y: landmarks[EYE_UPPER_RIGHT[0]].y * height };
+  const r = { x: landmarks[EYE_UPPER_LEFT[0]].x * width, y: landmarks[EYE_UPPER_LEFT[0]].y * height };
+  return Math.atan2(r.y - l.y, r.x - l.x);
+}
+
+/**
+ * Rotate a face-relative offset (dx = sideways, dy = down-the-face) into
+ * image pixel space by the head's roll, so "down the cheek" still means
+ * down the cheek — not straight down the photo — when the head is tilted.
+ */
+function rotateOffset(dx, dy, roll) {
+  const cos = Math.cos(roll);
+  const sin = Math.sin(roll);
+  return { x: dx * cos - dy * sin, y: dx * sin + dy * cos };
+}
+
 export function blushPlacements(landmarks, width, height) {
   const faceWidth = Math.hypot(
     (landmarks[FACE_LEFT].x - landmarks[FACE_RIGHT].x) * width,
     (landmarks[FACE_LEFT].y - landmarks[FACE_RIGHT].y) * height
   );
+  const roll = faceRoll(landmarks, width, height);
   const radius = faceWidth * 0.14;
-  return [CHEEK_RIGHT, CHEEK_LEFT].map((i) => ({
-    center: {
-      x: landmarks[i].x * width,
-      // nudged slightly down so the bloom sits on the cheekbone, not under-eye
-      y: landmarks[i].y * height + faceWidth * 0.02,
-    },
-    radius,
-  }));
+  return [CHEEK_RIGHT, CHEEK_LEFT].map((i) => {
+    // nudged slightly down-the-face so the bloom sits on the cheekbone, not under-eye
+    const offset = rotateOffset(0, faceWidth * 0.02, roll);
+    return {
+      center: {
+        x: landmarks[i].x * width + offset.x,
+        y: landmarks[i].y * height + offset.y,
+      },
+      radius,
+    };
+  });
 }
 
 /**
@@ -77,19 +103,23 @@ export function contourPlacements(landmarks, width, height) {
     (landmarks[FACE_LEFT].x - landmarks[FACE_RIGHT].x) * width,
     (landmarks[FACE_LEFT].y - landmarks[FACE_RIGHT].y) * height
   );
+  const roll = faceRoll(landmarks, width, height);
   const radius = faceWidth * 0.13;
   return [
     { cheek: CHEEK_RIGHT, side: 1 },
     { cheek: CHEEK_LEFT, side: -1 },
-  ].map(({ cheek, side }) => ({
-    center: {
-      // further down than blush (hollow, not the apple of the cheek) and
-      // nudged slightly toward center-face (side flips sign per cheek)
-      x: landmarks[cheek].x * width + side * faceWidth * -0.03,
-      y: landmarks[cheek].y * height + faceWidth * 0.1,
-    },
-    radius,
-  }));
+  ].map(({ cheek, side }) => {
+    // further down than blush (hollow, not the apple of the cheek) and
+    // nudged slightly toward center-face (side flips sign per cheek)
+    const offset = rotateOffset(side * faceWidth * -0.03, faceWidth * 0.1, roll);
+    return {
+      center: {
+        x: landmarks[cheek].x * width + offset.x,
+        y: landmarks[cheek].y * height + offset.y,
+      },
+      radius,
+    };
+  });
 }
 
 /** Nose tip — the single most consistently-cited index across MediaPipe FaceMesh AR references. */
@@ -115,13 +145,16 @@ export function noseContourPlacements(landmarks, width, height) {
   };
   const tip = { x: landmarks[NOSE_TIP].x * width, y: landmarks[NOSE_TIP].y * height };
   const lerp = (t) => ({ x: bridgeTop.x + (tip.x - bridgeTop.x) * t, y: bridgeTop.y + (tip.y - bridgeTop.y) * t });
+  const roll = faceRoll(landmarks, width, height);
   const sideOffset = faceWidth * 0.045;
   const radius = faceWidth * 0.045;
   const placements = [];
   for (const t of [0.4, 0.7]) {
     const p = lerp(t);
     for (const side of [1, -1]) {
-      placements.push({ center: { x: p.x + side * sideOffset, y: p.y }, radius });
+      // "sideways" is relative to the bridge/tip line's own tilt, not the raw image x-axis
+      const offset = rotateOffset(side * sideOffset, 0, roll);
+      placements.push({ center: { x: p.x + offset.x, y: p.y + offset.y }, radius });
     }
   }
   return placements;

@@ -4,11 +4,10 @@ import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../lib/firebase";
 
 function resolveApiBaseUrl() {
-  const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
-  if (raw) return String(raw).replace(/\/+$/, "");
   if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname))
-    return "http://127.0.0.1:5010";
-  return "";
+    return "";
+  const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  return String(raw).replace(/\/+$/, "");
 }
 
 async function tryLoginEndpoints(apiBaseUrl, emailNorm, password) {

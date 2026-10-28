@@ -46,6 +46,11 @@ export const saveAnalysisHistory = async (payload) => {
   }
 };
 
+// Gemini — used ONLY for the makeup-style suggestion fields (brows/eyes/
+// nose/lips) as of this refactor. It no longer returns season/faceShape:
+// those were computed here and then unconditionally discarded by the
+// classifiers below every single time (see the AI accuracy audit, Critical
+// Finding #7) — burning a rate-limited API call for values nothing used.
 export const analyzeFaceApi = async (file) => {
   const formData = new FormData();
   formData.append("image", file);
@@ -55,33 +60,32 @@ export const analyzeFaceApi = async (file) => {
   return response.data;
 };
 
-// วิเคราะห์ Seasonal Color ด้วยกฎ classical บน CIELAB ล้วนๆ (ITA x L*) — แทนที่
-// RandomForest เดิม (ลบแล้ว เพราะไม่มี dataset ให้เทรนใหม่แบบ Lab ได้)
-export const analyzeSeasonLab = async (file) => {
+// THE single authoritative Personal Color + skin-undertone source (audit
+// Critical Finding #1: this replaces three independent classifiers —
+// Gemini's guess, a global-Lab-threshold endpoint, and an unreachable-in-
+// production "color engine" proxy — that used to silently overwrite
+// data.season in sequence, with no fusion and no confidence comparison).
+//
+// `landmarksNorm` is the 468/478-point MediaPipe FaceLandmarker output
+// (normalized [0,1] x/y/z), detected once client-side via
+// src/utils/faceLandmarkerMP.js and reused here so the backend doesn't need
+// its own face-detection pass. See services/personal_color_service.py.
+export const analyzePersonalColor = async (file, landmarksNorm) => {
   const formData = new FormData();
   formData.append("image", file);
-  const response = await apiClient.post("/api/season/analyze", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-  return response.data;
-};
-
-// วิเคราะห์ Seasonal Color ด้วย color engine ของ auramatchgenz (MediaPipe + CIELAB)
-export const analyzeColorEngine = async (file) => {
-  const formData = new FormData();
-  formData.append("image", file);
-  const response = await apiClient.post("/api/color-engine/analyze", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-  return response.data;
-};
-
-// วิเคราะห์ Skin Undertone (cool/warm/neutral) + แนะนำโทนสีบลัชออน
-// พอร์ตมาจาก detection_skin_for_cream(2).ipynb (classical CV, ไม่ใช่ ML model)
-export const analyzeUndertone = async (file) => {
-  const formData = new FormData();
-  formData.append("image", file);
-  const response = await apiClient.post("/api/undertone/analyze", formData, {
+  // MediaPipe's native output is an array of {x, y, z} objects (see
+  // faceLandmarkerMP.js) -- that same shape is also fed straight into
+  // faceGeometry.js's detectFaceShapeFromLandmarks(), so it can't be changed
+  // upstream. The backend (personal_color_service.py) expects plain [x, y, z]
+  // arrays and does `np.asarray(landmarks, dtype=float)`, which throws
+  // TypeError on a list of dicts. Convert only here, at the point this
+  // specific request is serialized, so nothing else that consumes
+  // landmarksNorm is affected.
+  const landmarksArr = Array.isArray(landmarksNorm)
+    ? landmarksNorm.map((p) => (Array.isArray(p) ? p : [p.x, p.y, p.z ?? 0]))
+    : landmarksNorm;
+  formData.append("landmarks", JSON.stringify(landmarksArr));
+  const response = await apiClient.post("/api/personal-color/analyze", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;

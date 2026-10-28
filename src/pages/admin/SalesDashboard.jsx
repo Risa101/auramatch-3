@@ -239,8 +239,8 @@ function ProductView() {
       status: String(f.get("status") || "active"),
       stock: f.get("stock") === "" ? null : Number(f.get("stock")),
     };
-    const id = modal.data?.id || payload.product_id;
-    if (id) {
+    if (modal.data) {
+      const id = modal.data.id;
       setItems(prev => prev.map(x => x.id === id ? { ...x, ...payload } : x));
       setModal({ open: false, data: null });
       try { await updateAdminProduct(id, payload); }
@@ -348,7 +348,7 @@ function StockView() {
   const save = async (e) => {
     e.preventDefault(); if (saving) return;
     const f = new FormData(e.target);
-    const product_id = Number(f.get("product_id") || 0);
+    const product_id = String(f.get("product_id") || "").trim();
     const quantity = Number(f.get("quantity") || 0);
     if (!product_id) { setError("Please select a product."); return; }
     const sid = modal.data?.stock_id ?? modal.data?.id;
@@ -667,11 +667,11 @@ function PromoView() {
       end_date: String(f.get("end_date") || ""),
       status: String(f.get("status") || "active"),
       brand_id: Number(f.get("brand_id") || 0),
-      superadmin_id: Number(modal.data?.superadmin_id ?? 1),
+      superadmin_id: modal.data?.superadmin_id != null ? Number(modal.data.superadmin_id) : null,
     };
     if (!payload.promo_name || payload.brand_id <= 0) { setError("Please enter a title and select a brand."); return; }
-    const id = modal.data?.id || payload.promotion_id;
-    if (id) {
+    if (modal.data) {
+      const id = modal.data.id;
       setItems(prev => prev.map(x => x.id === id ? { ...x, ...payload, id } : x));
       setModal({ open: false, data: null });
       try { await updateAdminPromotion(id, payload); }
@@ -786,16 +786,16 @@ function ReviewView() {
     const payload = {
       review_id: String(f.get("review_id") || "").trim() || modal.data?.id,
       user_id: Number(f.get("user_id") || 0),
-      product_id: Number(f.get("product_id") || 0),
+      product_id: String(f.get("product_id") || "").trim(),
       rating: Number(f.get("rating") || 0),
       comment: String(f.get("comment") || "").trim(),
       status: String(f.get("status") || "active"),
     };
-    if (payload.user_id <= 0 || payload.product_id <= 0 || payload.rating <= 0) {
+    if (payload.user_id <= 0 || !payload.product_id || payload.rating <= 0) {
       setError("Please provide a valid user_id, product_id, and rating."); return;
     }
-    const id = modal.data?.id || payload.review_id;
-    if (id) {
+    if (modal.data) {
+      const id = modal.data.id;
       setItems(prev => prev.map(x => x.id === id ? { ...x, ...payload, id } : x));
       setModal({ open: false, data: null });
       try { await updateAdminReview(id, payload); }
@@ -851,7 +851,7 @@ function ReviewView() {
             {!modal.data && <Field label="Review ID (optional)" name="review_id" placeholder="auto if blank" />}
             <Row2>
               <Field label="User ID *" name="user_id" type="number" defaultValue={modal.data?.user_id ?? ""} required />
-              <Field label="Product ID *" name="product_id" type="number" defaultValue={modal.data?.product_id ?? ""} required />
+              <Field label="Product ID *" name="product_id" type="text" placeholder="e.g. CUSH009" defaultValue={modal.data?.product_id ?? ""} required />
             </Row2>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-600">Rating *</label>

@@ -48,6 +48,9 @@ const normalizeProduct = (item) => ({
   image_url: item?.image_url ?? item?.image ?? "",
   personal_color_tags: item?.personal_color_tags ?? item?.seasonTags ?? "",
   status: item?.status ?? "active",
+  // Multi-platform shopping links (Shopee/Lazada/TikTok Shop, extensible).
+  // Additive field -- absent on older API responses, so default to [].
+  platforms: Array.isArray(item?.platforms) ? item.platforms : [],
 });
 
 const normalizeUser = (item) => ({
@@ -113,7 +116,7 @@ export async function getStockList() {
 
 export async function createStockItem({ product_id, quantity }) {
   const body = {
-    product_id: Number(product_id),
+    product_id: String(product_id),
     quantity: Number(quantity),
   };
   const res = await apiClient.post("/stock", body);
@@ -143,6 +146,36 @@ export async function updateAdminProduct(product_id, payload) {
 
 export async function deleteAdminProduct(product_id) {
   await apiClient.delete(`/admin/products/${encodeURIComponent(product_id)}`);
+  return true;
+}
+
+// ===============================
+// PRODUCT SHOPPING PLATFORMS (Shopee / Lazada / TikTok Shop, extensible)
+// ===============================
+export async function getAdminProductPlatforms(product_id) {
+  const res = await apiClient.get(`/admin/products/${encodeURIComponent(product_id)}/platforms`);
+  return normalizeList(res);
+}
+
+// Bulk upsert -- NOT a full replace. Only the platforms included in this
+// call are created/updated; any existing platform row for this product that
+// is omitted from `platforms` is left untouched (the backend's
+// replace_platforms_for_product() never deletes omitted rows). Callers that
+// only send the platforms they're editing rely on this -- to remove a
+// platform entirely, use deleteAdminProductPlatform() below instead.
+// platforms: [{ platform, product_url, affiliate_url?, is_active? }, ...]
+export async function setAdminProductPlatforms(product_id, platforms) {
+  const res = await apiClient.put(
+    `/admin/products/${encodeURIComponent(product_id)}/platforms`,
+    { platforms }
+  );
+  return normalizeList(res);
+}
+
+export async function deleteAdminProductPlatform(product_id, platform) {
+  await apiClient.delete(
+    `/admin/products/${encodeURIComponent(product_id)}/platforms/${encodeURIComponent(platform)}`
+  );
   return true;
 }
 
@@ -209,7 +242,7 @@ export async function getAdminReviews() {
 export async function createAdminReview(payload) {
   const data = {
     user_id: Number(payload?.user_id || 0),
-    product_id: Number(payload?.product_id || 0),
+    product_id: String(payload?.product_id || "").trim(),
     rating: Number(payload?.rating || 0),
     comment: payload?.comment || "",
   };

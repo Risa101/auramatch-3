@@ -137,7 +137,7 @@ export default function UltimateAcademy() {
     { shape: "Square", trait: "Angular Precision", desc: "Wide jawline parallel to forehead, creating a strong and powerful look.", image: "/assets/recface.jpg" },
     { shape: "Heart", trait: "Upper Dominance", desc: "Wide forehead with a center hairline peak and a tapered pointed chin like a heart symbol.", image: "/assets/heartface.jpg" },
     { shape: "Diamond", trait: "Cheekbone Focus", desc: "Cheekbones are the widest point, while forehead and jaw are narrow and defined.", image: "/assets/diamondface.jpg" },
-    { shape: "Oblong", trait: "Vertical Depth", desc: "Face length noticeably greater than width, with a slim and elegant bone structure.", image: "/assets/triagle.jpg" }
+    { shape: "Triangle", trait: "Grounded Base", desc: "Narrow forehead widening to a strong, broad jawline — the widest point sits at the jaw.", image: "/assets/triagle.jpg" }
   ];
 
   const closetCards = [
@@ -455,7 +455,7 @@ export default function UltimateAcademy() {
                 { shape: "Round", trait: "Soft Contour", desc: "Face width and length are nearly equal, emphasizing softness.", image: faceShapes[1].image },
                 { shape: "Heart", trait: "Delicate Point", desc: "Wide forehead that tapers gradually to a pointed chin.", image: faceShapes[3].image },
                 { shape: "Diamond", trait: "Sharp Definition", desc: "Cheekbones are the widest point, with narrow forehead and jaw.", image: faceShapes[4].image },
-                { shape: "Long", trait: "Vertical Focus", desc: "Face length exceeds width — focus on horizontal balance.", image: faceShapes[5].image }
+                { shape: "Triangle", trait: "Strong Base", desc: "Jaw is wider than the forehead — balance it with volume up top.", image: faceShapes[5].image }
               ].map((item, i) => (
                 <div key={item.shape} className="group bg-white overflow-hidden hover:bg-[#EBC2C8] transition-all duration-500 cursor-default">
                   <div className="aspect-square overflow-hidden bg-white">

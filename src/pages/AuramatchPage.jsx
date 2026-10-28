@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import TikTokModal from "../components/TikTokModal";
+import ProductPlatformButtons from "../components/ProductPlatformButtons";
 import { Star, ArrowRight, Heart, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -595,19 +596,8 @@ export default function AuramatchDailyDose() {
               <p className="text-[13px] text-[#888] font-[300] leading-relaxed mb-8 border-l border-[#E8E0DC] pl-4">
                 Choose your preferred platform to purchase immediately.
               </p>
-              <div className="mt-auto space-y-2">
-                <a href={`https://www.tiktok.com/search/video?q=${encodeURIComponent(selectedProduct.name || "")}`} target="_blank" rel="noreferrer"
-                  className="flex w-full items-center justify-center bg-[#1A1A1A] py-3.5 text-[10px] font-[500] uppercase tracking-[0.2em] text-white hover:bg-black transition-colors">
-                  Buy on TikTok
-                </a>
-                <a href={`https://shopee.co.th/search?keyword=${encodeURIComponent(selectedProduct.name || "")}`} target="_blank" rel="noreferrer"
-                  className="flex w-full items-center justify-center bg-[#EE4D2D] py-3.5 text-[10px] font-[500] uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all">
-                  Buy on Shopee
-                </a>
-                <a href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(selectedProduct.name || "")}`} target="_blank" rel="noreferrer"
-                  className="flex w-full items-center justify-center bg-[#10078F] py-3.5 text-[10px] font-[500] uppercase tracking-[0.2em] text-white hover:brightness-110 transition-all">
-                  Buy on Lazada
-                </a>
+              <div className="mt-auto">
+                <ProductPlatformButtons product={selectedProduct} buttonClassName="py-3.5" />
               </div>
             </div>
           </div>
