@@ -369,9 +369,8 @@ export default function AccountProfile() {
               {likedProducts.slice(0, 4).map((f, i) => (
                 <Link to="/cosmetics" key={f.id} data-aos="fade-up" data-aos-delay={i * 60} className="group block">
                   <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-b from-[#FBF2F4] to-[#F6EEE9]">
-                    <img src={imgUrl(f.img || f.image_url)} alt={f.title} loading="lazy" decoding="async"
-                      className="w-full h-full object-contain p-6 mix-blend-multiply group-hover:scale-[1.06] transition-transform duration-700"
-                      onError={e => { e.target.src = "/assets/home2.webp"; }} />
+                    <SavedImg path={f.img || f.image_url} alt={f.title}
+                      className="w-full h-full object-contain p-6 mix-blend-multiply group-hover:scale-[1.06] transition-transform duration-700" />
                     <span className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-sm">
                       <Heart size={12} className="fill-[#D23669] text-[#D23669]" />
                     </span>
@@ -437,14 +436,27 @@ function SectionHeader({ no, eyebrow, title, accent, linkTo, linkLabel }) {
   );
 }
 
+// Saved items keep whatever path the source page had: backend uploads
+// ("/static/..."), or images bundled with this site ("/assets/look1.jpg.webp"
+// for trends). imgUrl() always points at the backend, so a site-bundled image
+// 404s there -- retry the same path on this site before the placeholder.
+function SavedImg({ path, alt, className }) {
+  const candidates = [imgUrl(path), path, "/assets/home2.webp"].filter(Boolean);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { setIdx(0); }, [path]);
+  return (
+    <img src={candidates[idx]} alt={alt} loading="lazy" decoding="async" className={className}
+      onError={() => setIdx(i => Math.min(i + 1, candidates.length - 1))} />
+  );
+}
+
 // Arch-framed look card (echoes the hero portrait)
 function LookCard({ item, delay, tag }) {
   return (
     <div data-aos="fade-up" data-aos-delay={delay} className="group cursor-pointer">
       <div className="relative aspect-[3/4] rounded-t-full overflow-hidden bg-[#F5EEF0] shadow-[0_10px_30px_rgba(43,34,38,0.08)]">
-        <img src={imgUrl(item.img || item.image_url)} alt={item.title} loading="lazy" decoding="async"
-          className="w-full h-full object-cover object-top group-hover:scale-[1.06] transition-transform duration-700"
-          onError={e => { e.target.src = "/assets/home2.webp"; }} />
+        <SavedImg path={item.img || item.image_url} alt={item.title}
+          className="w-full h-full object-cover object-top group-hover:scale-[1.06] transition-transform duration-700" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#2B2226]/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
       <div className="pt-3 text-center">
