@@ -93,23 +93,32 @@ export default function LoginPage() {
     try {
       const res = await signInWithPopup(auth, provider);
       const u = res.user;
-      const token = await u.getIdToken();
 
-      // Sync with backend
-      let backendUser = {};
-      let backendToken = token;
-      try {
-        const syncRes = await fetch(`${apiBaseUrl}/api/firebase-sync`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: u.email, name: u.displayName, photo_url: u.photoURL || "" }),
-        });
-        const syncData = await syncRes.json();
-        backendUser = syncData.user || {};
-        if (syncData.token) backendToken = syncData.token;
-      } catch {
-        // backend sync failed — use Firebase user data directly
+      // Sync with backend. The backend only accepts its own token, so a
+      // failed sync must not fall back to the Firebase ID token (every later
+      // API call would 401). Retry a few times: the free Render instance can
+      // take up to ~50 s to wake up.
+      let syncData = null;
+      for (let attempt = 0; attempt < 4 && !syncData?.token; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 8000));
+        try {
+          const syncRes = await fetch(`${apiBaseUrl}/api/firebase-sync`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: u.email, name: u.displayName, photo_url: u.photoURL || "" }),
+          });
+          if (syncRes.ok) syncData = await syncRes.json();
+        } catch {
+          // server waking up / restarting — retry
+        }
       }
+      if (!syncData?.token) {
+        await auth.signOut().catch(() => {});
+        setErr("เซิร์ฟเวอร์กำลังเริ่มทำงาน กรุณารอสักครู่แล้วลองเข้าสู่ระบบอีกครั้ง");
+        return;
+      }
+      const backendUser = syncData.user || {};
+      const backendToken = syncData.token;
 
       localStorage.setItem("auramatch:token", backendToken);
       afterLogin({
