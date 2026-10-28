@@ -586,36 +586,11 @@ async function saveAnalysisToBackend(userId, entry) {
   }
 }
 
-// Both used to raw-fetch(`${API_BASE_URL}/...`) with a hand-resolved base URL
+// Used to raw-fetch(`${API_BASE_URL}/...`) with a hand-resolved base URL
 // that (unlike src/api/client.js's apiClient) never checked for localhost —
 // so on a local dev server it always hit the production Railway URL, which
 // isn't CORS-configured for localhost and is intermittently down. Reuses the
 // shared, correctly-resolved apiClient (via getAnalysisHistory) instead.
-async function fetchLatestAnalysis(userId) {
-  if (!userId) return null;
-  try {
-    const data = await getAnalysisHistory(userId);
-    if (!Array.isArray(data) || data.length === 0) return null;
-    const latest = data[0];
-    return {
-      season: latest.season || null,
-      faceShape: latest.face_shape || null,
-      face: {
-        brows: latest.eyebrows || null,
-        eyes: latest.eyes || null,
-        nose: latest.nose || null,
-        lips: latest.lips || null,
-      },
-      hairLength: null,
-      hairTexture: null,
-      preview: latest.image_path || "",
-    };
-  } catch (e) {
-    console.warn("Fetch latest analysis failed:", e);
-    return null;
-  }
-}
-
 async function fetchAnalysisHistory(userId) {
   if (!userId) return [];
   try {
@@ -849,21 +824,9 @@ export default function Analysis() {
 
 
 
-  useEffect(() => {
-    const userId = getLoggedUserId();
-    if (!userId) return;
-    const hydrate = async () => {
-      const latest = await fetchLatestAnalysis(userId);
-      const list = await fetchAnalysisHistory(userId);
-      if (!latest) return;
-      setResult((prev) => prev || latest);
-      if (latest.preview) setPreview((prev) => prev || latest.preview);
-      setStatus((prev) => (prev === "idle" ? "done" : prev));
-      setHistory(list.slice(0, 8).map(normalizeHistoryRow));
-      saveRequestedRef.current = true;
-    };
-    hydrate();
-  }, []);
+  // The page always opens empty, ready for a new photo. Past results (and
+  // their photos) live on /history and /account — re-showing the last photo
+  // here made it look like the previous scan was stuck on the page.
 
   useEffect(() => {
     if (status !== "done" || !result) return;
